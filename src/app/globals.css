@@ -116,6 +116,9 @@
   * {
     @apply border-border outline-ring/50;
   }
+  html[lang="ar"] {
+    font-family: var(--font-tajawal), var(--font-geist-sans), sans-serif;
+  }
   body {
     @apply bg-background text-foreground;
   }
