@@ -330,6 +330,11 @@ export default function CatNutritionCalculator() {
                   <SelectItem value="none">لا توجد</SelectItem>
                   <SelectItem value="pregnant">حامل (Queen)</SelectItem>
                   <SelectItem value="lactating">مرضعة (Queen)</SelectItem>
+                  <SelectItem value="ckd">مرض الكلى المزمن (CKD)</SelectItem>
+                  <SelectItem value="hyperthyroid">فرط نشاط الغدة الدرقية</SelectItem>
+                  <SelectItem value="diabetes">السكري</SelectItem>
+                  <SelectItem value="recovery">الاستشفاء بعد جراحة/مرض</SelectItem>
+                  <SelectItem value="cardiac">أمراض القلب</SelectItem>
                 </SelectContent>
               </Select>
             </div>
