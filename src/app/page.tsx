@@ -134,6 +134,11 @@ export default function CatNutritionCalculator() {
           <p className="text-sm md:text-base opacity-90">سعرات محسوبة علميًا + جدول أسبوعي + بوكس شهري 30 يوم</p>
         </div>
       </header>
+<Alert className="bg-yellow-50 border-yellow-200 mb-6">
+  <AlertDescription className="text-sm">
+    هذه أداة إرشادية مبنية على إرشادات علمية (NRC, WSAVA, AAFP). استشر دائماً طبيب بيطري للحالات الفردية والمراقبة. لا تستبدل التشخيص المهني.
+  </AlertDescription>
+</Alert>
 
       <div className="max-w-6xl mx-auto p-4 md:p-6 space-y-6">
         {/* Cat Data */}
@@ -200,6 +205,26 @@ export default function CatNutritionCalculator() {
                 onChange={(e) => handleCatDataChange('weight', e.target.value)}
               />
             </div>
+<div className="space-y-2">
+  <Label>درجة حالة الجسم (BCS 1-9)</Label>
+  <Select value={catData.bcs.toString()} onValueChange={(value) => handleCatDataChange('bcs', parseInt(value))}>
+    <SelectTrigger>
+      <SelectValue />
+    </SelectTrigger>
+    <SelectContent>
+      <SelectItem value="1">1 - نحيل جداً (Underweight severe)</SelectItem>
+      <SelectItem value="2">2 - نحيل (Underweight)</SelectItem>
+      <SelectItem value="3">3 - نحيف قليلاً (Slightly underweight)</SelectItem>
+      <SelectItem value="4">4 - نحيف (Thin)</SelectItem>
+      <SelectItem value="5">5 - مثالي (Ideal)</SelectItem>
+      <SelectItem value="6">6 - بدين قليلاً (Slightly overweight)</SelectItem>
+      <SelectItem value="7">7 - بدين (Overweight)</SelectItem>
+      <SelectItem value="8">8 - سمين (Obese)</SelectItem>
+      <SelectItem value="9">9 - سمين جداً (Obese severe)</SelectItem>
+    </SelectContent>
+  </Select>
+  <p className="text-xs text-gray-500">BCS: 1-3 تحت الوزن، 4-5 مثالي، 6-9 فوق الوزن (WSAVA 2011).</p>
+</div>
 
             <div className="space-y-2">
               <Label>الجنس</Label>
@@ -909,6 +934,17 @@ export default function CatNutritionCalculator() {
                         <TableHead>جرامات ويت</TableHead>
                         <TableHead>جرامات دراي</TableHead>
                         <TableHead>وحدات ويت</TableHead>
+{/* Recommendations */}
+{results.recommendations && results.recommendations.length > 0 && (
+  <div className="space-y-2">
+    <h4 className="text-md font-semibold mb-2">توصيات تغذية إضافية</h4>
+    {results.recommendations.map((rec, index) => (
+      <Alert key={index} className="border-blue-200 bg-blue-50">
+        <AlertDescription className="text-sm">{rec}</AlertDescription>
+      </Alert>
+    ))}
+  </div>
+)}
                       </TableRow>
                     </TableHeader>
                     <TableBody>

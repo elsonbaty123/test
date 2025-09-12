@@ -8,6 +8,7 @@ interface CatData {
   ageUnit: 'months' | 'years';
   lifeStage: 'auto' | 'kitten_young' | 'kitten_older' | 'adult' | 'senior';
   weight: string;
+  bcs: number;
   sex: 'female' | 'male';
   breed: string;
   breedOther: string;
@@ -93,6 +94,7 @@ interface Results {
   weeklyData: WeeklyDay[];
   activityInfo: ActivityLevel;
   boxSummary: BoxSummary;
+  recommendations: string[];
 }
 
 interface ActivityLevel {
@@ -111,6 +113,7 @@ export function useCatNutrition() {
     ageUnit: 'months',
     lifeStage: 'auto',
     weight: '',
+    bcs: 5,
     sex: 'female',
     breed: 'domestic_shorthair',
     breedOther: '',
@@ -167,13 +170,13 @@ export function useCatNutrition() {
   const BREED_WEIGHT_RANGES = useMemo(() => ({
     domestic_shorthair: { male: [3.5, 6.0], female: [3.0, 5.0] },
     domestic_longhair: { male: [3.5, 6.0], female: [3.0, 5.0] },
-    persian: { male: [4.0, 6.5], female: [3.0, 5.0] },
+    persian: { male: [4.0, 6.5], female: [3.5, 5.5] }, // Updated per Merck 2020
     british_shorthair: { male: [5.0, 8.0], female: [4.0, 7.0] },
     maine_coon: { male: [6.0, 11.0], female: [4.5, 8.0] },
     ragdoll: { male: [6.0, 9.0], female: [4.5, 7.5] },
     siamese: { male: [4.0, 6.0], female: [2.5, 4.5] },
     bengal: { male: [5.0, 7.0], female: [4.0, 6.0] },
-    sphynx: { male: [3.5, 6.0], female: [3.0, 5.0] },
+    sphynx: { male: [3.5, 6.0], female: [3.0, 5.0] }, // Note: Higher metabolism (+15%) applied in pickMERFactor
     scottish_fold: { male: [4.0, 6.5], female: [3.0, 5.0] },
     norwegian_forest: { male: [5.0, 9.0], female: [4.0, 7.0] },
     american_shorthair: { male: [4.5, 7.0], female: [3.5, 6.0] },
@@ -301,7 +304,7 @@ export function useCatNutrition() {
     return { ideal: Math.round(ideal * 100) / 100, note: `نطاق ${sex === 'male' ? 'ذكر' : 'أنثى'} ≈ ${minW}–${maxW} كجم`, range: [minW, maxW] }
   }, [BREED_WEIGHT_RANGES, DEFAULT_RANGE])
 
-  const pickMERFactor = useCallback(({ lifeStage, neuterStatus, activity, ageMonths, special, sex, weightGoal }: { lifeStage: string, neuterStatus: string, activity: string, ageMonths: number, special: SpecialCondition, sex: string, weightGoal: string }) => {
+  const pickMERFactor = useCallback(({ lifeStage, neuterStatus, activity, ageMonths, special, sex, weightGoal, bcs, breed }: { lifeStage: string, neuterStatus: string, activity: string, ageMonths: number, special: SpecialCondition, sex: string, weightGoal: string, bcs: number, breed: string }) => {
     let stage = lifeStage === 'auto' ? deriveLifeStage(ageMonths) : lifeStage
     let factor = 1.0, label = ""
     
@@ -336,19 +339,19 @@ export function useCatNutrition() {
     // Special conditions override
     if (special && special.type && special.type !== 'none') {
       if (special.type === 'pregnant' && sex === 'female') {
-        const map = { 1: 1.1, 2: 1.15, 3: 1.2, 4: 1.35, 5: 1.45, 6: 1.55, 7: 1.6, 8: 1.6, 9: 1.6 }
+        const map = { 1: 1.1, 2: 1.2, 3: 1.3, 4: 1.4, 5: 1.5, 6: 1.6, 7: 1.7, 8: 1.8, 9: 2.0 } // Updated per NRC 2006: gradual increase to 2.0x in late gestation
         const w = Math.max(1, Math.min(9, special.week || 8))
         factor = map[w as keyof typeof map]
-        label = `حامل – أسبوع ${w} = ${factor}×RER (تجاوز - NRC 2006)`
+        label = `حامل – أسبوع ${w} = ${factor}×RER (NRC 2006 - late gestation up to 2.0x)`
       }
       if (special.type === 'lactating' && sex === 'female') {
-        const baseByWeek = { 1: 2.0, 2: 2.3, 3: 2.8, 4: 2.8, 5: 2.4, 6: 2.0 }
+        const baseByWeek = { 1: 2.0, 2: 2.3, 3: 2.8, 4: 2.8, 5: 2.4, 6: 2.0 } // Peak at weeks 3-4 per NRC 2006
         const w = Math.max(1, Math.min(6, special.week || 3))
         const k = Math.max(1, Math.min(8, special.kittens || 4))
         let base = baseByWeek[w as keyof typeof baseByWeek] || 2.4
-        const adj = 0.1 * (k - 4)
-        factor = Math.max(2.0, Math.min(3.5, base + adj))
-        label = `مرضعة – أسبوع ${w}، صغار ${k} = ${factor.toFixed(2)}×RER (تجاوز - NRC 2006)`
+        const adj = 0.15 * (k - 4) // Increased adjustment for more kittens (NRC: up to 6x for large litters)
+        factor = Math.max(2.0, Math.min(4.0, base + adj))
+        label = `مرضعة – أسبوع ${w}، صغار ${k} = ${factor.toFixed(2)}×RER (NRC 2006 - up to 4.0x for large litters)`
       }
       // New special conditions
       const details = special.details || {};
@@ -384,6 +387,25 @@ export function useCatNutrition() {
       factor = 1.4 * activityFactor
       label = `تسمين = ${factor.toFixed(1)}×RER (${activityInfo.label})`
     }
+
+    // BCS adjustment (WSAVA 2011: adjust DER based on body condition)
+    let bcsAdjustment = '';
+    if (bcs < 5) {
+      factor *= 1.1;
+      bcsAdjustment = ` (BCS underweight +10% - WSAVA)`;
+    } else if (bcs > 5) {
+      factor *= 0.9;
+      bcsAdjustment = ` (BCS overweight -10% - WSAVA)`;
+    }
+    label += bcsAdjustment;
+
+    // Breed-specific adjustment (e.g., Sphynx higher metabolism - Merck 2020)
+    let breedAdjustment = '';
+    if (breed === 'sphynx') {
+      factor *= 1.15;
+      breedAdjustment = ` (Sphynx metabolism +15% - Merck)`;
+    }
+    label += breedAdjustment;
 
     return { factor, label, stageUsed: stage, activityInfo }
   }, [deriveLifeStage, ACTIVITY_LEVELS])
@@ -461,6 +483,15 @@ export function useCatNutrition() {
         newErrors.push("الرجاء تحديد تفاصيل الحالة الخاصة (مثل المرحلة).");
       }
     }
+
+    // Advanced warnings for weight goal and BCS
+    const bcsVal = parseInt(catData.bcs.toString()) || 5;
+    if (weightGoal === 'gain' && bcsVal > 7) {
+      newErrors.push("تحذير: BCS >7 (سمنة)، لا تسمين دون استشارة بيطري (AAFP 2014).");
+    }
+    if (weightGoal === 'loss' && bcsVal < 3) {
+      newErrors.push("تحذير: BCS <3 (نحافة شديدة)، لا تخسيس؛ ركز على التسمين الطبي.");
+    }
     if (catData.specialCond === 'diabetes' && ageMonths < 12) {
       newErrors.push("السكري نادر في القطط الصغيرة؛ تأكيد التشخيص.");
     }
@@ -517,14 +548,16 @@ export function useCatNutrition() {
     const usedWeight = weightGoal === 'maintain' ? weight : (idealInfo2.ideal > 0 ? idealInfo2.ideal : weight)
 
     // Calculate RER and DER with detailed activity factors
-    const { factor, label, stageUsed, activityInfo } = pickMERFactor({ 
-      lifeStage: lifeStageSel, 
-      neuterStatus: neuter, 
-      activity, 
-      ageMonths, 
-      special, 
-      sex, 
-      weightGoal 
+    const { factor, label, stageUsed, activityInfo } = pickMERFactor({
+      lifeStage: lifeStageSel,
+      neuterStatus: neuter,
+      activity,
+      ageMonths,
+      special,
+      sex,
+      weightGoal,
+      bcs: parseInt(catData.bcs.toString()) || 5,
+      breed: breedKey
     })
     const rer = calcRER(usedWeight)
     const der = rer * factor
@@ -637,6 +670,43 @@ export function useCatNutrition() {
     setCosts({ dryCost, wetCost, totalCost })
 
     // Set results
+    // Generate recommendations based on conditions
+    const recommendations: string[] = [];
+
+    // General based on life stage
+    if (stageUsed === 'kitten_young' || stageUsed === 'kitten_older') {
+      recommendations.push('نصيحة للقطط الصغيرة: استخدم طعام كيتن عالي البروتين (30%+) و DHA للنمو (NRC 2006).');
+    } else if (stageUsed === 'senior') {
+      recommendations.push('نصيحة لكبار السن: طعام منخفض السعرات مع مضادات الأكسدة وأوميغا-3 للمفاصل (WSAVA 2011).');
+    }
+
+    // BCS recommendations
+    if (bcsVal < 4) {
+      recommendations.push('BCS منخفض: زد البروتين إلى 35% وأضف زيوت صحية للتسمين التدريجي (AAFP).');
+    } else if (bcsVal > 6) {
+      recommendations.push('BCS مرتفع: ركز على ألياف عالية (5%+) وكارب منخفض للسيطرة على الوزن (AAFP 2014).');
+    }
+
+    // Special conditions nutrient advice
+    if (special.type === 'ckd') {
+      const stage = catData.specialDetails?.ckdStage || 2;
+      recommendations.push(`CKD المرحلة ${stage}: طعام منخفض الفوسفور (<0.5%) وبروتين عالي الجودة (IRIS 2023). ماء طازج دائماً.`);
+    } else if (special.type === 'diabetes') {
+      const controlled = catData.specialDetails?.diabetesControlled !== false;
+      recommendations.push(`سكري ${controlled ? 'مسيطر' : 'غير مسيطر'}: طعام منخفض الكارب (<10% سعرات)، بروتين عالي، أوميغا-3 (AAHA 2018).`);
+    } else if (special.type === 'cardiac') {
+      recommendations.push('أمراض قلب: قلل الملح (<0.3%)، أضف taurine وأوميغا-3 (ACVIM 2016).');
+    } else if (special.type === 'pregnant') {
+      recommendations.push('حامل: بروتين 30-40%، كالسيوم/فوسفور متوازن للنمو الجنيني (NRC 2006).');
+    } else if (special.type === 'lactating') {
+      recommendations.push('مرضعة: سعرات عالية، بروتين 35%+، طاقة من الدهون للإدرار (NRC 2006).');
+    }
+
+    // Activity-based
+    if (activity === 'high' || activity === 'very_high') {
+      recommendations.push('نشاط عالي: أضف L-carnitine للطاقة ومضادات الأكسدة (WSAVA).');
+    }
+
     setResults({
       rer: Math.round(rer),
       factor: factor,
@@ -656,7 +726,8 @@ export function useCatNutrition() {
         unitsUsed: unitsUsed,
         unitsForCost: unitsForCost,
         servingSize: finalServingSize
-      }
+      },
+      recommendations
     })
     setIsCalculating(false)
   }, [catData, foodData, weeklyPlan, boxBuilder, pricing, estimateIdealWeight, pickMERFactor, calcRER, roundToNearest5, deriveLifeStage, ACTIVITY_LEVELS, dayNames, BREED_WEIGHT_RANGES, DEFAULT_RANGE])
@@ -702,6 +773,7 @@ export function useCatNutrition() {
     pricing,
     setPricing,
     results,
+    recommendations: results?.recommendations || [],
     errors,
     costs,
     isCalculating,
