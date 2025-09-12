@@ -129,11 +129,11 @@ export function useCatNutrition() {
   })
 
   const [foodData, setFoodData] = useState<FoodData>({
-    dry100: '',
+    dry100: '380',
     wetMode: 'per100',
-    wet100: '',
-    wetKcalPerUnit: '',
-    wetUnitGrams: '',
+    wet100: '80',
+    wetKcalPerUnit: '70',
+    wetUnitGrams: '85',
     wetPackType: 'pouch',
   })
 
@@ -484,14 +484,6 @@ export function useCatNutrition() {
       }
     }
 
-    // Advanced warnings for weight goal and BCS
-    const bcsVal = parseInt(catData.bcs.toString()) || 5;
-    if (weightGoal === 'gain' && bcsVal > 7) {
-      newErrors.push("تحذير: BCS >7 (سمنة)، لا تسمين دون استشارة بيطري (AAFP 2014).");
-    }
-    if (weightGoal === 'loss' && bcsVal < 3) {
-      newErrors.push("تحذير: BCS <3 (نحافة شديدة)، لا تخسيس؛ ركز على التسمين الطبي.");
-    }
     if (catData.specialCond === 'diabetes' && ageMonths < 12) {
       newErrors.push("السكري نادر في القطط الصغيرة؛ تأكيد التشخيص.");
     }
@@ -517,6 +509,8 @@ export function useCatNutrition() {
     const activity = catData.activity
     const meals = parseInt(catData.meals.toString()) || 2
     const weightGoal = catData.weightGoal
+    
+    const bcs = parseInt(catData.bcs.toString()) || 5
 
     // Food densities
     const wetMode = foodData.wetMode
@@ -681,9 +675,9 @@ export function useCatNutrition() {
     }
 
     // BCS recommendations
-    if (bcsVal < 4) {
+    if (bcs < 4) {
       recommendations.push('BCS منخفض: زد البروتين إلى 35% وأضف زيوت صحية للتسمين التدريجي (AAFP).');
-    } else if (bcsVal > 6) {
+    } else if (bcs > 6) {
       recommendations.push('BCS مرتفع: ركز على ألياف عالية (5%+) وكارب منخفض للسيطرة على الوزن (AAFP 2014).');
     }
 
@@ -750,16 +744,14 @@ export function useCatNutrition() {
       clearTimeout(timeoutRef.current)
     }
     timeoutRef.current = setTimeout(() => {
-      if (results) {
-        calculateNutrition()
-      }
+      calculateNutrition()
     }, 500)
     return () => {
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current)
       }
     }
-  }, [catData, foodData, weeklyPlan, boxBuilder, pricing, calculateNutrition, results])
+  }, [catData, foodData, weeklyPlan, boxBuilder, pricing, calculateNutrition])
 
   return {
     catData,
