@@ -339,19 +339,6 @@ export default function CatNutritionCalculator() {
             </div>
 
             <div className="space-y-2">
-              <Label>حالة التعقيم</Label>
-              <Select value={catData.neuter} onValueChange={(value) => handleCatDataChange('neuter', value)}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="neutered">معقّمة/مخصي</SelectItem>
-                  <SelectItem value="intact">غير معقّمة/سليمة</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
               <Label>مستوى النشاط</Label>
               <Select value={catData.activity} onValueChange={(value) => handleCatDataChange('activity', value)}>
                 <SelectTrigger>
@@ -641,11 +628,11 @@ export default function CatNutritionCalculator() {
                 <TooltipProvider>
                   <Tooltip>
                     <TooltipTrigger asChild>
-                      <p className="text-xs text-gray-500">انخفاض خفيف بسبب قيود النشاط (ACVIM).</p>
+                      <p className="text-xs text-gray-500">لا توجد تقليل تلقائي للسعرات.</p>
                     </TooltipTrigger>
                     <TooltipContent>
-                      <p className="text-sm">أمراض القلب: تقليل الملح والطاقة</p>
-                      <p className="text-xs text-gray-500">مستقر: -10% DER, فشل: -20% DER (ACVIM 2019)</p>
+                      <p className="text-sm">أمراض القلب: تقليل الصوديوم + أوميغا-3 وتورين</p>
+                      <p className="text-xs text-gray-500">الطاقة تُعدّل حسب BCS وهدف الوزن؛ تجنب الهزال (ACVIM)</p>
                     </TooltipContent>
                   </Tooltip>
                 </TooltipProvider>
@@ -942,7 +929,7 @@ export default function CatNutritionCalculator() {
               <Button
                 type="button"
                 variant="outline"
-                onClick={autoDistributeWetDays}
+                onClick={() => autoDistributeWetDays(weeklyPlan.wetDaysCount)}
                 className="mt-2"
               >
                 توزيع تلقائي متوازن
