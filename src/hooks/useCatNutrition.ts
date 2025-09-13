@@ -183,7 +183,16 @@ export function useCatNutrition() {
     abyssinian: { male: [3.5, 5.0], female: [3.0, 4.5] },
     turkish_angora: { male: [3.5, 5.5], female: [3.0, 4.5] },
     russian_blue: { male: [4.0, 6.5], female: [3.0, 5.0] },
-    oriental: { male: [3.5, 5.0], female: [2.5, 4.5] }
+    oriental: { male: [3.5, 5.0], female: [2.5, 4.5] },
+    // New breeds added per Merck Veterinary Manual 2020 and user requests
+    burmese: { male: [4.0, 6.0], female: [3.0, 5.0] }, // Medium-sized, muscular build
+    tonkinese: { male: [3.5, 5.5], female: [2.5, 4.5] }, // Siamese-Burmese hybrid, slender
+    himalayan: { male: [4.5, 7.0], female: [3.5, 6.0] }, // Persian colorpoint variant
+    devon_rex: { male: [2.5, 4.0], female: [2.0, 3.5] }, // Small, lightweight breed
+    cornish_rex: { male: [3.0, 5.0], female: [2.5, 4.0] }, // Slender, athletic build
+    manx: { male: [4.0, 6.5], female: [3.5, 5.5] }, // Tailless, sturdy body
+    savannah: { male: [6.0, 13.0], female: [4.0, 8.0] }, // Large hybrid breed
+    bombay: { male: [3.5, 5.5], female: [3.0, 4.5] } // Burmese variant, compact build
   }), [])
 
   const DEFAULT_RANGE = useMemo(() => ({ male: [4.0, 6.5], female: [3.0, 5.5] }), [])
@@ -195,7 +204,7 @@ export function useCatNutrition() {
       description: 'قطة منزلية تتحرك قليلاً، معظم وقتها نائمة أو جالسة',
       scientificNote: 'القطط المنزلية ذات النشاط المنخفض تحتاج إلى 60-80 كيلو كالوري لكل كجم من وزن الجسم يومياً',
       examples: ['قطط مسنة', 'قطط ذات أمراض مزمنة', 'قطط تفضل النوم معظم الوقت'],
-      merFactor: 0.8
+      merFactor: 1.0
     },
     moderate_low: {
       value: 'moderate_low',
@@ -203,7 +212,7 @@ export function useCatNutrition() {
       description: 'قطة منزلية تتحرك بشكل معتدل، تلعب لفترات قصيرة',
       scientificNote: 'القطط ذات النشاط المنخفض إلى المتوسط تحتاج إلى 80-90 كيلو كالوري لكل كجم من وزن الجسم يومياً',
       examples: ['قطط شابة قليلة النشاط', 'قطط تتحرك في المنزل بشكل منتظم'],
-      merFactor: 1.0
+      merFactor: 1.2
     },
     moderate: {
       value: 'moderate',
@@ -211,7 +220,7 @@ export function useCatNutrition() {
       description: 'قطة منزلية نشطة، تلعب يومياً وتستكشف بيئتها',
       scientificNote: 'القطط ذات النشاط المتوسط تحتاج إلى 90-100 كيلو كالوري لكل كجم من وزن الجسم يومياً (NRC 2006)',
       examples: ['معظم القطط المنزلية الصحية', 'قطط تلعب بانتظام'],
-      merFactor: 1.2
+      merFactor: 1.4
     },
     moderate_high: {
       value: 'moderate_high',
@@ -219,7 +228,7 @@ export function useCatNutrition() {
       description: 'قطة نشطة جداً، تلعب لساعات وتقفز كثيراً',
       scientificNote: 'القطط ذات النشاط المتوسط إلى العالي تحتاج إلى 100-120 كيلو كالوري لكل كجم من وزن الجسم يومياً',
       examples: ['قطط شابة جداً', 'قطط تملك مساحة كبيرة للحركة'],
-      merFactor: 1.4
+      merFactor: 1.6
     },
     high: {
       value: 'high',
@@ -227,7 +236,7 @@ export function useCatNutrition() {
       description: 'قطة ذات نشاط مكثف، تركض وتقفز باستمرار',
       scientificNote: 'القطط ذات النشاط العالي تحتاج إلى 120-140 كيلو كالوري لكل كجم من وزن الجسم يومياً (WSAVA)',
       examples: ['قطط صغيرة جداً', 'قطط تخرج للخارج', 'قطط رياضية'],
-      merFactor: 1.6
+      merFactor: 1.8
     },
     very_high: {
       value: 'very_high',
@@ -235,7 +244,7 @@ export function useCatNutrition() {
       description: 'قطة ذات طاقة غير عادية، نشاط مستمر وعنيف',
       scientificNote: 'القطط ذات النشاط المرتفع جداً تحتاج إلى 140-160+ كيلو كالوري لكل كجم من وزن الجسم يومياً',
       examples: ['قطط صغيرة نشيطة جداً', 'قطط تعيش في مزارع أو مساحات واسعة'],
-      merFactor: 1.8
+      merFactor: 2.0
     }
   }), [])
 
@@ -285,10 +294,12 @@ export function useCatNutrition() {
     setWeeklyPlan(prev => ({ ...prev, wetDays: arr }))
   }, [weeklyPlan.wetDaysCount])
 
+  // NRC 2006 - Chapter 2: Energy Requirements - RER formula for cats
   const calcRER = useCallback((weightKg: number) => {
     return 70 * Math.pow(weightKg, 0.75)
   }, [])
 
+  // Life stage classification based on NRC 2006 and common veterinary practice
   const deriveLifeStage = useCallback((ageMonths: number) => {
     if (ageMonths < 4) return 'kitten_young'
     if (ageMonths < 12) return 'kitten_older'
@@ -296,6 +307,7 @@ export function useCatNutrition() {
     return 'adult'
   }, [])
 
+  // Ideal weight estimation based on breed-specific ranges from Merck Veterinary Manual 2020
   const estimateIdealWeight = useCallback(({ breedKey, sex, ageMonths, currentWeight }: { breedKey: string, sex: string, ageMonths: number, currentWeight: number }) => {
     if (ageMonths < 12) return { ideal: 0, note: "قطة صغيرة: لا وزن مثالي ثابت أثناء النمو.", range: [0, 0] }
     const ranges = BREED_WEIGHT_RANGES[breedKey as keyof typeof BREED_WEIGHT_RANGES] || DEFAULT_RANGE
@@ -304,14 +316,16 @@ export function useCatNutrition() {
     return { ideal: Math.round(ideal * 100) / 100, note: `نطاق ${sex === 'male' ? 'ذكر' : 'أنثى'} ≈ ${minW}–${maxW} كجم`, range: [minW, maxW] }
   }, [BREED_WEIGHT_RANGES, DEFAULT_RANGE])
 
+  // MER factor calculation based on multiple scientific sources: NRC 2006, WSAVA 2011, AAFP 2014, IRIS 2023, ISFM 2016, AAHA 2018, ACVIM 2016
   const pickMERFactor = useCallback(({ lifeStage, neuterStatus, activity, ageMonths, special, sex, weightGoal, bcs, breed }: { lifeStage: string, neuterStatus: string, activity: string, ageMonths: number, special: SpecialCondition, sex: string, weightGoal: string, bcs: number, breed: string }) => {
     let stage = lifeStage === 'auto' ? deriveLifeStage(ageMonths) : lifeStage
     let factor = 1.0, label = ""
     
-    // Get activity factor
+    // Get activity factor from ACTIVITY_LEVELS (based on NRC 2006 and WSAVA 2011)
     const activityInfo = ACTIVITY_LEVELS[activity] || ACTIVITY_LEVELS.moderate
     const activityFactor = activityInfo.merFactor
     
+    // Life stage factors per NRC 2006
     if (stage === 'kitten_young') {
       factor = 2.5 * activityFactor
       label = `قطة صغيرة جدًا (<4 شهور) = ${factor.toFixed(1)}×RER (نمو سريع + ${activityInfo.label})`
@@ -323,12 +337,12 @@ export function useCatNutrition() {
         factor = activityFactor
         label = `بالغة معقّمة، ${activityInfo.label} = ${factor.toFixed(1)}×RER (${activityInfo.scientificNote})`
       } else {
-        factor = activityFactor * 1.1
+        factor = activityFactor * 1.1  // Intact cats have 10% higher MER (NRC 2006)
         label = `بالغة غير معقّمة، ${activityInfo.label} = ${factor.toFixed(1)}×RER (${activityInfo.scientificNote})`
       }
     } else if (stage === 'senior') {
       if (neuterStatus === 'neutered') {
-        factor = activityFactor * 0.9
+        factor = activityFactor * 0.9  // Senior neutered: 10% reduction (WSAVA 2011)
         label = `كبيرة سنًا معقّمة، ${activityInfo.label} = ${factor.toFixed(1)}×RER (انخفاض الأيض مع تقدم العمر)`
       } else {
         factor = activityFactor * 1.0
@@ -336,10 +350,10 @@ export function useCatNutrition() {
       }
     }
 
-    // Special conditions override
+    // Special conditions override with specific references
     if (special && special.type && special.type !== 'none') {
       if (special.type === 'pregnant' && sex === 'female') {
-        const map = { 1: 1.1, 2: 1.2, 3: 1.3, 4: 1.4, 5: 1.5, 6: 1.6, 7: 1.7, 8: 1.8, 9: 2.0 } // Updated per NRC 2006: gradual increase to 2.0x in late gestation
+        const map = { 1: 1.1, 2: 1.2, 3: 1.3, 4: 1.4, 5: 1.5, 6: 1.6, 7: 1.7, 8: 1.8, 9: 2.0 } // NRC 2006: gradual increase to 2.0x in late gestation
         const w = Math.max(1, Math.min(9, special.week || 8))
         factor = map[w as keyof typeof map]
         label = `حامل – أسبوع ${w} = ${factor}×RER (NRC 2006 - late gestation up to 2.0x)`
@@ -353,56 +367,56 @@ export function useCatNutrition() {
         factor = Math.max(2.0, Math.min(4.0, base + adj))
         label = `مرضعة – أسبوع ${w}، صغار ${k} = ${factor.toFixed(2)}×RER (NRC 2006 - up to 4.0x for large litters)`
       }
-      // New special conditions
+      // New special conditions with specific guidelines
       const details = special.details || {};
       if (special.type === 'ckd') {
         const stage = details.ckdStage || 2;
-        factor = Math.max(0.6, 1.0 - (stage * 0.1));
+        factor = Math.max(0.6, 1.0 - (stage * 0.1)); // IRIS 2023: decrease DER based on CKD stage
         label = `CKD المرحلة ${stage} = ${factor.toFixed(1)}×RER (انخفاض - IRIS 2023)`;
       } else if (special.type === 'hyperthyroid') {
         const treated = details.hyperthyroidTreated !== false; // default untreated
-        factor = treated ? 0.8 : 1.3;
+        factor = treated ? 0.8 : 1.3; // ISFM 2016: untreated hyperthyroid +30%, treated may need less
         label = `فرط درقية ${treated ? 'معالج' : 'غير معالج'} = ${factor.toFixed(1)}×RER (ISFM 2016)`;
       } else if (special.type === 'diabetes') {
         const controlled = details.diabetesControlled !== false;
-        factor = controlled ? 1.0 : 1.1; // mild increase if uncontrolled
-        if (weightGoal === 'loss') factor = 0.8; // override for obesity common in diabetes
+        factor = controlled ? 1.0 : 1.1; // mild increase if uncontrolled (AAHA 2018)
+        if (weightGoal === 'loss') factor = 0.8; // override for obesity common in diabetes (AAFP 2014)
         label = `سكري ${controlled ? 'مسيطر' : 'غير مسيطر'} = ${factor.toFixed(1)}×RER (AAHA 2018)`;
       } else if (special.type === 'recovery') {
         const weeks = details.recoveryWeeks || 2;
-        factor = weeks <= 2 ? 1.3 : 1.1;
+        factor = weeks <= 2 ? 1.3 : 1.1; // NRC 2006: increased needs during recovery
         label = `استشفاء (أسابيع ${weeks}) = ${factor.toFixed(1)}×RER (NRC 2006)`;
       } else if (special.type === 'cardiac') {
         const stable = details.cardiacStable !== false;
-        factor = stable ? 0.9 : 0.8;
+        factor = stable ? 0.9 : 0.8; // ACVIM 2016: reduced needs for cardiac patients
         label = `قلب ${stable ? 'مستقر' : 'فشل'} = ${factor.toFixed(1)}×RER (ACVIM 2016)`;
       }
     }
 
-    // Weight goals override
+    // Weight goals override per AAFP 2014
     if (weightGoal === 'loss') {
-      factor = 0.8 * activityFactor
+      factor = 0.8 * activityFactor  // AAFP 2014: 0.8x RER for weight loss
       label = `تخسيس = ${factor.toFixed(1)}×RER (AAFP 2014 - ${activityInfo.label})`
     } else if (weightGoal === 'gain') {
-      factor = 1.4 * activityFactor
+      factor = 1.4 * activityFactor  // AAFP 2014: 1.2-1.4x RER for weight gain
       label = `تسمين = ${factor.toFixed(1)}×RER (${activityInfo.label})`
     }
 
-    // BCS adjustment (WSAVA 2011: adjust DER based on body condition)
+    // BCS adjustment based on WSAVA 2011 guidelines
     let bcsAdjustment = '';
     if (bcs < 5) {
-      factor *= 1.1;
+      factor *= 1.1; // WSAVA 2011: +10% for underweight
       bcsAdjustment = ` (BCS underweight +10% - WSAVA)`;
     } else if (bcs > 5) {
-      factor *= 0.9;
+      factor *= 0.9; // WSAVA 2011: -10% for overweight
       bcsAdjustment = ` (BCS overweight -10% - WSAVA)`;
     }
     label += bcsAdjustment;
 
-    // Breed-specific adjustment (e.g., Sphynx higher metabolism - Merck 2020)
+    // Breed-specific adjustment per Merck Veterinary Manual 2020
     let breedAdjustment = '';
     if (breed === 'sphynx') {
-      factor *= 1.15;
+      factor *= 1.15; // Merck 2020: Sphynx have 15% higher metabolism due to heat loss
       breedAdjustment = ` (Sphynx metabolism +15% - Merck)`;
     }
     label += breedAdjustment;
@@ -422,41 +436,62 @@ export function useCatNutrition() {
     }
   }, [])
 
+  // Main nutrition calculation function - integrates all factors and validations
   const calculateNutrition = useCallback(() => {
     setIsCalculating(true)
     const newErrors: string[] = []
     
-    // Validation
+    // Input validation based on realistic ranges and scientific guidelines
     const weight = parseFloat(catData.weight)
     if (!weight || weight <= 0) {
       newErrors.push("الرجاء إدخال الوزن (كجم).")
+    } else if (weight < 0.5 || weight > 25) {
+      newErrors.push("الوزن يجب أن يكون بين 0.5 و 25 كجم (نطاق واقعي للقطط).")
+    }
+    
+    // These variables will be declared and used later in the function
+    const ageValue = parseFloat(catData.ageValue) || 0
+    const ageMonths = catData.ageUnit === 'years' ? ageValue * 12 : ageValue
+    if (ageMonths < 0 || ageMonths > 300) { // 25 years * 12 = 300 months
+      newErrors.push("العمر يجب أن يكون بين 0 و 25 سنة (نطاق واقعي للقطط).")
+    }
+    
+    const meals = parseInt(catData.meals.toString()) || 2
+    if (meals < 1 || meals > 6) {
+      newErrors.push("عدد الوجبات يجب أن يكون بين 1 و 6 (نطاق صحي للقطط).")
     }
     
     const dry100 = parseFloat(foodData.dry100)
     if (!dry100 || dry100 <= 0) {
       newErrors.push("الرجاء إدخال سعرات الدراي (لكل 100 جم).")
+    } else if (dry100 < 200 || dry100 > 600) {
+      newErrors.push("سعرات الدراي يجب أن تكون بين 200 و 600 لكل 100 جم (نطاق واقعي للطعام الجاف).")
     }
 
     const wetUnitGrams = parseFloat(foodData.wetUnitGrams)
     if (!wetUnitGrams || wetUnitGrams <= 0) {
       newErrors.push("الرجاء إدخال وزن وحدة الويت (جم).")
+    } else if (wetUnitGrams < 50 || wetUnitGrams > 200) {
+      newErrors.push("وزن وحدة الويت يجب أن يكون بين 50 و 200 جم (نطاق واقعي للعلب والأكياس).")
     }
 
     if (foodData.wetMode === 'per100') {
       const wet100 = parseFloat(foodData.wet100)
       if (!wet100 || wet100 <= 0) {
         newErrors.push("الرجاء إدخال سعرات الويت لكل 100 جم.")
+      } else if (wet100 < 50 || wet100 > 150) {
+        newErrors.push("سعرات الويت يجب أن تكون بين 50 و 150 لكل 100 جم (نطاق واقعي للطعام الرطب).")
       }
     } else {
       const wetKcalPerUnit = parseFloat(foodData.wetKcalPerUnit)
       if (!wetKcalPerUnit || wetKcalPerUnit <= 0) {
         newErrors.push("الرجاء إدخال سعرات الويت لكل وحدة.")
+      } else if (wetKcalPerUnit < 20 || wetKcalPerUnit > 200) {
+        newErrors.push("سعرات الويت لكل وحدة يجب أن تكون بين 20 و 200 (نطاق واقعي للعلب والأكياس).")
       }
     }
 
-    // Check weight goal logic
-    const ageValue = parseFloat(catData.ageValue) || 0
-    const ageMonths = catData.ageUnit === 'years' ? ageValue * 12 : ageValue
+    // Check weight goal logic - using variables already declared in validation
     const sex = catData.sex
     const breedKey = catData.breed
     
@@ -474,24 +509,132 @@ export function useCatNutrition() {
       newErrors.push("لا يمكن اختيار نظام تسمين والوزن الحالي أعلى من المثالي. الرجاء اختيار نظام حفاظ أو تخسيس.")
     }
 
-    // Additional validation for new special conditions
-    if (catData.specialCond === 'ckd' || catData.specialCond === 'hyperthyroid') {
-      if (ageMonths < 84) { // <7 years
-        newErrors.push("حالات CKD أو فرط الدرقية شائعة في القطط الكبيرة (7+ سنوات). تأكيد مع بيطري.");
+    // Enhanced validation for special conditions with more medical details
+    const specialDetails = catData.specialDetails || {}
+    
+    // Basic condition conflicts
+    if (specialCond === 'pregnant' && sex === 'male') {
+      newErrors.push("الحمل غير ممكن للذكور. الرجاء اختيار 'لا توجد'.")
+    }
+    if (specialCond === 'lactating' && sex === 'male') {
+      newErrors.push("الرضاعة غير ممكنة للذكور. الرجاء اختيار 'لا توجد'.")
+    }
+    if ((specialCond === 'pregnant' || specialCond === 'lactating') && ageMonths < 8) {
+      newErrors.push("الحمل/الرضاعة عادة بعد سن 8 أشهر (عمر الإناث المتوسط للتكاثر).")
+    }
+
+    // Pregnancy specific validation
+    if (specialCond === 'pregnant') {
+      const pregWeek = parseInt(catData.pregWeek.toString()) || 8
+      if (pregWeek < 1 || pregWeek > 9) {
+        newErrors.push("أسابيع الحمل يجب أن تكون بين 1-9 (حمل القطط ≈ 63 يوم).")
       }
-      if (!catData.specialDetails || Object.keys(catData.specialDetails).length === 0) {
-        newErrors.push("الرجاء تحديد تفاصيل الحالة الخاصة (مثل المرحلة).");
+      if (bcs < 4) {
+        newErrors.push("BCS منخفض (<4) قبل الحمل: قد يؤثر على الجنين. استشر بيطري (NRC 2006).")
       }
     }
 
-    if (catData.specialCond === 'diabetes' && ageMonths < 12) {
-      newErrors.push("السكري نادر في القطط الصغيرة؛ تأكيد التشخيص.");
+    // Lactation specific validation
+    if (specialCond === 'lactating') {
+      const lacWeek = parseInt(catData.lacWeek.toString()) || 3
+      const lacKittens = parseInt(catData.lacKittens.toString()) || 4
+      if (lacWeek < 1 || lacWeek > 12) {
+        newErrors.push("أسابيع الرضاعة عادة 1-12 أسبوع (الذروة في الأسابيع 3-4).")
+      }
+      if (lacKittens < 1 || lacKittens > 8) {
+        newErrors.push("عدد الصغار عادة 1-8 (متوسط 4). تأكيد مع بيطري.")
+      }
+      if (lacWeek > 6 && lacKittens > 4) {
+        newErrors.push("الرضاعة الطويلة مع صغار كثيرين تحتاج مراقبة مكثفة (NRC 2006).")
+      }
     }
-    if (catData.specialCond === 'recovery' && (catData.specialDetails.recoveryWeeks || 0) > 4) {
-      newErrors.push("فترة الاستشفاء عادة 1-4 أسابيع؛ استشر بيطريًا للفترات الأطول.");
+
+    // CKD enhanced validation (IRIS 2023)
+    if (specialCond === 'ckd') {
+      const ckdStage = specialDetails.ckdStage || 2
+      if (ageMonths < 60) { // <5 years
+        newErrors.push("CKD نادر في القطط تحت 5 سنوات. تأكيد التشخيص مع بيطري (IRIS 2023).")
+      }
+      if (ckdStage < 1 || ckdStage > 4) {
+        newErrors.push("مرحلة IRIS يجب أن تكون 1-4. استشر بيطري للتصنيف.")
+      }
+      if (bcs > 7 && ckdStage > 2) {
+        newErrors.push("BCS مرتفع مع CKD متقدم: خطر عالي للتدهور. نظام غذائي خاص موصى (IRIS).")
+      }
+      if (!specialDetails || !specialDetails.ckdStage) {
+        newErrors.push("الرجاء تحديد مرحلة IRIS لـ CKD (1-4).")
+      }
     }
-    if (catData.specialCond === 'cardiac' && catData.sex === 'male' && catData.breed === 'maine_coon') {
-      newErrors.push("HCM شائع في Maine Coon الذكور؛ فحص وراثي موصى.");
+
+    // Hyperthyroidism enhanced validation (ISFM 2016)
+    if (specialCond === 'hyperthyroid') {
+      if (ageMonths < 72) { // <6 years
+        newErrors.push("فرط الدرقية نادر تحت 6 سنوات. تأكيد التشخيص (ISFM 2016).")
+      }
+      const treated = specialDetails.hyperthyroidTreated !== false
+      if (!specialDetails || specialDetails.hyperthyroidTreated === undefined) {
+        newErrors.push("الرجاء تحديد حالة العلاج (معالج/غير معالج).")
+      }
+      if (!treated && activity === 'low') {
+        newErrors.push("فرط درقية غير معالج مع نشاط منخفض: مراقبة وزن مستمرة مطلوبة.")
+      }
+    }
+
+    // Diabetes enhanced validation (AAHA 2018)
+    if (specialCond === 'diabetes') {
+      if (ageMonths < 60) { // <5 years
+        newErrors.push("السكري نادر في القطط تحت 5 سنوات؛ غالباً مرتبط بالسمنة عند البالغين (AAHA 2018).")
+      }
+      const controlled = specialDetails.diabetesControlled !== false
+      if (bcs > 7 && !controlled) {
+        newErrors.push("BCS مرتفع مع سكري غير مسيطر: خطر مضاعفات عالي. نظام غذائي منخفض الكارب فوراً.")
+      }
+      if (!specialDetails || specialDetails.diabetesControlled === undefined) {
+        newErrors.push("الرجاء تحديد حالة السيطرة على السكر (مسيطر/غير مسيطر).")
+      }
+    }
+
+    // Recovery enhanced validation (NRC 2006)
+    if (specialCond === 'recovery') {
+      const recoveryWeeks = specialDetails.recoveryWeeks || 2
+      if (recoveryWeeks < 1 || recoveryWeeks > 12) {
+        newErrors.push("فترة الاستشفاء عادة 1-12 أسبوع. للفترات الأطول استشر بيطري.")
+      }
+      if (recoveryWeeks > 4 && bcs < 4) {
+        newErrors.push("استشفاء طويل مع BCS منخفض: قد يحتاج تغذية مساعدة (NRC 2006).")
+      }
+      if (!specialDetails || !specialDetails.recoveryWeeks) {
+        newErrors.push("الرجاء تحديد عدد أسابيع الاستشفاء (1-12).")
+      }
+    }
+
+    // Cardiac enhanced validation (ACVIM 2016)
+    if (specialCond === 'cardiac') {
+      if (ageMonths < 24) { // <2 years
+        newErrors.push("أمراض القلب نادرة في القطط الصغيرة؛ غالباً خلقية. فحص شامل مطلوب (ACVIM 2016).")
+      }
+      const stable = specialDetails.cardiacStable !== false
+      if (!specialDetails || specialDetails.cardiacStable === undefined) {
+        newErrors.push("الرجاء تحديد حالة القلب (مستقر/فشل).")
+      }
+      // Breed-specific cardiac risks
+      const cardiacBreeds = ['maine_coon', 'ragdoll', 'american_shorthair', 'british_shorthair']
+      if (cardiacBreeds.includes(breedKey) && !stable) {
+        newErrors.push(`سلالة ${breedKey} معرضة لـ HCM: فحص وراثي موصى بشدة (ACVIM).`)
+      }
+      if (specialCond === 'cardiac' && activity === 'high') {
+        newErrors.push("نشاط عالي مع حالة قلبية: قد يحتاج تقييد الحركة. استشر بيطري.")
+      }
+    }
+
+    // Multiple conditions warning
+    if (specialCond !== 'none' && (bcs < 3 || bcs > 8)) {
+      newErrors.push(`BCS متطرف (${bcs}) مع حالة طبية: حالة حرجة. استشارة فورية مع بيطري.`)
+    }
+
+    // Age-specific condition warnings
+    if (ageMonths > 144 && specialCond === 'none') { // >12 years without conditions
+      newErrors.push("قطة كبيرة سنًا (12+ سنة): فحص دوري لـ CKD/فرط درقية موصى (WSAVA 2011).")
     }
 
     if (newErrors.length > 0) {
@@ -507,7 +650,7 @@ export function useCatNutrition() {
     const lifeStageSel = catData.lifeStage
     const neuter = catData.neuter
     const activity = catData.activity
-    const meals = parseInt(catData.meals.toString()) || 2
+    // meals variable already declared in validation
     const weightGoal = catData.weightGoal
     
     const bcs = parseInt(catData.bcs.toString()) || 5

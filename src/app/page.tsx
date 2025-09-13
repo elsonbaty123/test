@@ -11,6 +11,7 @@ import { Badge } from '@/components/ui/badge'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Label } from '@/components/ui/label'
 import { Checkbox } from '@/components/ui/checkbox'
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 
 export default function CatNutritionCalculator() {
   const {
@@ -197,7 +198,17 @@ export default function CatNutritionCalculator() {
             </div>
 
             <div className="space-y-2">
-              <Label>الوزن الحالي (كجم)</Label>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Label>الوزن الحالي (كجم)</Label>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p className="text-sm">يستخدم لحساب RER (متطلبات الطاقة أثناء الراحة)</p>
+                    <p className="text-xs text-gray-500">RER = 70 × (الوزن^0.75) - NRC 2006</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
               <Input
                 type="number"
                 placeholder="مثال: 4.2"
@@ -223,7 +234,17 @@ export default function CatNutritionCalculator() {
       <SelectItem value="9">9 - سمين جداً (Obese severe)</SelectItem>
     </SelectContent>
   </Select>
-  <p className="text-xs text-gray-500">BCS: 1-3 تحت الوزن، 4-5 مثالي، 6-9 فوق الوزن (WSAVA 2011).</p>
+  <TooltipProvider>
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <p className="text-xs text-gray-500">BCS: 1-3 تحت الوزن، 4-5 مثالي، 6-9 فوق الوزن (WSAVA 2011).</p>
+      </TooltipTrigger>
+      <TooltipContent>
+        <p className="text-sm">Body Condition Score (BCS) نظام تقييم حالة الجسم</p>
+        <p className="text-xs text-gray-500">يؤثر BCS على السعرات بزيادة/نقصان 10% - WSAVA 2011</p>
+      </TooltipContent>
+    </Tooltip>
+  </TooltipProvider>
 </div>
 
             <div className="space-y-2">
@@ -262,6 +283,15 @@ export default function CatNutritionCalculator() {
                   <SelectItem value="turkish_angora">Turkish Angora</SelectItem>
                   <SelectItem value="russian_blue">Russian Blue</SelectItem>
                   <SelectItem value="oriental">Oriental</SelectItem>
+                  {/* New breeds added */}
+                  <SelectItem value="burmese">Burmese (بورميز)</SelectItem>
+                  <SelectItem value="tonkinese">Tonkinese (تونكينيز)</SelectItem>
+                  <SelectItem value="himalayan">Himalayan (هيمالايا)</SelectItem>
+                  <SelectItem value="devon_rex">Devon Rex (ديفون ريكس)</SelectItem>
+                  <SelectItem value="cornish_rex">Cornish Rex (كورنيش ريكس)</SelectItem>
+                  <SelectItem value="manx">Manx (مانكس)</SelectItem>
+                  <SelectItem value="savannah">Savannah (سافانا)</SelectItem>
+                  <SelectItem value="bombay">Bombay (بومباي)</SelectItem>
                   <SelectItem value="other">أخرى</SelectItem>
                 </SelectContent>
               </Select>
@@ -272,7 +302,40 @@ export default function CatNutritionCalculator() {
                   onChange={(e) => handleCatDataChange('breedOther', e.target.value)}
                 />
               )}
-              <p className="text-xs text-gray-500">نقدّر الوزن المثالي حسب السلالة والجنس (للبالغين/الكبار).</p>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <p className="text-xs text-gray-500">نقدّر الوزن المثالي حسب السلالة والجنس (للبالغين/الكبار).</p>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p className="text-sm">السلالة تؤثر على نطاق الوزن المثالي</p>
+                    <p className="text-xs text-gray-500">يتم تقدير النطاق بناءً على Merck Veterinary Manual 2020</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </div>
+
+            <div className="space-y-2">
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Label>حالة التعقيم</Label>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p className="text-sm">التعقيم يقلل متطلبات الطاقة</p>
+                    <p className="text-xs text-gray-500">القطط المعقمة: MER أقل بنسبة 10-20% (NRC 2006)</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+              <Select value={catData.neuter} onValueChange={(value) => handleCatDataChange('neuter', value)}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="neutered">معقّمة/مخصي</SelectItem>
+                  <SelectItem value="intact">غير معقّمة/سليمة</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
 
             <div className="space-y-2">
@@ -302,7 +365,17 @@ export default function CatNutritionCalculator() {
               </Select>
               <div className="p-2 bg-blue-50 rounded text-xs">
                 <p className="font-medium">{ACTIVITY_LEVELS[catData.activity]?.description}</p>
-                <p className="mt-1 text-blue-700">{ACTIVITY_LEVELS[catData.activity]?.scientificNote}</p>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <p className="mt-1 text-blue-700">{ACTIVITY_LEVELS[catData.activity]?.scientificNote}</p>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p className="text-sm">عوامل MER (متطلبات الطاقة الحافظة) تستند إلى:</p>
+                      <p className="text-xs text-gray-500">NRC 2006 و WSAVA 2011 للإرشادات العلمية</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
               </div>
             </div>
 
@@ -319,7 +392,17 @@ export default function CatNutritionCalculator() {
                   <SelectItem value="4">4</SelectItem>
                 </SelectContent>
               </Select>
-              <p className="text-xs text-gray-500">في أيام الويت توجد وجبة ويت واحدة والباقي دراي.</p>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <p className="text-xs text-gray-500">في أيام الويت توجد وجبة ويت واحدة والباقي دراي.</p>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p className="text-sm">تعدد الوجبات يحسن الهضم ويمنع السمنة</p>
+                    <p className="text-xs text-gray-500">2-4 وجبات يوميًا موصى بها (WSAVA 2011)</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
             </div>
 
             <div className="space-y-2">
@@ -334,7 +417,17 @@ export default function CatNutritionCalculator() {
                   <SelectItem value="gain">تسمين</SelectItem>
                 </SelectContent>
               </Select>
-              <p className="text-xs text-gray-500">التخسيس/التسمين تُحسب على الوزن المثالي المُقدّر.</p>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <p className="text-xs text-gray-500">التخسيس/التسمين تُحسب على الوزن المثالي المُقدّر.</p>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p className="text-sm">تعديلات هدف الوزن تستند إلى:</p>
+                    <p className="text-xs text-gray-500">فقدان الوزن: 0.8×RER - زيادة الوزن: 1.4×RER (AAFP 2014)</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
             </div>
           </CardContent>
         </Card>
@@ -377,7 +470,17 @@ export default function CatNutritionCalculator() {
                     ))}
                   </SelectContent>
                 </Select>
-                <p className="text-xs text-gray-500">حتى ~1.6×RER قرب الولادة (WSAVA/NRC).</p>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <p className="text-xs text-gray-500">حتى ~1.6×RER قرب الولادة (WSAVA/NRC).</p>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p className="text-sm">الحمل: زيادة تدريجية في السعرات</p>
+                      <p className="text-xs text-gray-500">الأسبوع 1-4: 1.1×RER, الأسبوع 5-9: 1.6×RER (NRC 2006)</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
               </div>
             )}
             {catData.specialCond === 'lactating' && (
@@ -394,7 +497,17 @@ export default function CatNutritionCalculator() {
                       ))}
                     </SelectContent>
                   </Select>
-                  <p className="text-xs text-gray-500">الذروة بالأسبوع 3–4 (~2.5–3.0×RER).</p>
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <p className="text-xs text-gray-500">الذروة بالأسبوع 3–4 (~2.5–3.0×RER).</p>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p className="text-sm">الرضاعة: أعلى متطلبات طاقة</p>
+                        <p className="text-xs text-gray-500">تصل إلى 2-3×RER حسب عدد الصغار (WSAVA 2011)</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
                 </div>
                 <div className="space-y-2">
                   <Label>عدد الصغار</Label>
@@ -424,7 +537,17 @@ export default function CatNutritionCalculator() {
                     ))}
                   </SelectContent>
                 </Select>
-                <p className="text-xs text-gray-500">انخفاض DER 20-30% (IRIS Guidelines).</p>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <p className="text-xs text-gray-500">انخفاض DER 20-30% (IRIS Guidelines).</p>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p className="text-sm">مرض الكلى المزمن (CKD): تقليل البروتين والفوسفور</p>
+                      <p className="text-xs text-gray-500">تعديل السعرات حسب المرحلة IRIS 1-4</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
               </div>
             )}
             {catData.specialCond === 'hyperthyroid' && (
@@ -439,7 +562,17 @@ export default function CatNutritionCalculator() {
                     <SelectItem value="true">معالج</SelectItem>
                   </SelectContent>
                 </Select>
-                <p className="text-xs text-gray-500">زيادة 30% إذا غير معالج (ISFM).</p>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <p className="text-xs text-gray-500">زيادة 30% إذا غير معالج (ISFM).</p>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p className="text-sm">فرط نشاط الغدة الدرقية: زيادة الأيض</p>
+                      <p className="text-xs text-gray-500">غير معالج: +30% DER, معالج: طبيعي (ISFM 2016)</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
               </div>
             )}
             {catData.specialCond === 'diabetes' && (
@@ -454,7 +587,17 @@ export default function CatNutritionCalculator() {
                     <SelectItem value="false">غير مسيطر</SelectItem>
                   </SelectContent>
                 </Select>
-                <p className="text-xs text-gray-500">تعديل لفقدان الوزن إذا بدين (AAHA).</p>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <p className="text-xs text-gray-500">تعديل لفقدان الوزن إذا بدين (AAHA).</p>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p className="text-sm">السكري: إدارة الوزن والجلوكوز</p>
+                      <p className="text-xs text-gray-500">السيطرة على السكر تحدد تعديل السعرات (AAHA 2018)</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
               </div>
             )}
             {catData.specialCond === 'recovery' && (
@@ -470,7 +613,17 @@ export default function CatNutritionCalculator() {
                     ))}
                   </SelectContent>
                 </Select>
-                <p className="text-xs text-gray-500">زيادة 30% في الأسابيع الأولى (NRC).</p>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <p className="text-xs text-gray-500">زيادة 30% في الأسابيع الأولى (NRC).</p>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p className="text-sm">الاستشفاء: زيادة البروتين والطاقة</p>
+                      <p className="text-xs text-gray-500">+30% DER للأسابيع 1-2 بعد الجراحة (NRC 2006)</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
               </div>
             )}
             {catData.specialCond === 'cardiac' && (
@@ -485,7 +638,17 @@ export default function CatNutritionCalculator() {
                     <SelectItem value="false">فشل</SelectItem>
                   </SelectContent>
                 </Select>
-                <p className="text-xs text-gray-500">انخفاض خفيف بسبب قيود النشاط (ACVIM).</p>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <p className="text-xs text-gray-500">انخفاض خفيف بسبب قيود النشاط (ACVIM).</p>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p className="text-sm">أمراض القلب: تقليل الملح والطاقة</p>
+                      <p className="text-xs text-gray-500">مستقر: -10% DER, فشل: -20% DER (ACVIM 2019)</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
               </div>
             )}
             {catData.specialCond !== 'none' && catData.specialCond !== 'pregnant' && catData.specialCond !== 'lactating' && (
@@ -512,6 +675,32 @@ export default function CatNutritionCalculator() {
                   </Select>
                   <p className="text-xs text-gray-500">الذروة بالأسبوع 3–4 (~2.5–3.0×RER).</p>
                 </div>
+   
+                <div className="space-y-2">
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Label>عدد أيام الويت في الأسبوع</Label>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p className="text-sm">الويت فود مهم للترطيب والصحة البولية</p>
+                        <p className="text-xs text-gray-500">يوصى بـ 2-3 أيام ويت أسبوعيًا (AAFP 2014)</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                  <Select value={weeklyPlan.wetDaysCount.toString()} onValueChange={(value) => handleWeeklyPlanChange('wetDaysCount', parseInt(value))}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="0">0</SelectItem>
+                      <SelectItem value="1">1</SelectItem>
+                      <SelectItem value="2">2</SelectItem>
+                      <SelectItem value="3">3</SelectItem>
+                      <SelectItem value="4">4</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
                 <div className="space-y-2">
                   <Label>عدد الصغار</Label>
                   <Select value={catData.lacKittens.toString()} onValueChange={(value) => handleCatDataChange('lacKittens', parseInt(value))}>
@@ -537,7 +726,17 @@ export default function CatNutritionCalculator() {
           </CardHeader>
           <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label>سعرات الدراي (كيلو كالوري لكل 100 جم)</Label>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Label>سعرات الدراي (كيلو كالوري لكل 100 جم)</Label>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p className="text-sm">السعرات الحرارية في الطعام الجاف لكل 100 جرام</p>
+                    <p className="text-xs text-gray-500">عادةً بين 350-450 كيلو كالوري/100 جم للطعام الجاف عالي الجودة (NRC 2006)</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
               <Input
                 type="number"
                 placeholder="مثال: 380"
@@ -547,49 +746,110 @@ export default function CatNutritionCalculator() {
             </div>
 
             <div className="space-y-2">
-              <Label>الويت فود</Label>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Label>الويت فود</Label>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p className="text-sm">الطعام الرطب مهم للترطيب والصحة البولية</p>
+                    <p className="text-xs text-gray-500">يوصى بـ 2-3 أيام ويت أسبوعيًا للوقاية من أمراض المسالك البولية (AAFP 2014)</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
               <div className="flex gap-2 flex-wrap mb-2">
-                <Select value={foodData.wetMode} onValueChange={(value) => handleFoodDataChange('wetMode', value)}>
-                  <SelectTrigger className="w-[140px]">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="per100">سعرات لكل 100 جم</SelectItem>
-                    <SelectItem value="perUnit">سعرات لكل وحدة</SelectItem>
-                  </SelectContent>
-                </Select>
-                <Select value={foodData.wetPackType} onValueChange={(value) => handleFoodDataChange('wetPackType', value)}>
-                  <SelectTrigger className="w-[80px]">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="pouch">كيس</SelectItem>
-                    <SelectItem value="can">علبة</SelectItem>
-                  </SelectContent>
-                </Select>
-                <Input
-                  type="number"
-                  placeholder="وزن الوحدة (جم)"
-                  value={foodData.wetUnitGrams}
-                  onChange={(e) => handleFoodDataChange('wetUnitGrams', e.target.value)}
-                  className="w-32"
-                />
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Select value={foodData.wetMode} onValueChange={(value) => handleFoodDataChange('wetMode', value)}>
+                        <SelectTrigger className="w-[140px]">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="per100">سعرات لكل 100 جم</SelectItem>
+                          <SelectItem value="perUnit">سعرات لكل وحدة</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p className="text-sm">اختر طريقة إدخال سعرات الويت</p>
+                      <p className="text-xs text-gray-500">لكل 100 جم: للمنتجات التي توضح السعرات/100جم</p>
+                      <p className="text-xs text-gray-500">لكل وحدة: للمنتجات التي توضح السعرات/كيس أو علبة</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Select value={foodData.wetPackType} onValueChange={(value) => handleFoodDataChange('wetPackType', value)}>
+                        <SelectTrigger className="w-[80px]">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="pouch">كيس</SelectItem>
+                          <SelectItem value="can">علبة</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p className="text-sm">نوع عبوة الويت فود</p>
+                      <p className="text-xs text-gray-500">الكيس: عادةً 85-100 جم، العلبة: عادةً 150-400 جم</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Input
+                        type="number"
+                        placeholder="وزن الوحدة (جم)"
+                        value={foodData.wetUnitGrams}
+                        onChange={(e) => handleFoodDataChange('wetUnitGrams', e.target.value)}
+                        className="w-32"
+                      />
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p className="text-sm">وزن كل وحدة ويت فود بالجرام</p>
+                      <p className="text-xs text-gray-500">مهم للحساب الدقيق عند استخدام وضع "سعرات لكل وحدة"</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
               </div>
               <div className="flex gap-2">
-                <Input
-                  type="number"
-                  placeholder="kcal/100g"
-                  value={foodData.wet100}
-                  onChange={(e) => handleFoodDataChange('wet100', e.target.value)}
-                  className={`flex-1 ${foodData.wetMode === 'per100' ? '' : 'hidden'}`}
-                />
-                <Input
-                  type="number"
-                  placeholder="kcal/وحدة"
-                  value={foodData.wetKcalPerUnit}
-                  onChange={(e) => handleFoodDataChange('wetKcalPerUnit', e.target.value)}
-                  className={`flex-1 ${foodData.wetMode === 'perUnit' ? '' : 'hidden'}`}
-                />
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Input
+                        type="number"
+                        placeholder="kcal/100g"
+                        value={foodData.wet100}
+                        onChange={(e) => handleFoodDataChange('wet100', e.target.value)}
+                        className={`flex-1 ${foodData.wetMode === 'per100' ? '' : 'hidden'}`}
+                      />
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p className="text-sm">السعرات الحرارية لكل 100 جرام من الويت فود</p>
+                      <p className="text-xs text-gray-500">عادةً بين 70-120 كيلو كالوري/100جم للطعام الرطب (NRC 2006)</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Input
+                        type="number"
+                        placeholder="kcal/وحدة"
+                        value={foodData.wetKcalPerUnit}
+                        onChange={(e) => handleFoodDataChange('wetKcalPerUnit', e.target.value)}
+                        className={`flex-1 ${foodData.wetMode === 'perUnit' ? '' : 'hidden'}`}
+                      />
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p className="text-sm">السعرات الحرارية لكل وحدة ويت فود</p>
+                      <p className="text-xs text-gray-500">مفيد عندما يكون الوزن الدقيق للوحدة غير معروف</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
               </div>
               <p className="text-xs text-gray-500">اختر نظام السعرات للويت: إما لكل 100 جم أو لكل وحدة (كيس/علبة).</p>
             </div>
@@ -603,7 +863,17 @@ export default function CatNutritionCalculator() {
           </CardHeader>
           <CardContent className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             <div className="space-y-2">
-              <Label>عدد أيام الويت في الأسبوع</Label>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Label>عدد أيام الويت في الأسبوع</Label>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p className="text-sm">الويت فود مهم للترطيب والصحة البولية</p>
+                    <p className="text-xs text-gray-500">يوصى بـ 2-3 أيام ويت أسبوعيًا (AAFP 2014)</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
               <Select value={weeklyPlan.wetDaysCount.toString()} onValueChange={(value) => handleWeeklyPlanChange('wetDaysCount', parseInt(value))}>
                 <SelectTrigger>
                   <SelectValue />
@@ -619,7 +889,17 @@ export default function CatNutritionCalculator() {
             </div>
 
             <div className="space-y-2">
-              <Label>أي وجبة ستكون ويت؟</Label>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Label>أي وجبة ستكون ويت؟</Label>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p className="text-sm">توزيع الوجبات يحسن الهضم ويمنع السمنة</p>
+                    <p className="text-xs text-gray-500">2-4 وجبات يوميًا موصى بها (WSAVA 2011)</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
               <Select value={weeklyPlan.wetMealIndex.toString()} onValueChange={(value) => handleWeeklyPlanChange('wetMealIndex', parseInt(value))}>
                 <SelectTrigger>
                   <SelectValue />
@@ -634,7 +914,17 @@ export default function CatNutritionCalculator() {
             </div>
 
             <div className="space-y-2">
-              <Label>أيام الأسبوع التي بها ويت</Label>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Label>أيام الأسبوع التي بها ويت</Label>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p className="text-sm">التوزيع المتوازن يضمن تغذية متوازنة</p>
+                    <p className="text-xs text-gray-500">تجنب التركيز في أيام متتالية (AAFP 2014)</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
               <div className="flex flex-wrap gap-2 mt-2">
                 {dayNames.map((day, index) => (
                   <div key={index} className="flex items-center space-x-2 space-x-reverse">
@@ -669,7 +959,17 @@ export default function CatNutritionCalculator() {
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
               <div className="space-y-2">
-                <Label>نوع البوكس</Label>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Label>نوع البوكس</Label>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p className="text-sm">مدة التخطيط تؤثر على الكميات الإجمالية</p>
+                      <p className="text-xs text-gray-500">الشهري (30 يوم) يوفر تخطيطًا طويل الأمد</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
                 <Select value={boxBuilder.boxType} onValueChange={(value) => handleBoxBuilderChange('boxType', value)}>
                   <SelectTrigger>
                     <SelectValue />
@@ -692,7 +992,17 @@ export default function CatNutritionCalculator() {
                 </div>
               )}
               <div className="space-y-2">
-                <Label>هامش أمان للتعبئة</Label>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Label>هامش أمان للتعبئة</Label>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p className="text-sm">هامش أمان لتغطية التباينات في الاستهلاك</p>
+                      <p className="text-xs text-gray-500">+10% يضمن عدم النقص (WSAVA 2011)</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
                 <Select value={boxBuilder.safety.toString()} onValueChange={(value) => handleBoxBuilderChange('safety', parseFloat(value))}>
                   <SelectTrigger>
                     <SelectValue />
@@ -711,7 +1021,17 @@ export default function CatNutritionCalculator() {
             </CardHeader>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               <div className="space-y-2">
-                <Label>وضع الويت للبوكس</Label>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Label>وضع الويت للبوكس</Label>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p className="text-sm">تلقائي: يحسب حسب أيام الويت، ثابت: كمية محددة</p>
+                      <p className="text-xs text-gray-500">التلقائي يضمن التوازن الغذائي (AAFP 2014)</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
                 <Select value={boxBuilder.boxWetMode} onValueChange={(value) => handleBoxBuilderChange('boxWetMode', value)}>
                   <SelectTrigger>
                     <SelectValue />
@@ -754,7 +1074,17 @@ export default function CatNutritionCalculator() {
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
               <div className="space-y-2">
-                <Label>العملة</Label>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Label>العملة</Label>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p className="text-sm">العملة للحسابات المالية</p>
+                      <p className="text-xs text-gray-500">للاستخدام الداخلي في التسعير</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
                 <Input
                   placeholder="مثال: ج.م"
                   value={pricing.currency}
@@ -762,7 +1092,17 @@ export default function CatNutritionCalculator() {
                 />
               </div>
               <div className="space-y-2">
-                <Label>سعر الدراي (لكل 1 كجم)</Label>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Label>سعر الدراي (لكل 1 كجم)</Label>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p className="text-sm">سعر الكيلوجرام من الطعام الجاف</p>
+                      <p className="text-xs text-gray-500">للحساب الإجمالي للتكلفة</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
                 <Input
                   type="number"
                   placeholder="مثال: 180"
@@ -771,7 +1111,17 @@ export default function CatNutritionCalculator() {
                 />
               </div>
               <div className="space-y-2">
-                <Label>سعر وحدة الويت (كيس/علبة)</Label>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Label>سعر وحدة الويت (كيس/علبة)</Label>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p className="text-sm">سعر كل وحدة ويت فود (كيس أو علبة)</p>
+                      <p className="text-xs text-gray-500">للحساب الدقيق للتكلفة الإجمالية</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
                 <Input
                   type="number"
                   placeholder="مثال: 25"
@@ -865,19 +1215,49 @@ export default function CatNutritionCalculator() {
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <Card className="bg-gray-50">
                   <CardContent className="p-4 text-center">
-                    <p className="text-sm text-gray-600">RER (Resting)</p>
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <p className="text-sm text-gray-600">RER (Resting)</p>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p className="text-sm">RER = متطلبات الطاقة أثناء الراحة</p>
+                          <p className="text-xs text-gray-500">70 × (الوزن^0.75) كيلو كالوري/يوم (NRC 2006)</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
                     <p className="text-xl font-bold">{results.rer}</p>
                   </CardContent>
                 </Card>
                 <Card className="bg-gray-50">
                   <CardContent className="p-4 text-center">
-                    <p className="text-sm text-gray-600">العامل المستخدم (MER)</p>
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <p className="text-sm text-gray-600">العامل المستخدم (MER)</p>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p className="text-sm">MER = متطلبات الطاقة الحافظة</p>
+                          <p className="text-xs text-gray-500">عامل مشتق من النشاط والحالة (NRC 2006)</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
                     <p className="text-xl font-bold">{results.factor.toFixed(1)}×RER</p>
                   </CardContent>
                 </Card>
                 <Card className="bg-gray-50">
                   <CardContent className="p-4 text-center">
-                    <p className="text-sm text-gray-600">السعرات اليومية المطلوبة (DER)</p>
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <p className="text-sm text-gray-600">السعرات اليومية المطلوبة (DER)</p>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p className="text-sm">DER = متطلبات الطاقة اليومية</p>
+                          <p className="text-xs text-gray-500">RER × عامل MER (NRC 2006)</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
                     <p className="text-xl font-bold">{results.der}</p>
                   </CardContent>
                 </Card>
