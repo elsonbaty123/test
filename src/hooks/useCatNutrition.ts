@@ -881,20 +881,8 @@ export function useCatNutrition() {
     autoDistributeWetDays()
   }, [weeklyPlan.wetDaysCount, autoDistributeWetDays])
 
-  // Debounced auto-calculate when inputs change
-  useEffect(() => {
-    if (timeoutRef.current) {
-      clearTimeout(timeoutRef.current)
-    }
-    timeoutRef.current = setTimeout(() => {
-      calculateNutrition()
-    }, 500)
-    return () => {
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current)
-      }
-    }
-  }, [catData, foodData, weeklyPlan, boxBuilder, pricing, calculateNutrition])
+  // Removed auto-calculation to prevent infinite loops - manual calculation only
+  // Users trigger calculation via "حساب الجدول" button when ready
 
   return {
     catData,
