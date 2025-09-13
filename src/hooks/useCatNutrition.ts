@@ -156,6 +156,9 @@ export const BREED_WEIGHT_RANGES: Record<string, BreedRange> = {
   devon_rex: { male: [2.5, 4.0], female: [2.0, 3.5] },
   savannah: { male: [6.0, 13.0], female: [5.0, 10.0] },
   domestic_shorthair: { male: [3.5, 6.0], female: [3.0, 5.0] },
+  domestic_longhair: { male: [3.5, 6.0], female: [3.0, 5.0] },
+  egyptian_mau: { male: [3.0, 5.0], female: [2.5, 4.0] },
+  egyptian_baladi: { male: [3.5, 6.0], female: [3.0, 5.0] },
   sphynx: { male: [3.5, 6.0], female: [3.0, 5.0] },
 }
 
@@ -169,6 +172,27 @@ function toNumber(v: any, fallback = 0): number {
 function formatNumber(n: number, digits = 0) {
   if (!Number.isFinite(n)) return '0'
   return n.toFixed(digits)
+}
+
+function round1(n: number) {
+  return Math.round(n * 10) / 10
+}
+
+function suggestBCS(weight: number, minW: number, maxW: number, ideal: number, stage: CatData['lifeStage']): number {
+  if (stage === 'kitten_young' || stage === 'kitten_older') return 5
+  if (!Number.isFinite(weight) || ideal <= 0) return 5
+  const dev = (weight - ideal) / ideal
+  const abs = Math.abs(dev)
+  if (abs < 0.05) return 5
+  if (dev < 0) {
+    if (abs < 0.10) return 4
+    return 3
+  } else {
+    if (abs < 0.10) return 6
+    if (abs < 0.20) return 7
+    if (abs < 0.35) return 8
+    return 9
+  }
 }
 
 function ageToMonths(ageValue: string, unit: 'months'|'years'): number {
@@ -414,6 +438,7 @@ export function useCatNutrition() {
     setIsCalculating(true)
     try {
       const newErrors: string[] = []
+      const recommendations: string[] = []
       const weight = toNumber(catData.weight, NaN)
 
       // Basic validations
@@ -473,13 +498,15 @@ export function useCatNutrition() {
       const stage = catData.lifeStage === 'auto' ? deriveLifeStage(ageMonths) : catData.lifeStage
       const activityInfo = getActivityInfo(catData.activity)
 
-      const rer = calcRER(weight)
-      const factor = computeFactor(rer, stage, activityInfo, catData)
-      const der = rer * factor
-
+      const rerRaw = calcRER(weight)
       // Breed range & ideal weight
       const [minW, maxW] = getBreedRange(catData.breed, catData.sex)
       const idealWeight = (minW + maxW) / 2
+      const bcsSuggested = suggestBCS(weight, minW, maxW, idealWeight, stage)
+      const catForFactor = { ...catData, bcs: bcsSuggested }
+      const factor = computeFactor(rerRaw, stage, activityInfo, catForFactor)
+      const rer = round1(rerRaw)
+      const der = round1(rer * factor)
       let weightStatus: Results['weightStatus'] = 'ok'
       if (stage === 'kitten_young' || stage === 'kitten_older') {
         weightStatus = 'na'
@@ -498,7 +525,7 @@ export function useCatNutrition() {
         }
       }
 
-      // Weekly data (simplified). If wet day => 25% of DER from wet; else 0.
+      // Weekly data (simplified). If wet day => default 1 unit if perUnit; if per100 cap grams to unit size; otherwise 25% share target.
       const wetDays = weeklyPlan.wetDays
       const wetShare = 0.25
       const wetKcalPer100 = toNumber(foodData.wet100, 80)
@@ -507,28 +534,34 @@ export function useCatNutrition() {
 
       const dailyData: WeeklyDay[] = dayNames.map((d, i) => {
         const isWet = Boolean(wetDays[i])
-        const wetKcal = isWet ? der * wetShare : 0
-        const dryKcal = der - wetKcal
+        let wetKcal = 0
         let wetGrams = 0
         let units = 0
         if (isWet) {
-          if (foodData.wetMode === 'per100') {
-            wetGrams = (wetKcal / Math.max(1, wetKcalPer100)) * 100
-          } else {
-            units = wetKcal / Math.max(1, wetKcalPerUnit)
+          if (foodData.wetMode === 'perUnit') {
+            // Default to 1 wet unit per wet day; rest as dry
+            units = 1
+            wetKcal = units * Math.max(1, wetKcalPerUnit)
             wetGrams = units * wetUnitGrams
+          } else {
+            const targetWetKcal = der * wetShare
+            const targetWetGrams = (targetWetKcal / Math.max(1, wetKcalPer100)) * 100
+            const cap = wetUnitGrams > 0 ? wetUnitGrams : targetWetGrams
+            wetGrams = Math.min(targetWetGrams, cap)
+            wetKcal = (wetGrams * Math.max(1, wetKcalPer100)) / 100
           }
         }
+        const dryKcal = Math.max(0, der - wetKcal)
         const dryGrams = (dryKcal / Math.max(1, dry100)) * 100
         return {
           day: d,
           type: isWet ? 'wet' : 'dry',
-          der,
-          wetKcal,
-          dryKcal,
-          wetGrams,
-          dryGrams,
-          units,
+          der: round1(der),
+          wetKcal: round1(wetKcal),
+          dryKcal: round1(dryKcal),
+          wetGrams: round1(wetGrams),
+          dryGrams: round1(dryGrams),
+          units: Math.round(units * 100) / 100,
           servingSize: wetUnitGrams,
         }
       })
@@ -560,6 +593,12 @@ export function useCatNutrition() {
         unitsForCost: unitsUsed,
       }
 
+      // Auto-assign BCS recommendation and update state to reflect it
+      if ((stage === 'adult' || stage === 'senior') && catData.bcs !== bcsSuggested) {
+        recommendations.push(`تم اختيار BCS تلقائيًا بقيمة ${bcsSuggested} استنادًا إلى الانحراف عن الوزن المثالي للسلالة.`)
+        setCatData(prev => ({ ...prev, bcs: bcsSuggested }))
+      }
+
       setResults({
         rer,
         factor,
@@ -571,7 +610,7 @@ export function useCatNutrition() {
         weightRange: [minW, maxW],
         idealWeight,
         usedWeight: weight,
-        recommendations: [],
+        recommendations,
       })
 
       // Costs

@@ -1,6 +1,7 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+
 import { useCatNutrition } from '@/hooks/useCatNutrition'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -40,6 +41,49 @@ export default function CatNutritionCalculator() {
   } = useCatNutrition()
 
   const [isSaving, setIsSaving] = useState(false)
+
+  // Auto-load saved data on mount
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem('catNutritionData')
+      if (!raw) return
+      const data = JSON.parse(raw)
+      if (data?.catData) {
+        Object.entries(data.catData).forEach(([k, v]) => {
+          // @ts-ignore
+          handleCatDataChange(k as any, v as any)
+        })
+      }
+      if (data?.foodData) {
+        Object.entries(data.foodData).forEach(([k, v]) => {
+          // @ts-ignore
+          handleFoodDataChange(k as any, v as any)
+        })
+      }
+      if (data?.weeklyPlan) {
+        const wp = data.weeklyPlan
+        if (Array.isArray(wp.wetDays)) {
+          handleWeeklyPlanChange('wetDays', wp.wetDays)
+          handleWeeklyPlanChange('wetDaysCount', wp.wetDays.filter((b: boolean) => !!b).length)
+        }
+        if (typeof wp.wetMealIndex !== 'undefined') handleWeeklyPlanChange('wetMealIndex', wp.wetMealIndex)
+      }
+      if (data?.boxBuilder) {
+        Object.entries(data.boxBuilder).forEach(([k, v]) => {
+          // @ts-ignore
+          handleBoxBuilderChange(k as any, v as any)
+        })
+      }
+      if (data?.pricing) {
+        Object.entries(data.pricing).forEach(([k, v]) => {
+          // @ts-ignore
+          handlePricingChange(k as any, v as any)
+        })
+      }
+    } catch (e) {
+      console.error('Load failed:', e)
+    }
+  }, [])
 
   const saveData = async () => {
     setIsSaving(true)
@@ -87,10 +131,10 @@ export default function CatNutritionCalculator() {
           <p><strong>مدة البوكس:</strong> ${results.boxSummary.totalDays} يوم</p>
           <p><strong>السعرات اليومية:</strong> ${results.der} كيلو كالوري</p>
           <hr style="margin: 10px 0;">
-          <p><strong>الدراي الإجمالي:</strong> ${results.boxSummary.totalDryGrams} جم</p>
-          <p><strong>الويت الإجمالي:</strong> ${results.boxSummary.totalWetGrams} جم</p>
+          <p><strong>الدراي الإجمالي:</strong> ${formatNumber(results.boxSummary.totalDryGrams, 1)} جم</p>
+          <p><strong>الويت الإجمالي:</strong> ${formatNumber(results.boxSummary.totalWetGrams, 1)} جم</p>
           <p><strong>عدد وحدات الويت:</strong> ${results.boxSummary.unitsUsed}</p>
-          <p><strong>حجم كل وجبة ويت:</strong> ${results.boxSummary.servingSize} جم</p>
+          <p><strong>حجم كل وجبة ويت:</strong> ${formatNumber(results.boxSummary.servingSize, 1)} جم</p>
           <hr style="margin: 10px 0;">
           <p style="font-size: 12px; color: #666;">
             <strong>ملاحظات:</strong><br>
@@ -135,11 +179,11 @@ export default function CatNutritionCalculator() {
           <p className="text-sm md:text-base opacity-90">سعرات محسوبة علميًا + جدول أسبوعي + بوكس شهري 30 يوم</p>
         </div>
       </header>
-<Alert className="bg-yellow-50 border-yellow-200 mb-6">
-  <AlertDescription className="text-sm">
-    هذه أداة إرشادية مبنية على إرشادات علمية (NRC, WSAVA, AAFP). استشر دائماً طبيب بيطري للحالات الفردية والمراقبة. لا تستبدل التشخيص المهني.
-  </AlertDescription>
-</Alert>
+      <Alert className="bg-yellow-50 border-yellow-200 mb-6">
+        <AlertDescription className="text-sm">
+          هذه أداة إرشادية مبنية على إرشادات علمية (NRC, WSAVA, AAFP). استشر دائماً طبيب بيطري للحالات الفردية والمراقبة. لا تستبدل التشخيص المهني.
+        </AlertDescription>
+      </Alert>
 
       <div className="max-w-6xl mx-auto p-4 md:p-6 space-y-6">
         {/* Cat Data */}
@@ -198,17 +242,7 @@ export default function CatNutritionCalculator() {
             </div>
 
             <div className="space-y-2">
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Label>الوزن الحالي (كجم)</Label>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p className="text-sm">يستخدم لحساب RER (متطلبات الطاقة أثناء الراحة)</p>
-                    <p className="text-xs text-gray-500">RER = 70 × (الوزن^0.75) - NRC 2006</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
+              <Label>الوزن الحالي (كجم)</Label>
               <Input
                 type="number"
                 placeholder="مثال: 4.2"
@@ -216,36 +250,37 @@ export default function CatNutritionCalculator() {
                 onChange={(e) => handleCatDataChange('weight', e.target.value)}
               />
             </div>
-<div className="space-y-2">
-  <Label>درجة حالة الجسم (BCS 1-9)</Label>
-  <Select value={catData.bcs.toString()} onValueChange={(value) => handleCatDataChange('bcs', parseInt(value))}>
-    <SelectTrigger>
-      <SelectValue />
-    </SelectTrigger>
-    <SelectContent>
-      <SelectItem value="1">1 - نحيل جداً (Underweight severe)</SelectItem>
-      <SelectItem value="2">2 - نحيل (Underweight)</SelectItem>
-      <SelectItem value="3">3 - نحيف قليلاً (Slightly underweight)</SelectItem>
-      <SelectItem value="4">4 - نحيف (Thin)</SelectItem>
-      <SelectItem value="5">5 - مثالي (Ideal)</SelectItem>
-      <SelectItem value="6">6 - بدين قليلاً (Slightly overweight)</SelectItem>
-      <SelectItem value="7">7 - بدين (Overweight)</SelectItem>
-      <SelectItem value="8">8 - سمين (Obese)</SelectItem>
-      <SelectItem value="9">9 - سمين جداً (Obese severe)</SelectItem>
-    </SelectContent>
-  </Select>
-  <TooltipProvider>
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <p className="text-xs text-gray-500">BCS: 1-3 تحت الوزن، 4-5 مثالي، 6-9 فوق الوزن (WSAVA 2011).</p>
-      </TooltipTrigger>
-      <TooltipContent>
-        <p className="text-sm">Body Condition Score (BCS) نظام تقييم حالة الجسم</p>
-        <p className="text-xs text-gray-500">يؤثر BCS على السعرات بزيادة/نقصان 10% - WSAVA 2011</p>
-      </TooltipContent>
-    </Tooltip>
-  </TooltipProvider>
-</div>
+
+            <div className="space-y-2">
+              <Label>درجة حالة الجسم (BCS 1-9)</Label>
+              <Select value={catData.bcs.toString()} onValueChange={(value) => handleCatDataChange('bcs', parseInt(value))}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="1">1 - نحيل جداً (Underweight severe)</SelectItem>
+                  <SelectItem value="2">2 - نحيل (Underweight)</SelectItem>
+                  <SelectItem value="3">3 - نحيف قليلاً (Slightly underweight)</SelectItem>
+                  <SelectItem value="4">4 - نحيف (Thin)</SelectItem>
+                  <SelectItem value="5">5 - مثالي (Ideal)</SelectItem>
+                  <SelectItem value="6">6 - بدين قليلاً (Slightly overweight)</SelectItem>
+                  <SelectItem value="7">7 - بدين (Overweight)</SelectItem>
+                  <SelectItem value="8">8 - سمين (Obese)</SelectItem>
+                  <SelectItem value="9">9 - سمين جداً (Obese severe)</SelectItem>
+                </SelectContent>
+              </Select>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <p className="text-xs text-gray-500">BCS: 1-3 تحت الوزن، 4-5 مثالي، 6-9 فوق الوزن (WSAVA 2011).</p>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p className="text-sm">Body Condition Score (BCS) نظام تقييم حالة الجسم</p>
+                    <p className="text-xs text-gray-500">يؤثر BCS على السعرات بزيادة/نقصان 10% - WSAVA 2011</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </div>
 
             <div className="space-y-2">
               <Label>الجنس</Label>
@@ -292,6 +327,8 @@ export default function CatNutritionCalculator() {
                   <SelectItem value="manx">Manx (مانكس)</SelectItem>
                   <SelectItem value="savannah">Savannah (سافانا)</SelectItem>
                   <SelectItem value="bombay">Bombay (بومباي)</SelectItem>
+                  <SelectItem value="egyptian_mau">Egyptian Mau (مصري ماو)</SelectItem>
+                  <SelectItem value="egyptian_baladi">بلدي مصري (Baladi)</SelectItem>
                   <SelectItem value="other">أخرى</SelectItem>
                 </SelectContent>
               </Select>
@@ -346,7 +383,12 @@ export default function CatNutritionCalculator() {
                 </SelectTrigger>
                 <SelectContent>
                   {Object.entries(ACTIVITY_LEVELS).map(([key, level]) => (
-                    <SelectItem key={key} value={level.value}>{level.label}</SelectItem>
+                    <SelectItem key={key} value={level.value}>
+                      <div className="flex flex-col">
+                        <span>{level.label}</span>
+                        <span className="text-xs text-gray-500">{level.examples?.join('، ')}</span>
+                      </div>
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -671,7 +713,7 @@ export default function CatNutritionCalculator() {
                       </TooltipTrigger>
                       <TooltipContent>
                         <p className="text-sm">الويت فود مهم للترطيب والصحة البولية</p>
-                        <p className="text-xs text-gray-500">يوصى بـ 2-3 أيام ويت أسبوعيًا (AAFP 2014)</p>
+                        <p className="text-xs text-gray-500">يوصى بـ 2-3 أيام ويت أسبوعيًا للوقاية من أمراض المسالك البولية (AAFP 2014)</p>
                       </TooltipContent>
                     </Tooltip>
                   </TooltipProvider>
@@ -1192,8 +1234,9 @@ export default function CatNutritionCalculator() {
                 <Badge variant="outline">النشاط: {results.activityInfo.label}</Badge>
                 {results.weightStatus !== 'na' && (
                   <Badge variant={results.weightStatus === 'ok' ? "default" : results.weightStatus === 'low' ? "secondary" : "destructive"}>
-                    الوزن: {results.weightStatus === 'ok' ? 'مثالي' : results.weightStatus === 'low' ? 'أقل من المثالي' : 'أعلى من المثالي'}
-                    {results.weightStatus !== 'ok' && ` (الوزن المثالي: ${results.idealWeight} كجم)`}
+                    {results.weightStatus === 'ok'
+                      ? 'وزنه مثالي'
+                      : `الوزن: ${results.weightStatus === 'low' ? 'أقل من المثالي' : 'أعلى من المثالي'} (الوزن المثالي: ${results.idealWeight} كجم)`}
                   </Badge>
                 )}
               </div>
@@ -1213,7 +1256,7 @@ export default function CatNutritionCalculator() {
                         </TooltipContent>
                       </Tooltip>
                     </TooltipProvider>
-                    <p className="text-xl font-bold">{results.rer}</p>
+                    <p className="text-xl font-bold">{formatNumber(results.rer, 1)}</p>
                   </CardContent>
                 </Card>
                 <Card className="bg-gray-50">
@@ -1245,7 +1288,7 @@ export default function CatNutritionCalculator() {
                         </TooltipContent>
                       </Tooltip>
                     </TooltipProvider>
-                    <p className="text-xl font-bold">{results.der}</p>
+                    <p className="text-xl font-bold">{formatNumber(results.der, 1)}</p>
                   </CardContent>
                 </Card>
                 <Card className="bg-gray-50">
@@ -1301,17 +1344,6 @@ export default function CatNutritionCalculator() {
                         <TableHead>جرامات ويت</TableHead>
                         <TableHead>جرامات دراي</TableHead>
                         <TableHead>وحدات ويت</TableHead>
-{/* Recommendations */}
-{results.recommendations && results.recommendations.length > 0 && (
-  <div className="space-y-2">
-    <h4 className="text-md font-semibold mb-2">توصيات تغذية إضافية</h4>
-    {results.recommendations.map((rec, index) => (
-      <Alert key={index} className="border-blue-200 bg-blue-50">
-        <AlertDescription className="text-sm">{rec}</AlertDescription>
-      </Alert>
-    ))}
-  </div>
-)}
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -1319,11 +1351,11 @@ export default function CatNutritionCalculator() {
                         <TableRow key={index}>
                           <TableCell className="text-center">{day.day}</TableCell>
                           <TableCell className="text-center">{day.type}</TableCell>
-                          <TableCell className="text-center">{day.der}</TableCell>
-                          <TableCell className="text-center">{day.wetKcal}</TableCell>
-                          <TableCell className="text-center">{day.dryKcal}</TableCell>
-                          <TableCell className="text-center">{formatNumber(day.wetGrams)}</TableCell>
-                          <TableCell className="text-center">{formatNumber(day.dryGrams)}</TableCell>
+                          <TableCell className="text-center">{formatNumber(day.der, 1)}</TableCell>
+                          <TableCell className="text-center">{formatNumber(day.wetKcal, 1)}</TableCell>
+                          <TableCell className="text-center">{formatNumber(day.dryKcal, 1)}</TableCell>
+                          <TableCell className="text-center">{formatNumber(day.wetGrams, 1)}</TableCell>
+                          <TableCell className="text-center">{formatNumber(day.dryGrams, 1)}</TableCell>
                           <TableCell className="text-center">{day.units.toFixed(2)}</TableCell>
                         </TableRow>
                       ))}
@@ -1368,12 +1400,12 @@ export default function CatNutritionCalculator() {
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                   <Card className="bg-yellow-50 border-yellow-200">
                     <CardContent className="p-4">
-                      <p className="font-semibold">الدراي الإجمالي: <span className="text-lg">{formatNumber(results.boxSummary.totalDryGrams)} جم</span></p>
+                      <p className="font-semibold">الدراي الإجمالي: <span className="text-lg">{formatNumber(results.boxSummary.totalDryGrams, 1)} جم</span></p>
                     </CardContent>
                   </Card>
                   <Card className="bg-yellow-50 border-yellow-200">
                     <CardContent className="p-4">
-                      <p className="font-semibold">الويت الإجمالي: <span className="text-lg">{formatNumber(results.boxSummary.totalWetGrams)} جم</span></p>
+                      <p className="font-semibold">الويت الإجمالي: <span className="text-lg">{formatNumber(results.boxSummary.totalWetGrams, 1)} جم</span></p>
                     </CardContent>
                   </Card>
                   <Card className="bg-yellow-50 border-yellow-200">
