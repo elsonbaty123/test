@@ -1387,7 +1387,7 @@ export default function CatNutritionCalculator() {
                       value={pricing.discountPercentage}
                       onChange={(e) => handlePricingChange('discountPercentage', e.target.value)}
                     />
-                    <p className="text-xs text-gray-500">خصم من المبلغ بعد الأرباح</p>
+                    <p className="text-xs text-gray-500">خصم من (دراي + ويت + تغليف + إضافي)</p>
                   </div>
                 </div>
 
@@ -1414,7 +1414,7 @@ export default function CatNutritionCalculator() {
                           <span className="font-medium">{formatNumber(costs.additionalCosts, 2)} {pricing.currency}</span>
                         </div>
                         <div className="flex justify-between border-t pt-2 mt-2">
-                          <span className="font-medium">المجموع قبل الأرباح:</span>
+                          <span className="font-medium">المجموع قبل الخصم:</span>
                           <span className="font-bold text-blue-600">{formatNumber(costs.totalCostBeforeProfit, 2)} {pricing.currency}</span>
                         </div>
                       </div>
@@ -1422,14 +1422,6 @@ export default function CatNutritionCalculator() {
                     
                     <div className="space-y-3">
                       <div className="text-sm">
-                        <div className="flex justify-between">
-                          <span className="text-gray-600">مبلغ الأرباح ({pricing.profitPercentage}%):</span>
-                          <span className="font-medium text-green-600">+{formatNumber(costs.profitAmount, 2)} {pricing.currency}</span>
-                        </div>
-                        <div className="flex justify-between border-t pt-2 mt-2">
-                          <span className="font-medium">المجموع بعد الأرباح:</span>
-                          <span className="font-bold text-green-600">{formatNumber(costs.totalCostWithProfit, 2)} {pricing.currency}</span>
-                        </div>
                         {costs.discountAmount > 0 && (
                           <>
                             <div className="flex justify-between">
@@ -1437,11 +1429,19 @@ export default function CatNutritionCalculator() {
                               <span className="font-medium text-red-600">-{formatNumber(costs.discountAmount, 2)} {pricing.currency}</span>
                             </div>
                             <div className="flex justify-between border-t pt-2 mt-2">
-                              <span className="font-medium">المجموع بعد الخصم:</span>
-                              <span className="font-bold text-green-600">{formatNumber(costs.totalCostAfterDiscount, 2)} {pricing.currency}</span>
+                              <span className="font-medium">بعد الخصم:</span>
+                              <span className="font-bold text-blue-600">{formatNumber(costs.totalCostAfterDiscount, 2)} {pricing.currency}</span>
                             </div>
                           </>
                         )}
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">مبلغ الأرباح ({pricing.profitPercentage}%):</span>
+                          <span className="font-medium text-green-600">+{formatNumber(costs.profitAmount, 2)} {pricing.currency}</span>
+                        </div>
+                        <div className="flex justify-between border-t pt-2 mt-2">
+                          <span className="font-medium">بعد الأرباح:</span>
+                          <span className="font-bold text-green-600">{formatNumber(costs.totalCostWithProfit, 2)} {pricing.currency}</span>
+                        </div>
                         <div className="flex justify-between">
                           <span className="text-gray-600">سعر الدلفري:</span>
                           <span className="font-medium">+{formatNumber(costs.deliveryCost, 2)} {pricing.currency}</span>

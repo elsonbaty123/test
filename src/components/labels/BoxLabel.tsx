@@ -370,10 +370,10 @@ export const BoxLabel: React.FC<BoxLabelProps> = ({
           {/* Order Total */}
           <div className="label-section">
             <div className="label-section-title">معلومات الأوردر</div>
-            {costs && costs.totalCostWithProfit > 0 && (
+            {costs && costs.totalCostBeforeProfit > 0 && (
               <div className="label-field">
-                <span className="label-field-name">المبلغ قبل الخصم:</span>
-                <span className="label-field-value">{formatNumber(costs.totalCostWithProfit, 0)} {pricing.currency}</span>
+                <span className="label-field-name">قبل الخصم:</span>
+                <span className="label-field-value">{formatNumber(costs.totalCostBeforeProfit, 0)} {pricing.currency}</span>
               </div>
             )}
             {costs && costs.discountAmount > 0 && (

@@ -771,11 +771,11 @@ export function useCatNutrition() {
       const wetCost = unitsUsed * priceWetUnit
       const subtotalCost = dryCost + wetCost
       const totalCostBeforeProfit = subtotalCost + packagingCost + additionalCosts
-      const profitAmount = (totalCostBeforeProfit * profitPercentage) / 100
-      const totalCostWithProfit = totalCostBeforeProfit + profitAmount
-      const discountAmount = (totalCostWithProfit * discountPercentage) / 100
-      const totalCostAfterDiscount = totalCostWithProfit - discountAmount
-      const totalCostWithDelivery = totalCostAfterDiscount + deliveryCost
+      const discountAmount = (totalCostBeforeProfit * discountPercentage) / 100
+      const totalCostAfterDiscount = totalCostBeforeProfit - discountAmount
+      const profitAmount = (totalCostAfterDiscount * profitPercentage) / 100
+      const totalCostWithProfit = totalCostAfterDiscount + profitAmount
+      const totalCostWithDelivery = totalCostWithProfit + deliveryCost
       
       setCosts({
         dryCost,
