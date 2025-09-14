@@ -6,17 +6,18 @@ export async function POST(req: Request) {
   try {
     const body = await req.json()
     const clientName = (body?.clientName || '').trim()
-    const data = body?.data
+    const dataObj = body?.data
     if (!clientName) {
       return NextResponse.json({ error: 'اسم العميل مطلوب' }, { status: 400 })
     }
-    if (!data) {
+    if (!dataObj) {
       return NextResponse.json({ error: 'بيانات العميل مطلوبة' }, { status: 400 })
     }
 
     const db = getDb()
     const exists = await db.customer.findUnique({ where: { name: clientName } })
 
+    const data = JSON.stringify(dataObj)
     await db.customer.upsert({
       where: { name: clientName },
       create: { name: clientName, data },
@@ -38,7 +39,9 @@ export async function GET(req: Request) {
       const db = getDb()
       const item = await db.customer.findUnique({ where: { name } })
       if (!item) return NextResponse.json({ error: 'Not found' }, { status: 404 })
-      return NextResponse.json(item)
+      let parsed: any = null
+      try { parsed = JSON.parse(item.data as unknown as string) } catch {}
+      return NextResponse.json({ data: parsed })
     }
     const db = getDb()
     const items = await db.customer.findMany({
