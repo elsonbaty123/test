@@ -9,6 +9,7 @@ export async function POST(req: Request) {
   try {
     const body = await req.json()
     const clientName = (body?.clientName || '').trim()
+    const clientPhone = (body?.clientPhone || '').trim()
     const dataObj = body?.data
     if (!clientName) {
       return NextResponse.json({ error: 'اسم العميل مطلوب' }, { status: 400 })
@@ -23,8 +24,8 @@ export async function POST(req: Request) {
     const data = JSON.stringify(dataObj)
     await db.customer.upsert({
       where: { name: clientName },
-      create: { name: clientName, data },
-      update: { data }
+      create: { name: clientName, phone: clientPhone, data },
+      update: { phone: clientPhone, data }
     })
 
     return NextResponse.json({ ok: true, created: !exists })
@@ -48,7 +49,7 @@ export async function GET(req: Request) {
     }
     const db = getDb()
     const items = await db.customer.findMany({
-      select: { id: true, name: true, createdAt: true, updatedAt: true }
+      select: { id: true, name: true, phone: true, createdAt: true, updatedAt: true }
     })
     return NextResponse.json(items)
   } catch (e) {

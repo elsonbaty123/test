@@ -5,6 +5,7 @@ import { useState, useCallback } from 'react'
 interface CatData {
   name: string;
   clientName: string;
+  clientPhone: string;
   ageValue: string;
   ageUnit: 'months' | 'years';
   lifeStage: 'auto' | 'kitten_young' | 'kitten_older' | 'adult' | 'senior';
@@ -71,6 +72,13 @@ interface WeeklyDay {
   dryGrams: number;
   units: number;
   servingSize: number;
+  mealsBreakdown: Array<{
+    mealIndex: number;
+    kcal: number;
+    wetGrams: number;
+    dryGrams: number;
+  }>;
+  // Keep legacy fields for backward compatibility
   breakfastKcal: number;
   dinnerKcal: number;
   breakfastWetGrams: number;
@@ -229,6 +237,7 @@ export function useCatNutrition() {
   const [catData, setCatData] = useState<CatData>({
     name: '',
     clientName: '',
+    clientPhone: '',
     ageValue: '',
     ageUnit: 'months',
     lifeStage: 'auto',
@@ -622,6 +631,20 @@ export function useCatNutrition() {
         const dryGrams = Math.round(breakfastDryGrams + dinnerDryGrams + othersDryGrams)
         const wetKcalTotal = Math.max(0, wetKcalPerMeal.reduce((s, v) => s + v, 0))
         const wetGramsTotal = Math.round(breakfastWetGrams + dinnerWetGrams + othersWetGrams)
+        
+        // Create meals breakdown for all meals
+        const mealsBreakdown = wetKcalPerMeal.map((wetKcal, idx) => {
+          const dryKcal = dryKcalPerMeal[idx] || 0
+          const wetGramsForMeal = wetKcal / Math.max(1e-6, wetKcalPerGram)
+          const dryGramsForMeal = dryKcal * dryGramsPerKcal
+          return {
+            mealIndex: idx + 1,
+            kcal: round1(perMealTarget),
+            wetGrams: Math.round(wetGramsForMeal),
+            dryGrams: Math.round(dryGramsForMeal)
+          }
+        })
+        
         return {
           day: d,
           type: isWet ? 'wet' : 'dry',
@@ -632,6 +655,8 @@ export function useCatNutrition() {
           dryGrams: round1(dryGrams),
           units: Math.round(units * 100) / 100,
           servingSize: wetUnitGrams,
+          mealsBreakdown,
+          // Legacy fields for backward compatibility
           breakfastKcal: round1(perMealTarget),
           dinnerKcal: round1(perMealTarget),
           breakfastWetGrams: round1(breakfastWetGrams),

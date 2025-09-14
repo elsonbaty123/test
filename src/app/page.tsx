@@ -13,6 +13,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Label } from '@/components/ui/label'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 
 export default function CatNutritionCalculator() {
   const {
@@ -41,6 +42,11 @@ export default function CatNutritionCalculator() {
   } = useCatNutrition()
 
   const [isSaving, setIsSaving] = useState(false)
+  const [clients, setClients] = useState<Array<{id: string, name: string, phone: string, createdAt: string, updatedAt: string}>>([])
+  const [isLoadingClients, setIsLoadingClients] = useState(false)
+  const [showNewClientDialog, setShowNewClientDialog] = useState(false)
+  const [newClientName, setNewClientName] = useState('')
+  const [newClientPhone, setNewClientPhone] = useState('')
   const breedLabel = (code: string) => {
     const map: Record<string, string> = {
       domestic_shorthair: 'منزلية شعر قصير',
@@ -71,6 +77,41 @@ export default function CatNutritionCalculator() {
       egyptian_baladi: 'بلدي مصري (Baladi)'
     }
     return map[code] || code
+  }
+
+  const loadClients = async () => {
+    try {
+      setIsLoadingClients(true)
+      const res = await fetch('/api/clients/list')
+      const json = await res.json()
+      if (!res.ok) throw new Error(json?.error || 'فشل تحميل قائمة العملاء')
+      setClients(json)
+    } catch (e) {
+      console.error('Load clients failed:', e)
+      alert('فشل تحميل قائمة العملاء')
+    } finally {
+      setIsLoadingClients(false)
+    }
+  }
+
+  const selectClient = (client: {name: string, phone: string}) => {
+    handleCatDataChange('clientName', client.name)
+    handleCatDataChange('clientPhone', client.phone)
+    loadClient()
+  }
+
+  const createNewClient = async () => {
+    if (!newClientName.trim()) {
+      alert('الرجاء إدخال اسم العميل')
+      return
+    }
+    
+    handleCatDataChange('clientName', newClientName.trim())
+    handleCatDataChange('clientPhone', newClientPhone.trim())
+    setShowNewClientDialog(false)
+    setNewClientName('')
+    setNewClientPhone('')
+    await loadClients() // Refresh client list
   }
 
   const loadClient = async () => {
@@ -125,6 +166,8 @@ export default function CatNutritionCalculator() {
 
   // Auto-load saved data on mount
   useEffect(() => {
+    loadClients() // Load client list
+    
     try {
       const raw = localStorage.getItem('catNutritionData')
       if (!raw) return
@@ -185,7 +228,7 @@ export default function CatNutritionCalculator() {
       const res = await fetch('/api/clients', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ clientName, data: dataToSave })
+        body: JSON.stringify({ clientName, clientPhone: catData.clientPhone, data: dataToSave })
       })
       const json = await res.json()
       if (!res.ok) throw new Error(json?.error || 'خطأ غير معروف')
@@ -287,12 +330,62 @@ export default function CatNutritionCalculator() {
           </CardHeader>
           <CardContent className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="clientName">اسم العميل</Label>
+              <Label>اختيار العميل</Label>
+              <div className="flex gap-2">
+                <Select 
+                  value={catData.clientName} 
+                  onValueChange={(value) => {
+                    if (value === '__new__') {
+                      setShowNewClientDialog(true)
+                    } else {
+                      const client = clients.find(c => c.name === value)
+                      if (client) {
+                        selectClient(client)
+                      }
+                    }
+                  }}
+                >
+                  <SelectTrigger className="flex-1">
+                    <SelectValue placeholder="اختر عميل موجود أو أضف جديد" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="__new__">+ إضافة عميل جديد</SelectItem>
+                    {clients.map((client) => (
+                      <SelectItem key={client.id} value={client.name}>
+                        <div className="flex flex-col text-right">
+                          <span>{client.name}</span>
+                          {client.phone && (
+                            <span className="text-xs text-gray-500">{client.phone}</span>
+                          )}
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Button 
+                  variant="outline" 
+                  onClick={loadClients}
+                  disabled={isLoadingClients}
+                  size="sm"
+                >
+                  تحديث
+                </Button>
+              </div>
               <Input
-                id="clientName"
-                placeholder="مثال: د. أحمد"
+                placeholder="أو اكتب اسم العميل مباشرة"
                 value={catData.clientName}
                 onChange={(e) => handleCatDataChange('clientName', e.target.value)}
+                className="text-sm"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="clientPhone">رقم هاتف العميل</Label>
+              <Input
+                id="clientPhone"
+                placeholder="مثال: 01234567890"
+                value={catData.clientPhone}
+                onChange={(e) => handleCatDataChange('clientPhone', e.target.value)}
               />
             </div>
 
@@ -1421,10 +1514,14 @@ export default function CatNutritionCalculator() {
                         <TableHead>DER (كcal)</TableHead>
                         <TableHead>سعرات ويت</TableHead>
                         <TableHead>سعرات دراي</TableHead>
-                        <TableHead>الوجبة 1 (كcal)</TableHead>
-                        <TableHead>الوجبة 2 (كcal)</TableHead>
-                        <TableHead>الوجبة 1 (مكونات)</TableHead>
-                        <TableHead>الوجبة 2 (مكونات)</TableHead>
+                        {/* Dynamic meal calories columns */}
+                        {Array.from({ length: catData.meals }, (_, i) => (
+                          <TableHead key={`meal-kcal-${i}`}>الوجبة {i + 1} (كcal)</TableHead>
+                        ))}
+                        {/* Dynamic meal components columns */}
+                        {Array.from({ length: catData.meals }, (_, i) => (
+                          <TableHead key={`meal-comp-${i}`}>الوجبة {i + 1} (مكونات)</TableHead>
+                        ))}
                         <TableHead>جرامات ويت</TableHead>
                         <TableHead>جرامات دراي</TableHead>
                         <TableHead>وحدات ويت</TableHead>
@@ -1438,42 +1535,32 @@ export default function CatNutritionCalculator() {
                           <TableCell className="text-center">{formatNumber(day.der, 1)}</TableCell>
                           <TableCell className="text-center">{formatNumber(day.wetKcal, 1)}</TableCell>
                           <TableCell className="text-center">{formatNumber(day.dryKcal, 1)}</TableCell>
-                          <TableCell className="text-center">{formatNumber(day.breakfastKcal, 1)}</TableCell>
-                          <TableCell className="text-center">{formatNumber(day.dinnerKcal, 1)}</TableCell>
-                          <TableCell className="text-center">
-                            {(() => {
-                              const packLabel = foodData.wetPackType === 'can' ? 'علبة ويت' : 'كيس ويت'
-                              if (day.breakfastWetGrams > 0) {
-                                const dry = Math.round(day.breakfastDryGrams)
-                                let base = `ويت ${formatNumber(day.breakfastWetGrams, 0)} جم`
-                                if (foodData.wetMode === 'perUnit') {
-                                  const fullUnit = Math.abs(day.breakfastWetGrams - day.servingSize) <= 1
-                                  base = fullUnit ? packLabel : `ويت ${formatNumber(day.breakfastWetGrams, 0)} جم`
+                          {/* Dynamic meal calories */}
+                          {day.mealsBreakdown.map((meal, mealIndex) => (
+                            <TableCell key={`meal-kcal-${mealIndex}`} className="text-center">
+                              {formatNumber(meal.kcal, 1)}
+                            </TableCell>
+                          ))}
+                          {/* Dynamic meal components */}
+                          {day.mealsBreakdown.map((meal, mealIndex) => (
+                            <TableCell key={`meal-comp-${mealIndex}`} className="text-center">
+                              {(() => {
+                                const packLabel = foodData.wetPackType === 'can' ? 'علبة ويت' : 'كيس ويت'
+                                if (meal.wetGrams > 0) {
+                                  const dry = Math.round(meal.dryGrams)
+                                  let base = `ويت ${formatNumber(meal.wetGrams, 0)} جم`
+                                  if (foodData.wetMode === 'perUnit') {
+                                    const fullUnit = Math.abs(meal.wetGrams - day.servingSize) <= 1
+                                    base = fullUnit ? packLabel : `ويت ${formatNumber(meal.wetGrams, 0)} جم`
+                                  }
+                                  return dry > 0 ? `${base} + ${dry} جم دراي` : base
+                                } else {
+                                  const dry = Math.round(meal.dryGrams)
+                                  return dry > 0 ? `دراي ${dry} جم` : '-'
                                 }
-                                return dry > 0 ? `${base} + ${dry} جم دراي` : base
-                              } else {
-                                const dry = Math.round(day.breakfastDryGrams)
-                                return dry > 0 ? `دراي ${dry} جم` : '-'
-                              }
-                            })()}
-                          </TableCell>
-                          <TableCell className="text-center">
-                            {(() => {
-                              const packLabel = foodData.wetPackType === 'can' ? 'علبة ويت' : 'كيس ويت'
-                              if (day.dinnerWetGrams > 0) {
-                                const dry = Math.round(day.dinnerDryGrams)
-                                let base = `ويت ${formatNumber(day.dinnerWetGrams, 0)} جم`
-                                if (foodData.wetMode === 'perUnit') {
-                                  const fullUnit = Math.abs(day.dinnerWetGrams - day.servingSize) <= 1
-                                  base = fullUnit ? packLabel : `ويت ${formatNumber(day.dinnerWetGrams, 0)} جم`
-                                }
-                                return dry > 0 ? `${base} + ${dry} جم دراي` : base
-                              } else {
-                                const dry = Math.round(day.dinnerDryGrams)
-                                return dry > 0 ? `دراي ${dry} جم` : '-'
-                              }
-                            })()}
-                          </TableCell>
+                              })()}
+                            </TableCell>
+                          ))}
                           <TableCell className="text-center">{formatNumber(day.wetGrams, 0)}</TableCell>
                           <TableCell className="text-center">{formatNumber(day.dryGrams, 0)}</TableCell>
                           <TableCell className="text-center">{day.units.toFixed(2)}</TableCell>
@@ -1675,6 +1762,54 @@ export default function CatNutritionCalculator() {
           }
         `}</style>
       </div>
+      
+      {/* New Client Dialog */}
+      <Dialog open={showNewClientDialog} onOpenChange={setShowNewClientDialog}>
+        <DialogContent className="max-w-md" dir="rtl">
+          <DialogHeader>
+            <DialogTitle>إضافة عميل جديد</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="newClientName">اسم العميل *</Label>
+              <Input
+                id="newClientName"
+                placeholder="أدخل اسم العميل"
+                value={newClientName}
+                onChange={(e) => setNewClientName(e.target.value)}
+                autoFocus
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="newClientPhone">رقم الهاتف</Label>
+              <Input
+                id="newClientPhone"
+                placeholder="أدخل رقم الهاتف (اختياري)"
+                value={newClientPhone}
+                onChange={(e) => setNewClientPhone(e.target.value)}
+              />
+            </div>
+            <div className="flex gap-2 justify-end">
+              <Button 
+                variant="outline" 
+                onClick={() => {
+                  setShowNewClientDialog(false)
+                  setNewClientName('')
+                  setNewClientPhone('')
+                }}
+              >
+                إلغاء
+              </Button>
+              <Button 
+                onClick={createNewClient}
+                disabled={!newClientName.trim()}
+              >
+                إضافة
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

@@ -35,6 +35,7 @@ model Post {
 model Customer {
   id        String   @id @default(cuid())
   name      String   @unique
+  phone     String?  @default("")
   data      String   @db.Text
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
