@@ -20,6 +20,8 @@ const nextConfig: NextConfig = {
     // 构建时忽略ESLint错误
     ignoreDuringBuilds: true,
   },
+  // Ensure we're not using static export
+  trailingSlash: false,
 };
 
 export default nextConfig;

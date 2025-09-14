@@ -1,6 +1,9 @@
 import { NextResponse } from 'next/server'
-export const runtime = 'nodejs'
 import { getDb } from '@/lib/db'
+
+// Configure route for dynamic rendering
+export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs'
 
 export async function POST(req: Request) {
   try {
