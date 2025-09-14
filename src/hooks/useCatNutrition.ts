@@ -6,6 +6,7 @@ interface CatData {
   name: string;
   clientName: string;
   clientPhone: string;
+  clientAddress: string;
   ageValue: string;
   ageUnit: 'months' | 'years';
   lifeStage: 'auto' | 'kitten_young' | 'kitten_older' | 'adult' | 'senior';
@@ -238,6 +239,7 @@ export function useCatNutrition() {
     name: '',
     clientName: '',
     clientPhone: '',
+    clientAddress: '',
     ageValue: '',
     ageUnit: 'months',
     lifeStage: 'auto',
