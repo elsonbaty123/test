@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
-import { db } from '@/lib/db'
+export const runtime = 'nodejs'
+import { getDb } from '@/lib/db'
 
 export async function POST(req: Request) {
   try {
@@ -13,6 +14,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'بيانات العميل مطلوبة' }, { status: 400 })
     }
 
+    const db = getDb()
     const exists = await db.customer.findUnique({ where: { name: clientName } })
 
     await db.customer.upsert({
@@ -33,10 +35,12 @@ export async function GET(req: Request) {
     const { searchParams } = new URL(req.url)
     const name = searchParams.get('name')
     if (name) {
+      const db = getDb()
       const item = await db.customer.findUnique({ where: { name } })
       if (!item) return NextResponse.json({ error: 'Not found' }, { status: 404 })
       return NextResponse.json(item)
     }
+    const db = getDb()
     const items = await db.customer.findMany({
       select: { id: true, name: true, createdAt: true, updatedAt: true }
     })
