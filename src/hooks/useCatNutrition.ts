@@ -71,6 +71,12 @@ interface WeeklyDay {
   dryGrams: number;
   units: number;
   servingSize: number;
+  breakfastKcal: number;
+  dinnerKcal: number;
+  breakfastWetGrams: number;
+  breakfastDryGrams: number;
+  dinnerWetGrams: number;
+  dinnerDryGrams: number;
 }
 
 interface BoxSummary {
@@ -527,7 +533,10 @@ export function useCatNutrition() {
         }
       }
 
-      // Weekly data (simplified). If wet day => default 1 unit if perUnit; if per100 cap grams to unit size; otherwise 25% share target.
+      // Weekly data
+      // If wet day:
+      //  - perUnit: default 1 wet unit per wet day (capped by DER) and distribute between meals to equalize kcal.
+      //  - per100: target 25% DER from wet but cap grams to unit size; then distribute between meals to equalize kcal.
       const wetDays = weeklyPlan.wetDays
       const wetShare = 0.25
       const wetKcalPer100 = toNumber(foodData.wet100, 80)
@@ -541,20 +550,58 @@ export function useCatNutrition() {
         let units = 0
         if (isWet) {
           if (foodData.wetMode === 'perUnit') {
-            // Default to 1 wet unit per wet day; rest as dry
+            // Default to 1 wet unit per wet day; cap to DER to avoid overfeeding
             units = 1
-            wetKcal = units * Math.max(1, wetKcalPerUnit)
-            wetGrams = units * wetUnitGrams
+            const kcal = units * Math.max(1, wetKcalPerUnit)
+            wetKcal = Math.min(kcal, der)
+            // compute grams proportionally if capped
+            const kcalPerGram = Math.max(1, wetKcalPerUnit) / Math.max(1, wetUnitGrams)
+            wetGrams = wetKcal / kcalPerGram
           } else {
             const targetWetKcal = der * wetShare
             const targetWetGrams = (targetWetKcal / Math.max(1, wetKcalPer100)) * 100
             const cap = wetUnitGrams > 0 ? wetUnitGrams : targetWetGrams
             wetGrams = Math.min(targetWetGrams, cap)
             wetKcal = (wetGrams * Math.max(1, wetKcalPer100)) / 100
+            if (wetKcal > der) {
+              wetKcal = der
+              wetGrams = (wetKcal / Math.max(1, wetKcalPer100)) * 100
+            }
           }
         }
-        const dryKcal = Math.max(0, der - wetKcal)
+
+        // Split energy into two equal meals
+        const half = der / 2
+        let breakfastWetKcal = 0
+        let dinnerWetKcal = 0
+        if (isWet) {
+          const idx = Math.max(0, Math.min(1, weeklyPlan.wetMealIndex || 0))
+          if (wetKcal <= half) {
+            // place wet entirely in selected meal and top up with dry to equalize
+            breakfastWetKcal = idx === 0 ? wetKcal : 0
+            dinnerWetKcal = idx === 1 ? wetKcal : 0
+          } else {
+            // if wet exceeds half, split to keep meals equal
+            breakfastWetKcal = half
+            dinnerWetKcal = Math.min(half, wetKcal - half)
+          }
+        }
+        const breakfastDryKcal = Math.max(0, half - breakfastWetKcal)
+        const dinnerDryKcal = Math.max(0, half - dinnerWetKcal)
+
+        // Totals
+        const dryKcal = Math.max(0, breakfastDryKcal + dinnerDryKcal)
         const dryGrams = (dryKcal / Math.max(1, dry100)) * 100
+
+        // Per-meal grams
+        const dryGramsPerKcal = 100 / Math.max(1, dry100)
+        const breakfastDryGrams = breakfastDryKcal * dryGramsPerKcal
+        const dinnerDryGrams = dinnerDryKcal * dryGramsPerKcal
+        const wetKcalPerGram = foodData.wetMode === 'per100'
+          ? Math.max(1, wetKcalPer100) / 100
+          : Math.max(1, wetKcalPerUnit) / Math.max(1, wetUnitGrams)
+        const breakfastWetGrams = breakfastWetKcal / Math.max(1e-6, wetKcalPerGram)
+        const dinnerWetGrams = dinnerWetKcal / Math.max(1e-6, wetKcalPerGram)
         return {
           day: d,
           type: isWet ? 'wet' : 'dry',
@@ -565,6 +612,12 @@ export function useCatNutrition() {
           dryGrams: round1(dryGrams),
           units: Math.round(units * 100) / 100,
           servingSize: wetUnitGrams,
+          breakfastKcal: round1(half),
+          dinnerKcal: round1(half),
+          breakfastWetGrams: round1(breakfastWetGrams),
+          breakfastDryGrams: round1(breakfastDryGrams),
+          dinnerWetGrams: round1(dinnerWetGrams),
+          dinnerDryGrams: round1(dinnerDryGrams),
         }
       })
 

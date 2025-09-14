@@ -239,7 +239,6 @@ export default function CatNutritionCalculator() {
             <strong>ملاحظات:</strong><br>
             • قسم الدراي إلى حصص يومية ≈ ${Math.round(results.boxSummary.totalDryGrams / results.boxSummary.totalDays / 5) * 5} جم/يوم<br>
             • اتبع تعليمات التوزيع الأسبوعية<br>
-            • ${results.activityInfo.scientificNote}<br>
             • راجع طبيب بيطري لأي استفسارات
           </p>
           <p style="text-align: center; margin-top: 15px; font-size: 11px; color: #999;">
@@ -278,11 +277,7 @@ export default function CatNutritionCalculator() {
           <p className="text-sm md:text-base opacity-90">سعرات محسوبة علميًا + جدول أسبوعي + بوكس شهري 30 يوم</p>
         </div>
       </header>
-      <Alert className="bg-yellow-50 border-yellow-200 mb-6">
-        <AlertDescription className="text-sm">
-          هذه أداة إرشادية مبنية على إرشادات علمية (NRC, WSAVA, AAFP). استشر دائماً طبيب بيطري للحالات الفردية والمراقبة. لا تستبدل التشخيص المهني.
-        </AlertDescription>
-      </Alert>
+      {/* Advisory removed per user request */}
 
       <div className="max-w-6xl mx-auto p-4 md:p-6 space-y-6">
         {/* Cat Data */}
@@ -1358,6 +1353,20 @@ export default function CatNutritionCalculator() {
 
               {/* Summary */}
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                {/* RER - on screen only */}
+                <Card className="bg-gray-50 print:hidden">
+                  <CardContent className="p-4 text-center">
+                    <p className="text-sm text-gray-600">RER (Resting)</p>
+                    <p className="text-xl font-bold">{formatNumber(results.rer, 1)}</p>
+                  </CardContent>
+                </Card>
+                {/* MER factor - on screen only */}
+                <Card className="bg-gray-50 print:hidden">
+                  <CardContent className="p-4 text-center">
+                    <p className="text-sm text-gray-600">MER (العامل)</p>
+                    <p className="text-xl font-bold">{results.factor.toFixed(1)}×RER</p>
+                  </CardContent>
+                </Card>
                 <Card className="bg-gray-50">
                   <CardContent className="p-4 text-center">
                     <p className="text-sm text-gray-600">السعرات اليومية المطلوبة (DER)</p>
@@ -1403,7 +1412,6 @@ export default function CatNutritionCalculator() {
               {/* Weekly Table */}
               <div>
                 <h3 className="text-lg font-semibold mb-4">الجدول الأسبوعي</h3>
-                <p className="text-sm text-gray-600 mb-4">تقريب الجرامات لأقرب 5 جم.</p>
                 <div className="overflow-x-auto">
                   <Table>
                     <TableHeader>
@@ -1413,6 +1421,8 @@ export default function CatNutritionCalculator() {
                         <TableHead>DER (كcal)</TableHead>
                         <TableHead>سعرات ويت</TableHead>
                         <TableHead>سعرات دراي</TableHead>
+                        <TableHead>فطار (كcal)</TableHead>
+                        <TableHead>عشاء (كcal)</TableHead>
                         <TableHead>جرامات ويت</TableHead>
                         <TableHead>جرامات دراي</TableHead>
                         <TableHead>وحدات ويت</TableHead>
@@ -1426,6 +1436,8 @@ export default function CatNutritionCalculator() {
                           <TableCell className="text-center">{formatNumber(day.der, 1)}</TableCell>
                           <TableCell className="text-center">{formatNumber(day.wetKcal, 1)}</TableCell>
                           <TableCell className="text-center">{formatNumber(day.dryKcal, 1)}</TableCell>
+                          <TableCell className="text-center">{formatNumber(day.breakfastKcal, 1)}</TableCell>
+                          <TableCell className="text-center">{formatNumber(day.dinnerKcal, 1)}</TableCell>
                           <TableCell className="text-center">{formatNumber(day.wetGrams, 1)}</TableCell>
                           <TableCell className="text-center">{formatNumber(day.dryGrams, 1)}</TableCell>
                           <TableCell className="text-center">{day.units.toFixed(2)}</TableCell>
