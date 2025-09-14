@@ -242,7 +242,21 @@ export default function CatNutritionCalculator() {
           </CardHeader>
           <CardContent className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             <div className="space-y-2">
-              <Label>اختيار العميل</Label>
+              <Label htmlFor="clientName">اسم العميل *</Label>
+              <Input
+                id="clientName"
+                placeholder="أدخل اسم العميل"
+                value={catData.clientName}
+                onChange={(e) => handleCatDataChange('clientName', e.target.value)}
+                className={!catData.clientName.trim() ? 'border-red-300 focus:border-red-500' : ''}
+              />
+              {!catData.clientName.trim() && (
+                <p className="text-xs text-red-500">هذا الحقل مطلوب للحفظ</p>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <Label>البحث في العملاء المحفوظين</Label>
               <div className="relative">
                 <Input
                   placeholder={isLoadingClientData ? "جاري تحميل البيانات..." : "ابحث عن العميل بالاسم أو رقم الهاتف"}
@@ -284,6 +298,7 @@ export default function CatNutritionCalculator() {
                   </div>
                 )}
               </div>
+              <p className="text-xs text-gray-500">اختياري: ابحث لتحميل بيانات عميل محفوظة مسبقاً</p>
             </div>
 
             <div className="space-y-2">
