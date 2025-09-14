@@ -269,16 +269,16 @@ export const PrintableReport: React.FC<PrintableReportProps> = ({
         <div className="print-section-title">الحسابات الغذائية</div>
         <div className="print-highlights">
           <div className="print-highlight">
-            <div className="print-highlight-value">{formatNumber(results.factor, 2)}x</div>
-            <div className="print-highlight-label">معامل النشاط<br/>{results.activityInfo.label}</div>
-          </div>
-          <div className="print-highlight">
             <div className="print-highlight-value">{formatNumber(results.der, 1)}</div>
             <div className="print-highlight-label">DER - الطاقة اليومية<br/>(كيلو كالوري/يوم)</div>
           </div>
           <div className="print-highlight">
             <div className="print-highlight-value">{catData.meals}</div>
             <div className="print-highlight-label">عدد الوجبات<br/>في اليوم</div>
+          </div>
+          <div className="print-highlight">
+            <div className="print-highlight-value">{formatNumber(results.usedWeight, 1)} كجم</div>
+            <div className="print-highlight-label">الوزن الحالي<br/>للقطة</div>
           </div>
         </div>
       </div>
@@ -342,83 +342,55 @@ export const PrintableReport: React.FC<PrintableReportProps> = ({
             ))}
           </tbody>
         </table>
-      </div>
 
-      {/* Meal Details */}
-      <div className="print-section">
-        <div className="print-section-title">تفاصيل الوجبات</div>
-        {results.weeklyData.map((day: any, dayIndex: number) => (
-          <div key={dayIndex} style={{ marginBottom: '15px', border: '1px solid #e5e7eb', borderRadius: '4px', padding: '8px' }}>
-            <div style={{ fontWeight: 'bold', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <span>{day.day}</span>
-              <span style={{ 
-                backgroundColor: day.type === 'wet' ? '#dbeafe' : '#f3f4f6',
-                color: day.type === 'wet' ? '#1e40af' : '#374151',
-                padding: '2px 8px',
-                borderRadius: '12px',
-                fontSize: '10px'
-              }}>
-                {day.type === 'wet' ? 'ويت' : 'دراي'}
-              </span>
-            </div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '8px' }}>
-              {day.mealsBreakdown.map((meal: any, mealIndex: number) => (
-                <div key={mealIndex} style={{ backgroundColor: '#f9fafb', border: '1px solid #e5e7eb', borderRadius: '4px', padding: '6px' }}>
-                  <div style={{ fontWeight: 'bold', fontSize: '11px', marginBottom: '4px' }}>الوجبة {meal.mealIndex}</div>
-                  <div style={{ fontSize: '10px', lineHeight: '1.4' }}>
-                    <div>الطاقة: {formatNumber(meal.kcal, 0)} ك.ك</div>
-                    {meal.wetGrams > 0 && <div>ويت: {formatNumber(meal.wetGrams, 0)} جرام</div>}
-                    {meal.dryGrams > 0 && <div>دراي: {formatNumber(meal.dryGrams, 0)} جرام</div>}
-                  </div>
+        {/* Meal Details - Compact Layout */}
+        <div style={{ marginTop: '15px' }}>
+          <div style={{ fontWeight: 'bold', fontSize: '14px', marginBottom: '10px', color: '#0ea5e9' }}>تفاصيل الوجبات</div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '10px' }}>
+            {results.weeklyData.map((day: any, dayIndex: number) => (
+              <div key={dayIndex} style={{ border: '1px solid #e5e7eb', borderRadius: '4px', padding: '8px', fontSize: '10px' }}>
+                <div style={{ fontWeight: 'bold', marginBottom: '6px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <span>{day.day}</span>
+                  <span style={{ 
+                    backgroundColor: day.type === 'wet' ? '#dbeafe' : '#f3f4f6',
+                    color: day.type === 'wet' ? '#1e40af' : '#374151',
+                    padding: '1px 6px',
+                    borderRadius: '8px',
+                    fontSize: '9px'
+                  }}>
+                    {day.type === 'wet' ? 'ويت' : 'دراي'}
+                  </span>
                 </div>
-              ))}
-            </div>
-          </div>
-        ))}
-      </div>
-
-      {/* Box Summary */}
-      {boxSummary && (
-        <div className="print-section">
-          <div className="print-section-title">ملخص البوكس</div>
-          <div className="print-grid">
-            <div className="print-field">
-              <span className="print-field-label">فترة البوكس:</span>
-              <span className="print-field-value">{boxSummary.totalDays} يوم</span>
-            </div>
-            <div className="print-field">
-              <span className="print-field-label">إجمالي الطاقة:</span>
-              <span className="print-field-value">{formatNumber(boxSummary.totalDER, 0)} كيلو كالوري</span>
-            </div>
-            <div className="print-field">
-              <span className="print-field-label">إجمالي الدراي:</span>
-              <span className="print-field-value">{formatNumber(boxSummary.totalDryGrams / 1000, 2)} كجم</span>
-            </div>
-            <div className="print-field">
-              <span className="print-field-label">وحدات الويت:</span>
-              <span className="print-field-value">{formatNumber(boxSummary.unitsUsed, 0)} وحدة</span>
-            </div>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(70px, 1fr))', gap: '4px' }}>
+                  {day.mealsBreakdown.map((meal: any, mealIndex: number) => (
+                    <div key={mealIndex} style={{ backgroundColor: '#f9fafb', border: '1px solid #e5e7eb', borderRadius: '3px', padding: '4px' }}>
+                      <div style={{ fontWeight: 'bold', fontSize: '9px', marginBottom: '2px' }}>وجبة {meal.mealIndex}</div>
+                      <div style={{ fontSize: '8px', lineHeight: '1.2' }}>
+                        <div>{formatNumber(meal.kcal, 0)} ك.ك</div>
+                        {meal.wetGrams > 0 && <div>ويت: {formatNumber(meal.wetGrams, 0)}ج</div>}
+                        {meal.dryGrams > 0 && <div>دراي: {formatNumber(meal.dryGrams, 0)}ج</div>}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
           </div>
         </div>
-      )}
+      </div>
 
       {/* Recommendations */}
       {results.recommendations && results.recommendations.length > 0 && (
         <div className="print-section">
           <div className="print-section-title">التوصيات</div>
-          <ul style={{ margin: 0, paddingRight: '20px' }}>
+          <ul style={{ margin: 0, paddingRight: '20px', fontSize: '11px' }}>
             {results.recommendations.map((rec: string, index: number) => (
-              <li key={index} style={{ marginBottom: '5px' }}>{rec}</li>
+              <li key={index} style={{ marginBottom: '3px' }}>{rec}</li>
             ))}
           </ul>
         </div>
       )}
 
-      {/* Footer */}
-      <div className="print-footer">
-        <div>تم إنشاء هذا التقرير بواسطة حاسبة تغذية القطة - نظام حساب علمي معتمد على NRC و WSAVA</div>
-        <div>للاستفسارات أو المراجعة، يرجى الاتصال بالطبيب البيطري المختص</div>
-      </div>
     </div>
   )
 }
