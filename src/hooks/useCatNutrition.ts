@@ -58,6 +58,7 @@ interface Pricing {
   deliveryCost: string;
   additionalCosts: string;
   profitPercentage: string;
+  discountPercentage: string;
 }
 
 interface SpecialCondition {
@@ -143,6 +144,8 @@ interface Costs {
   totalCostBeforeProfit: number;
   profitAmount: number;
   totalCostWithProfit: number;
+  discountAmount: number;
+  totalCostAfterDiscount: number;
   totalCostWithDelivery: number;
   deliveryCost: number;
   perDay: number;
@@ -304,6 +307,7 @@ export function useCatNutrition() {
     deliveryCost: '0',
     additionalCosts: '0',
     profitPercentage: '20',
+    discountPercentage: '0',
   })
 
   const [results, setResults] = useState<Results | null>(null)
@@ -317,6 +321,8 @@ export function useCatNutrition() {
     totalCostBeforeProfit: 0,
     profitAmount: 0,
     totalCostWithProfit: 0,
+    discountAmount: 0,
+    totalCostAfterDiscount: 0,
     totalCostWithDelivery: 0,
     deliveryCost: 0,
     perDay: 0
@@ -758,6 +764,7 @@ export function useCatNutrition() {
       const additionalCosts = toNumber(pricing.additionalCosts, 0)
       const deliveryCost = toNumber(pricing.deliveryCost, 0)
       const profitPercentage = toNumber(pricing.profitPercentage, 0)
+      const discountPercentage = toNumber(pricing.discountPercentage, 0)
       
       const totalDryKg = totalDryGrams / 1000
       const dryCost = totalDryKg * priceDryPerKg
@@ -766,7 +773,9 @@ export function useCatNutrition() {
       const totalCostBeforeProfit = subtotalCost + packagingCost + additionalCosts
       const profitAmount = (totalCostBeforeProfit * profitPercentage) / 100
       const totalCostWithProfit = totalCostBeforeProfit + profitAmount
-      const totalCostWithDelivery = totalCostWithProfit + deliveryCost
+      const discountAmount = (totalCostWithProfit * discountPercentage) / 100
+      const totalCostAfterDiscount = totalCostWithProfit - discountAmount
+      const totalCostWithDelivery = totalCostAfterDiscount + deliveryCost
       
       setCosts({
         dryCost,
@@ -777,6 +786,8 @@ export function useCatNutrition() {
         totalCostBeforeProfit,
         profitAmount,
         totalCostWithProfit,
+        discountAmount,
+        totalCostAfterDiscount,
         totalCostWithDelivery,
         deliveryCost,
         perDay: totalDays > 0 ? (totalCostWithDelivery / totalDays) : 0

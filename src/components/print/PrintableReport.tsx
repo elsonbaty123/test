@@ -60,6 +60,21 @@ export const PrintableReport: React.FC<PrintableReportProps> = ({
     return map[code] || code
   }
 
+  const getBCSDescription = (bcs: number) => {
+    const descriptions: Record<number, string> = {
+      1: 'نحيف جداً - ضلوع وعظام واضحة جداً',
+      2: 'نحيف - ضلوع وعظام واضحة', 
+      3: 'تحت الوزن - ضلوع محسوسة بسهولة',
+      4: 'أقل من المثالي - ضلوع محسوسة بلمسة خفيفة',
+      5: 'مثالي - وزن مثالي وشكل متناسق',
+      6: 'فوق المثالي قليلاً - صعوبة في الإحساس بالضلوع',
+      7: 'زيادة وزن - دهون واضحة على الجسم',
+      8: 'بدانة - دهون كثيرة وصعوبة في الحركة',
+      9: 'بدانة مفرطة - دهون مفرطة تؤثر على الصحة'
+    }
+    return descriptions[bcs] || 'غير محدد'
+  }
+
   if (!results) return null
 
   return (
@@ -270,7 +285,7 @@ export const PrintableReport: React.FC<PrintableReportProps> = ({
           </div>
           <div className="print-field">
             <span className="print-field-label">حالة الجسم (BCS):</span>
-            <span className="print-field-value">{catData.bcs}/9 (يعني مستوى {catData.bcs} من أصل 9)</span>
+            <span className="print-field-value">{catData.bcs}/9 - {getBCSDescription(catData.bcs)}</span>
           </div>
         </div>
       </div>
