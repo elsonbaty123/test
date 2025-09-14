@@ -1147,16 +1147,26 @@ export default function CatNutritionCalculator() {
                         </Badge>
                       </h4>
                       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
-                        {day.mealsBreakdown.map((meal, mealIndex) => (
-                          <div key={mealIndex} className="bg-gray-50 rounded p-3">
-                            <div className="font-medium text-sm mb-2">الوجبة {meal.mealIndex}</div>
-                            <div className="space-y-1 text-xs">
-                              <div>الطاقة: {formatNumber(meal.kcal, 0)} كيلو كالوري</div>
-                              {meal.wetGrams > 0 && <div>ويت: {formatNumber(meal.wetGrams, 0)} جرام</div>}
-                              {meal.dryGrams > 0 && <div>دراي: {formatNumber(meal.dryGrams, 0)} جرام</div>}
+                        {day.mealsBreakdown.map((meal, mealIndex) => {
+                          // Determine how to display wet food based on package type
+                          const isPouch = foodData.wetPackType === 'pouch'
+                          const wetDisplayText = meal.wetGrams > 0 
+                            ? isPouch 
+                              ? `باوتش: ${formatNumber(meal.wetUnits, 1)} وحدة`
+                              : `ويت: ${formatNumber(meal.wetGrams, 0)} جرام`
+                            : null
+                          
+                          return (
+                            <div key={mealIndex} className="bg-gray-50 rounded p-3">
+                              <div className="font-medium text-sm mb-2">الوجبة {meal.mealIndex}</div>
+                              <div className="space-y-1 text-xs">
+                                <div>الطاقة: {formatNumber(meal.kcal, 0)} كيلو كالوري</div>
+                                {wetDisplayText && <div>{wetDisplayText}</div>}
+                                {meal.dryGrams > 0 && <div>دراي: {formatNumber(meal.dryGrams, 0)} جرام</div>}
+                              </div>
                             </div>
-                          </div>
-                        ))}
+                          )
+                        })}
                       </div>
                     </div>
                   ))}

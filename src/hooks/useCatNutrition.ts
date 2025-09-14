@@ -78,6 +78,7 @@ interface WeeklyDay {
     kcal: number;
     wetGrams: number;
     dryGrams: number;
+    wetUnits: number;
   }>;
   // Keep legacy fields for backward compatibility
   breakfastKcal: number;
@@ -639,11 +640,19 @@ export function useCatNutrition() {
           const dryKcal = dryKcalPerMeal[idx] || 0
           const wetGramsForMeal = wetKcal / Math.max(1e-6, wetKcalPerGram)
           const dryGramsForMeal = dryKcal * dryGramsPerKcal
+          
+          // Calculate units for this meal
+          let wetUnitsForMeal = 0
+          if (wetGramsForMeal > 0 && wetUnitGrams > 0) {
+            wetUnitsForMeal = wetGramsForMeal / wetUnitGrams
+          }
+          
           return {
             mealIndex: idx + 1,
             kcal: round1(perMealTarget),
             wetGrams: Math.round(wetGramsForMeal),
-            dryGrams: Math.round(dryGramsForMeal)
+            dryGrams: Math.round(dryGramsForMeal),
+            wetUnits: Math.round(wetUnitsForMeal * 100) / 100
           }
         })
         
