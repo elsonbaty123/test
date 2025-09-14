@@ -434,6 +434,238 @@ export default function CatNutritionCalculator() {
           </CardContent>
         </Card>
 
+        {/* Food Data Section */}
+        <Card>
+          <CardHeader>
+            <CardTitle>بيانات الطعام</CardTitle>
+            <CardDescription>أدخل السعرات الحرارية لكل 100 جرام</CardDescription>
+          </CardHeader>
+          <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="dry100">سعرات الدراي (لكل 100 جرام)</Label>
+              <Input
+                id="dry100"
+                type="number"
+                placeholder="مثال: 380"
+                value={foodData.dry100}
+                onChange={(e) => handleFoodDataChange('dry100', e.target.value)}
+              />
+              <p className="text-xs text-gray-500">نموذجي: 350-450 كيلو كالوري</p>
+            </div>
+
+            <div className="space-y-2">
+              <Label>نوع بيانات الويت</Label>
+              <Select value={foodData.wetMode} onValueChange={(value) => handleFoodDataChange('wetMode', value)}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="per100">سعرات لكل 100 جرام</SelectItem>
+                  <SelectItem value="perUnit">سعرات لكل وحدة (علبة/باوتش)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {foodData.wetMode === 'per100' ? (
+              <div className="space-y-2">
+                <Label htmlFor="wet100">سعرات الويت (لكل 100 جرام)</Label>
+                <Input
+                  id="wet100"
+                  type="number"
+                  placeholder="مثال: 80"
+                  value={foodData.wet100}
+                  onChange={(e) => handleFoodDataChange('wet100', e.target.value)}
+                />
+                <p className="text-xs text-gray-500">نموذجي: 70-100 كيلو كالوري</p>
+              </div>
+            ) : (
+              <>
+                <div className="space-y-2">
+                  <Label htmlFor="wetKcalPerUnit">سعرات الوحدة الواحدة</Label>
+                  <Input
+                    id="wetKcalPerUnit"
+                    type="number"
+                    placeholder="مثال: 85"
+                    value={foodData.wetKcalPerUnit}
+                    onChange={(e) => handleFoodDataChange('wetKcalPerUnit', e.target.value)}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="wetUnitGrams">وزن الوحدة (جرام)</Label>
+                  <Input
+                    id="wetUnitGrams"
+                    type="number"
+                    placeholder="مثال: 85"
+                    value={foodData.wetUnitGrams}
+                    onChange={(e) => handleFoodDataChange('wetUnitGrams', e.target.value)}
+                  />
+                </div>
+              </>
+            )}
+
+            <div className="space-y-2">
+              <Label htmlFor="wetUnitGrams">وزن الوحدة (جرام) - للعرض</Label>
+              <Input
+                id="wetUnitGrams"
+                type="number"
+                placeholder="مثال: 85"
+                value={foodData.wetUnitGrams}
+                onChange={(e) => handleFoodDataChange('wetUnitGrams', e.target.value)}
+              />
+              <p className="text-xs text-gray-500">يستخدم في عرض أحجام التقديم</p>
+            </div>
+
+            <div className="space-y-2">
+              <Label>نوع العبوة</Label>
+              <Select value={foodData.wetPackType} onValueChange={(value) => handleFoodDataChange('wetPackType', value)}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="pouch">باوتش</SelectItem>
+                  <SelectItem value="can">علبة</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Weekly Plan Section */}
+        <Card>
+          <CardHeader>
+            <CardTitle>التخطيط الأسبوعي</CardTitle>
+            <CardDescription>حدد الأيام التي ستُعطى فيها طعام ويت</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>عدد أيام الويت في الأسبوع</Label>
+                <div className="flex gap-2">
+                  <Input
+                    type="number"
+                    min="0"
+                    max="7"
+                    value={weeklyPlan.wetDaysCount}
+                    onChange={(e) => handleWeeklyPlanChange('wetDaysCount', parseInt(e.target.value))}
+                    className="w-20"
+                  />
+                  <Button
+                    variant="outline"
+                    onClick={() => autoDistributeWetDays(weeklyPlan.wetDaysCount)}
+                    size="sm"
+                  >
+                    توزيع تلقائي
+                  </Button>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label>الوجبة التي تحتوي على ويت</Label>
+                <Select 
+                  value={weeklyPlan.wetMealIndex.toString()} 
+                  onValueChange={(value) => handleWeeklyPlanChange('wetMealIndex', parseInt(value))}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {Array.from({ length: catData.meals }, (_, i) => (
+                      <SelectItem key={i + 1} value={(i + 1).toString()}>
+                        الوجبة {i + 1}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label>أيام الأسبوع</Label>
+              <div className="grid grid-cols-7 gap-2">
+                {dayNames.map((day, index) => (
+                  <div key={index} className="flex items-center space-x-2 space-x-reverse">
+                    <Checkbox
+                      id={`day-${index}`}
+                      checked={weeklyPlan.wetDays[index]}
+                      onCheckedChange={() => handleWetDayToggle(index)}
+                    />
+                    <Label htmlFor={`day-${index}`} className="text-sm">
+                      {day}
+                    </Label>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Special Conditions Section */}
+        <Card>
+          <CardHeader>
+            <CardTitle>الحالات الخاصة</CardTitle>
+            <CardDescription>حدد إذا كانت القطة لديها حالة صحية خاصة</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label>الحالة الصحية</Label>
+              <Select value={catData.specialCond} onValueChange={(value) => handleCatDataChange('specialCond', value)}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">طبيعية</SelectItem>
+                  <SelectItem value="pregnant">حامل</SelectItem>
+                  <SelectItem value="lactating">مُرضعة</SelectItem>
+                  <SelectItem value="ckd">قصور كلوي مزمن (CKD)</SelectItem>
+                  <SelectItem value="hyperthyroid">فرط نشاط الغدة الدرقية</SelectItem>
+                  <SelectItem value="diabetes">السكري</SelectItem>
+                  <SelectItem value="recovery">فترة نقاهة</SelectItem>
+                  <SelectItem value="cardiac">مشاكل قلبية</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {catData.specialCond === 'pregnant' && (
+              <div className="space-y-2">
+                <Label>أسبوع الحمل (1-9)</Label>
+                <Input
+                  type="number"
+                  min="1"
+                  max="9"
+                  value={catData.pregWeek}
+                  onChange={(e) => handleCatDataChange('pregWeek', parseInt(e.target.value))}
+                />
+              </div>
+            )}
+
+            {catData.specialCond === 'lactating' && (
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>أسبوع الرضاعة (1-8)</Label>
+                  <Input
+                    type="number"
+                    min="1"
+                    max="8"
+                    value={catData.lacWeek}
+                    onChange={(e) => handleCatDataChange('lacWeek', parseInt(e.target.value))}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>عدد الصغار (1-8)</Label>
+                  <Input
+                    type="number"
+                    min="1"
+                    max="8"
+                    value={catData.lacKittens}
+                    onChange={(e) => handleCatDataChange('lacKittens', parseInt(e.target.value))}
+                  />
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
         {/* Calculate Button */}
         <div className="flex justify-center">
           <Button 
@@ -445,6 +677,470 @@ export default function CatNutritionCalculator() {
             {isCalculating ? 'جاري الحساب...' : 'احسب الجدول'}
           </Button>
         </div>
+
+        {/* Errors Display */}
+        {errors.length > 0 && (
+          <Alert className="border-red-200 bg-red-50">
+            <AlertDescription>
+              <ul className="list-disc list-inside space-y-1">
+                {errors.map((error, index) => (
+                  <li key={index} className="text-red-700">{error}</li>
+                ))}
+              </ul>
+            </AlertDescription>
+          </Alert>
+        )}
+
+        {/* Results Display */}
+        {results && (
+          <div className="space-y-6">
+            {/* Basic Calculations */}
+            <Card>
+              <CardHeader>
+                <CardTitle>الحسابات الأساسية</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-blue-600">{formatNumber(results.rer, 1)}</div>
+                    <div className="text-sm font-medium">RER - الطاقة الأساسية</div>
+                    <div className="text-xs text-gray-500">كيلو كالوري يومياً</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-green-600">{formatNumber(results.factor, 2)}x</div>
+                    <div className="text-sm font-medium">معامل النشاط</div>
+                    <div className="text-xs text-gray-500">{results.activityInfo.label}</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-purple-600">{formatNumber(results.der, 1)}</div>
+                    <div className="text-sm font-medium">DER - الطاقة اليومية</div>
+                    <div className="text-xs text-gray-500">كيلو كالوري يومياً</div>
+                  </div>
+                </div>
+
+                {results.recommendations.length > 0 && (
+                  <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded">
+                    <h4 className="font-medium text-yellow-800 mb-2">توصيات:</h4>
+                    <ul className="text-sm text-yellow-700 space-y-1">
+                      {results.recommendations.map((rec, index) => (
+                        <li key={index}>• {rec}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Weight Status */}
+            <Card>
+              <CardHeader>
+                <CardTitle>حالة الوزن</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                  <div className="text-center">
+                    <div className="text-lg font-bold">{formatNumber(results.usedWeight, 1)} كجم</div>
+                    <div className="text-sm text-gray-500">الوزن الحالي</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-lg font-bold">{formatNumber(results.idealWeight, 1)} كجم</div>
+                    <div className="text-sm text-gray-500">الوزن المثالي</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-lg font-bold">{formatNumber(results.weightRange[0], 1)} - {formatNumber(results.weightRange[1], 1)} كجم</div>
+                    <div className="text-sm text-gray-500">النطاق الطبيعي</div>
+                  </div>
+                  <div className="text-center">
+                    <Badge 
+                      variant={results.weightStatus === 'ok' ? 'default' : results.weightStatus === 'low' ? 'secondary' : results.weightStatus === 'high' ? 'destructive' : 'outline'}
+                    >
+                      {results.weightStatus === 'ok' && 'طبيعي'}
+                      {results.weightStatus === 'low' && 'منخفض'}
+                      {results.weightStatus === 'high' && 'مرتفع'}
+                      {results.weightStatus === 'na' && 'غير محدد'}
+                    </Badge>
+                    <div className="text-sm text-gray-500">حالة الوزن</div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Weekly Schedule */}
+            <Card>
+              <CardHeader>
+                <CardTitle>الجدول الأسبوعي</CardTitle>
+                <CardDescription>تفاصيل الوجبات لكل يوم</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="text-right">اليوم</TableHead>
+                        <TableHead className="text-right">النوع</TableHead>
+                        <TableHead className="text-right">DER</TableHead>
+                        <TableHead className="text-right">ويت (كيلو كالوري)</TableHead>
+                        <TableHead className="text-right">دراي (كيلو كالوري)</TableHead>
+                        <TableHead className="text-right">ويت (جرام)</TableHead>
+                        <TableHead className="text-right">دراي (جرام)</TableHead>
+                        <TableHead className="text-right">عدد الوحدات</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {results.weeklyData.map((day, index) => (
+                        <TableRow key={index} className={day.type === 'wet' ? 'bg-blue-50' : ''}>
+                          <TableCell className="font-medium">{day.day}</TableCell>
+                          <TableCell>
+                            <Badge variant={day.type === 'wet' ? 'default' : 'secondary'}>
+                              {day.type === 'wet' ? 'ويت' : 'دراي'}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>{formatNumber(day.der, 0)}</TableCell>
+                          <TableCell>{formatNumber(day.wetKcal, 0)}</TableCell>
+                          <TableCell>{formatNumber(day.dryKcal, 0)}</TableCell>
+                          <TableCell>{formatNumber(day.wetGrams, 0)}</TableCell>
+                          <TableCell>{formatNumber(day.dryGrams, 0)}</TableCell>
+                          <TableCell>{formatNumber(day.units, 1)}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Detailed Meal Breakdown */}
+            <Card>
+              <CardHeader>
+                <CardTitle>تفاصيل الوجبات</CardTitle>
+                <CardDescription>كميات كل وجبة في اليوم</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="grid gap-4">
+                  {results.weeklyData.map((day, dayIndex) => (
+                    <div key={dayIndex} className="border rounded-lg p-4">
+                      <h4 className="font-semibold mb-3 flex items-center gap-2">
+                        {day.day}
+                        <Badge variant={day.type === 'wet' ? 'default' : 'secondary'}>
+                          {day.type === 'wet' ? 'ويت' : 'دراي'}
+                        </Badge>
+                      </h4>
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+                        {day.mealsBreakdown.map((meal, mealIndex) => (
+                          <div key={mealIndex} className="bg-gray-50 rounded p-3">
+                            <div className="font-medium text-sm mb-2">الوجبة {meal.mealIndex}</div>
+                            <div className="space-y-1 text-xs">
+                              <div>الطاقة: {formatNumber(meal.kcal, 0)} كيلو كالوري</div>
+                              {meal.wetGrams > 0 && <div>ويت: {formatNumber(meal.wetGrams, 0)} جرام</div>}
+                              {meal.dryGrams > 0 && <div>دراي: {formatNumber(meal.dryGrams, 0)} جرام</div>}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+            {/* Box Builder */}
+            <Card>
+              <CardHeader>
+                <CardTitle>صانع البوكسات</CardTitle>
+                <CardDescription>احسب ما تحتاجه لفترة معينة</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="space-y-2">
+                    <Label>نوع البوكس</Label>
+                    <Select value={boxBuilder.boxType} onValueChange={(value) => handleBoxBuilderChange('boxType', value)}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="weekly">أسبوعي (7 أيام)</SelectItem>
+                        <SelectItem value="monthly30">شهري (30 يوم)</SelectItem>
+                        <SelectItem value="custom">مخصص</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {boxBuilder.boxType === 'custom' && (
+                    <div className="space-y-2">
+                      <Label>عدد الأيام</Label>
+                      <Input
+                        type="number"
+                        min="1"
+                        max="365"
+                        value={boxBuilder.customDays}
+                        onChange={(e) => handleBoxBuilderChange('customDays', parseInt(e.target.value))}
+                      />
+                    </div>
+                  )}
+
+                  <div className="space-y-2">
+                    <Label>هامش أمان (%)</Label>
+                    <Input
+                      type="number"
+                      min="0"
+                      max="50"
+                      step="0.1"
+                      value={boxBuilder.safety}
+                      onChange={(e) => handleBoxBuilderChange('safety', parseFloat(e.target.value))}
+                    />
+                    <p className="text-xs text-gray-500">نسبة زيادة لتجنب نفود الطعام</p>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label>طريقة حساب الويت</Label>
+                    <Select value={boxBuilder.boxWetMode} onValueChange={(value) => handleBoxBuilderChange('boxWetMode', value)}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="auto_total">تلقائي من الجدول</SelectItem>
+                        <SelectItem value="fixed_total">عدد ثابت</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {boxBuilder.boxWetMode === 'fixed_total' && (
+                    <div className="space-y-2">
+                      <Label>عدد وحدات الويت الإجمالي</Label>
+                      <Input
+                        type="number"
+                        min="0"
+                        value={boxBuilder.boxTotalUnits}
+                        onChange={(e) => handleBoxBuilderChange('boxTotalUnits', parseInt(e.target.value))}
+                      />
+                    </div>
+                  )}
+                </div>
+
+                {/* Box Summary */}
+                <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                  <h4 className="font-semibold mb-3">ملخص البوكس</h4>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                    <div>
+                      <div className="font-medium">فترة البوكس</div>
+                      <div className="text-blue-600">{results.boxSummary.totalDays} يوم</div>
+                    </div>
+                    <div>
+                      <div className="font-medium">إجمالي الطاقة</div>
+                      <div className="text-blue-600">{formatNumber(results.boxSummary.totalDER, 0)} كيلو كالوري</div>
+                    </div>
+                    <div>
+                      <div className="font-medium">إجمالي الدراي</div>
+                      <div className="text-blue-600">{formatNumber(results.boxSummary.totalDryGrams / 1000, 2)} كجم</div>
+                    </div>
+                    <div>
+                      <div className="font-medium">وحدات الويت</div>
+                      <div className="text-blue-600">{formatNumber(results.boxSummary.unitsUsed, 0)} وحدة</div>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Pricing Section */}
+            <Card>
+              <CardHeader>
+                <CardTitle>حاسبة الأسعار</CardTitle>
+                <CardDescription>احسب تكلفة الطعام</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="space-y-2">
+                    <Label>العملة</Label>
+                    <Select value={pricing.currency} onValueChange={(value) => handlePricingChange('currency', value)}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="EGP">جنيه مصري (EGP)</SelectItem>
+                        <SelectItem value="USD">دولار أمريكي (USD)</SelectItem>
+                        <SelectItem value="EUR">يورو (EUR)</SelectItem>
+                        <SelectItem value="SAR">ريال سعودي (SAR)</SelectItem>
+                        <SelectItem value="AED">درهم إماراتي (AED)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>سعر الدراي (لكل كيلو)</Label>
+                    <Input
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      placeholder="0.00"
+                      value={pricing.priceDryPerKg}
+                      onChange={(e) => handlePricingChange('priceDryPerKg', e.target.value)}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>سعر وحدة الويت</Label>
+                    <Input
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      placeholder="0.00"
+                      value={pricing.priceWetUnit}
+                      onChange={(e) => handlePricingChange('priceWetUnit', e.target.value)}
+                    />
+                  </div>
+                </div>
+
+                {/* Cost Summary */}
+                <div className="mt-6 p-4 bg-green-50 border border-green-200 rounded-lg">
+                  <h4 className="font-semibold mb-3">ملخص التكاليف</h4>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                    <div>
+                      <div className="font-medium">تكلفة الدراي</div>
+                      <div className="text-green-600">{formatNumber(costs.dryCost, 2)} {pricing.currency}</div>
+                    </div>
+                    <div>
+                      <div className="font-medium">تكلفة الويت</div>
+                      <div className="text-green-600">{formatNumber(costs.wetCost, 2)} {pricing.currency}</div>
+                    </div>
+                    <div>
+                      <div className="font-medium">التكلفة الإجمالية</div>
+                      <div className="text-green-600 font-bold">{formatNumber(costs.totalCost, 2)} {pricing.currency}</div>
+                    </div>
+                    <div>
+                      <div className="font-medium">التكلفة في اليوم</div>
+                      <div className="text-green-600">{formatNumber(costs.perDay, 2)} {pricing.currency}</div>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+            
+            {/* Save/Load Data Section */}
+            <Card>
+              <CardHeader>
+                <CardTitle>حفظ وتحميل البيانات</CardTitle>
+                <CardDescription>احفظ بيانات العميل لاستعمالها لاحقاً</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="flex flex-wrap gap-4">
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button 
+                          variant="outline" 
+                          onClick={async () => {
+                            if (!catData.clientName.trim()) {
+                              alert('الرجاء إدخال اسم العميل أولاً')
+                              return
+                            }
+                            setIsSaving(true)
+                            try {
+                              const res = await fetch('/api/clients', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({
+                                  name: catData.clientName,
+                                  phone: catData.clientPhone,
+                                  address: catData.clientAddress,
+                                  data: {
+                                    catData,
+                                    foodData,
+                                    weeklyPlan,
+                                    boxBuilder,
+                                    pricing
+                                  }
+                                })
+                              })
+                              const json = await res.json()
+                              if (!res.ok) throw new Error(json?.error || 'فشل في الحفظ')
+                              alert('تم حفظ بيانات العميل بنجاح')
+                              await loadClients() // Refresh client list
+                            } catch (e) {
+                              console.error('Save failed:', e)
+                              alert('فشل في حفظ البيانات: ' + (e as Error).message)
+                            } finally {
+                              setIsSaving(false)
+                            }
+                          }}
+                          disabled={isSaving || !catData.clientName.trim()}
+                        >
+                          {isSaving ? 'جاري الحفظ...' : 'حفظ بيانات العميل'}
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>يحفظ جميع بيانات القطة والطعام والجدوهة</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button 
+                          variant="outline"
+                          onClick={async () => {
+                            if (!catData.clientName.trim()) {
+                              alert('الرجاء اختيار عميل أولاً')
+                              return
+                            }
+                            try {
+                              const res = await fetch(`/api/clients?name=${encodeURIComponent(catData.clientName)}`)
+                              const json = await res.json()
+                              if (!res.ok) throw new Error(json?.error || 'غير موجود')
+                              const data = json?.data
+                              
+                              if (data?.catData) {
+                                Object.entries(data.catData).forEach(([k, v]) => {
+                                  handleCatDataChange(k as any, v as any)
+                                })
+                              }
+                              if (data?.foodData) {
+                                Object.entries(data.foodData).forEach(([k, v]) => {
+                                  handleFoodDataChange(k as any, v as any)
+                                })
+                              }
+                              if (data?.weeklyPlan) {
+                                const wp = data.weeklyPlan
+                                if (Array.isArray(wp.wetDays)) {
+                                  handleWeeklyPlanChange('wetDays', wp.wetDays)
+                                  handleWeeklyPlanChange('wetDaysCount', wp.wetDays.filter((b: boolean) => !!b).length)
+                                }
+                                if (typeof wp.wetMealIndex !== 'undefined') handleWeeklyPlanChange('wetMealIndex', wp.wetMealIndex)
+                              }
+                              if (data?.boxBuilder) {
+                                Object.entries(data.boxBuilder).forEach(([k, v]) => {
+                                  handleBoxBuilderChange(k as any, v as any)
+                                })
+                              }
+                              if (data?.pricing) {
+                                Object.entries(data.pricing).forEach(([k, v]) => {
+                                  handlePricingChange(k as any, v as any)
+                                })
+                              }
+                              
+                              alert('تم تحميل بيانات العميل بنجاح')
+                            } catch (e) {
+                              console.error('Load failed:', e)
+                              alert('فشل في تحميل بيانات العميل: ' + (e as Error).message)
+                            }
+                          }}
+                          disabled={!catData.clientName.trim()}
+                        >
+                          تحميل بيانات العميل
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>يحمّل بيانات محفوظة سابقاً لهذا العميل</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
 
         {/* New Client Dialog */}
         <Dialog open={showNewClientDialog} onOpenChange={setShowNewClientDialog}>
