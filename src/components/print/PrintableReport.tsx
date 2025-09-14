@@ -1,0 +1,412 @@
+'use client'
+
+import React from 'react'
+import { formatNumber } from '@/lib/utils'
+
+interface PrintableReportProps {
+  catData: any
+  foodData: any
+  results: any
+  costs: any
+  pricing: any
+  boxSummary: any
+}
+
+export const PrintableReport: React.FC<PrintableReportProps> = ({
+  catData,
+  foodData,
+  results,
+  costs,
+  pricing,
+  boxSummary
+}) => {
+  const formatDate = () => {
+    return new Date().toLocaleDateString('ar-EG', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    })
+  }
+
+  const breedLabel = (code: string) => {
+    const map: Record<string, string> = {
+      domestic_shorthair: 'منزلية شعر قصير',
+      domestic_longhair: 'منزلية شعر طويل',
+      persian: 'Persian (شيرازي)',
+      british_shorthair: 'British Shorthair',
+      maine_coon: 'Maine Coon',
+      ragdoll: 'Ragdoll',
+      siamese: 'Siamese',
+      bengal: 'Bengal',
+      sphynx: 'Sphynx',
+      scottish_fold: 'Scottish Fold',
+      norwegian_forest: 'Norwegian Forest',
+      american_shorthair: 'American Shorthair',
+      abyssinian: 'Abyssinian',
+      turkish_angora: 'Turkish Angora',
+      russian_blue: 'Russian Blue',
+      oriental: 'Oriental',
+      burmese: 'Burmese (بورميز)',
+      tonkinese: 'Tonkinese (تونكينيز)',
+      himalayan: 'Himalayan (هيمالايا)',
+      devon_rex: 'Devon Rex (ديفون ريكس)',
+      cornish_rex: 'Cornish Rex (كورنيش ريكس)',
+      manx: 'Manx (مانكس)',
+      savannah: 'Savannah (سافانا)',
+      bombay: 'Bombay (بومباي)',
+      egyptian_mau: 'Egyptian Mau (مصري ماو)',
+      egyptian_baladi: 'بلدي مصري (Baladi)'
+    }
+    return map[code] || code
+  }
+
+  if (!results) return null
+
+  return (
+    <div className="print-report" dir="rtl">
+      <style jsx>{`
+        @media print {
+          .print-report {
+            font-family: 'Arial', sans-serif;
+            font-size: 12px;
+            line-height: 1.4;
+            color: #000;
+            background: white;
+          }
+          
+          .print-header {
+            text-align: center;
+            border-bottom: 2px solid #0ea5e9;
+            padding-bottom: 15px;
+            margin-bottom: 20px;
+          }
+          
+          .print-title {
+            font-size: 18px;
+            font-weight: bold;
+            color: #0ea5e9;
+            margin-bottom: 5px;
+          }
+          
+          .print-subtitle {
+            font-size: 12px;
+            color: #666;
+          }
+          
+          .print-section {
+            margin-bottom: 20px;
+            page-break-inside: avoid;
+          }
+          
+          .print-section-title {
+            font-size: 14px;
+            font-weight: bold;
+            color: #0ea5e9;
+            border-bottom: 1px solid #e5e7eb;
+            padding-bottom: 5px;
+            margin-bottom: 10px;
+          }
+          
+          .print-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-bottom: 15px;
+          }
+          
+          .print-grid-3 {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-bottom: 15px;
+          }
+          
+          .print-field {
+            display: flex;
+            justify-content: space-between;
+            padding: 5px 0;
+            border-bottom: 1px dotted #ccc;
+          }
+          
+          .print-field-label {
+            font-weight: bold;
+            color: #374151;
+          }
+          
+          .print-field-value {
+            color: #000;
+          }
+          
+          .print-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 15px;
+          }
+          
+          .print-table th,
+          .print-table td {
+            border: 1px solid #ccc;
+            padding: 8px;
+            text-align: center;
+            font-size: 11px;
+          }
+          
+          .print-table th {
+            background-color: #f3f4f6;
+            font-weight: bold;
+          }
+          
+          .print-table .wet-day {
+            background-color: #dbeafe;
+          }
+          
+          .print-highlights {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin: 20px 0;
+          }
+          
+          .print-highlight {
+            text-align: center;
+            padding: 10px;
+            border: 2px solid #0ea5e9;
+            border-radius: 8px;
+          }
+          
+          .print-highlight-value {
+            font-size: 16px;
+            font-weight: bold;
+            color: #0ea5e9;
+          }
+          
+          .print-highlight-label {
+            font-size: 10px;
+            color: #666;
+            margin-top: 5px;
+          }
+          
+          .print-footer {
+            margin-top: 30px;
+            text-align: center;
+            font-size: 10px;
+            color: #666;
+            border-top: 1px solid #e5e7eb;
+            padding-top: 10px;
+          }
+          
+          .no-print {
+            display: none !important;
+          }
+        }
+      `}</style>
+
+      {/* Header */}
+      <div className="print-header">
+        <div className="print-title">تقرير تغذية القطة</div>
+        <div className="print-subtitle">حساب علمي للسعرات اليومية وخطة التغذية الأسبوعية</div>
+        <div className="print-subtitle">تاريخ التقرير: {formatDate()}</div>
+      </div>
+
+      {/* Client Information */}
+      <div className="print-section">
+        <div className="print-section-title">معلومات العميل</div>
+        <div className="print-grid">
+          <div className="print-field">
+            <span className="print-field-label">اسم العميل:</span>
+            <span className="print-field-value">{catData.clientName || 'غير محدد'}</span>
+          </div>
+          <div className="print-field">
+            <span className="print-field-label">رقم الهاتف:</span>
+            <span className="print-field-value">{catData.clientPhone || 'غير محدد'}</span>
+          </div>
+        </div>
+        {catData.clientAddress && (
+          <div className="print-field">
+            <span className="print-field-label">العنوان:</span>
+            <span className="print-field-value">{catData.clientAddress}</span>
+          </div>
+        )}
+      </div>
+
+      {/* Cat Information */}
+      <div className="print-section">
+        <div className="print-section-title">بيانات القطة</div>
+        <div className="print-grid">
+          <div className="print-field">
+            <span className="print-field-label">الاسم:</span>
+            <span className="print-field-value">{catData.name || 'غير محدد'}</span>
+          </div>
+          <div className="print-field">
+            <span className="print-field-label">العمر:</span>
+            <span className="print-field-value">{catData.ageValue} {catData.ageUnit === 'months' ? 'شهور' : 'سنوات'}</span>
+          </div>
+          <div className="print-field">
+            <span className="print-field-label">الوزن:</span>
+            <span className="print-field-value">{catData.weight} كجم</span>
+          </div>
+          <div className="print-field">
+            <span className="print-field-label">الجنس:</span>
+            <span className="print-field-value">{catData.sex === 'female' ? 'أنثى' : 'ذكر'}</span>
+          </div>
+          <div className="print-field">
+            <span className="print-field-label">السلالة:</span>
+            <span className="print-field-value">{breedLabel(catData.breed)}</span>
+          </div>
+          <div className="print-field">
+            <span className="print-field-label">التعقيم:</span>
+            <span className="print-field-value">{catData.neuter === 'neutered' ? 'معقّمة' : 'غير معقّمة'}</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Nutrition Calculations */}
+      <div className="print-section">
+        <div className="print-section-title">الحسابات الغذائية</div>
+        <div className="print-highlights">
+          <div className="print-highlight">
+            <div className="print-highlight-value">{formatNumber(results.rer, 1)}</div>
+            <div className="print-highlight-label">RER - الطاقة الأساسية<br/>(كيلو كالوري/يوم)</div>
+          </div>
+          <div className="print-highlight">
+            <div className="print-highlight-value">{formatNumber(results.factor, 2)}x</div>
+            <div className="print-highlight-label">معامل النشاط<br/>{results.activityInfo.label}</div>
+          </div>
+          <div className="print-highlight">
+            <div className="print-highlight-value">{formatNumber(results.der, 1)}</div>
+            <div className="print-highlight-label">DER - الطاقة اليومية<br/>(كيلو كالوري/يوم)</div>
+          </div>
+        </div>
+      </div>
+
+      {/* Weight Status */}
+      <div className="print-section">
+        <div className="print-section-title">حالة الوزن</div>
+        <div className="print-grid">
+          <div className="print-field">
+            <span className="print-field-label">الوزن الحالي:</span>
+            <span className="print-field-value">{formatNumber(results.usedWeight, 1)} كجم</span>
+          </div>
+          <div className="print-field">
+            <span className="print-field-label">الوزن المثالي:</span>
+            <span className="print-field-value">{formatNumber(results.idealWeight, 1)} كجم</span>
+          </div>
+          <div className="print-field">
+            <span className="print-field-label">النطاق الطبيعي:</span>
+            <span className="print-field-value">{formatNumber(results.weightRange[0], 1)} - {formatNumber(results.weightRange[1], 1)} كجم</span>
+          </div>
+          <div className="print-field">
+            <span className="print-field-label">حالة الوزن:</span>
+            <span className="print-field-value">
+              {results.weightStatus === 'ok' && 'طبيعي'}
+              {results.weightStatus === 'low' && 'منخفض'}
+              {results.weightStatus === 'high' && 'مرتفع'}
+              {results.weightStatus === 'na' && 'غير محدد'}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      {/* Weekly Schedule */}
+      <div className="print-section">
+        <div className="print-section-title">الجدول الأسبوعي</div>
+        <table className="print-table">
+          <thead>
+            <tr>
+              <th>اليوم</th>
+              <th>النوع</th>
+              <th>DER</th>
+              <th>ويت (ك.ك)</th>
+              <th>دراي (ك.ك)</th>
+              <th>ويت (جرام)</th>
+              <th>دراي (جرام)</th>
+              <th>عدد الوحدات</th>
+            </tr>
+          </thead>
+          <tbody>
+            {results.weeklyData.map((day: any, index: number) => (
+              <tr key={index} className={day.type === 'wet' ? 'wet-day' : ''}>
+                <td>{day.day}</td>
+                <td>{day.type === 'wet' ? 'ويت' : 'دراي'}</td>
+                <td>{formatNumber(day.der, 0)}</td>
+                <td>{formatNumber(day.wetKcal, 0)}</td>
+                <td>{formatNumber(day.dryKcal, 0)}</td>
+                <td>{formatNumber(day.wetGrams, 0)}</td>
+                <td>{formatNumber(day.dryGrams, 0)}</td>
+                <td>{formatNumber(day.units, 1)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {/* Box Summary */}
+      {boxSummary && (
+        <div className="print-section">
+          <div className="print-section-title">ملخص البوكس</div>
+          <div className="print-grid">
+            <div className="print-field">
+              <span className="print-field-label">فترة البوكس:</span>
+              <span className="print-field-value">{boxSummary.totalDays} يوم</span>
+            </div>
+            <div className="print-field">
+              <span className="print-field-label">إجمالي الطاقة:</span>
+              <span className="print-field-value">{formatNumber(boxSummary.totalDER, 0)} كيلو كالوري</span>
+            </div>
+            <div className="print-field">
+              <span className="print-field-label">إجمالي الدراي:</span>
+              <span className="print-field-value">{formatNumber(boxSummary.totalDryGrams / 1000, 2)} كجم</span>
+            </div>
+            <div className="print-field">
+              <span className="print-field-label">وحدات الويت:</span>
+              <span className="print-field-value">{formatNumber(boxSummary.unitsUsed, 0)} وحدة</span>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Cost Summary */}
+      {costs && costs.totalCost > 0 && (
+        <div className="print-section">
+          <div className="print-section-title">ملخص التكاليف</div>
+          <div className="print-grid">
+            <div className="print-field">
+              <span className="print-field-label">تكلفة الدراي:</span>
+              <span className="print-field-value">{formatNumber(costs.dryCost, 2)} {pricing.currency}</span>
+            </div>
+            <div className="print-field">
+              <span className="print-field-label">تكلفة الويت:</span>
+              <span className="print-field-value">{formatNumber(costs.wetCost, 2)} {pricing.currency}</span>
+            </div>
+            <div className="print-field">
+              <span className="print-field-label">التكلفة الإجمالية:</span>
+              <span className="print-field-value">{formatNumber(costs.totalCost, 2)} {pricing.currency}</span>
+            </div>
+            <div className="print-field">
+              <span className="print-field-label">التكلفة يومياً:</span>
+              <span className="print-field-value">{formatNumber(costs.perDay, 2)} {pricing.currency}</span>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Recommendations */}
+      {results.recommendations && results.recommendations.length > 0 && (
+        <div className="print-section">
+          <div className="print-section-title">التوصيات</div>
+          <ul style={{ margin: 0, paddingRight: '20px' }}>
+            {results.recommendations.map((rec: string, index: number) => (
+              <li key={index} style={{ marginBottom: '5px' }}>{rec}</li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {/* Footer */}
+      <div className="print-footer">
+        <div>تم إنشاء هذا التقرير بواسطة حاسبة تغذية القطة - نظام حساب علمي معتمد على NRC و WSAVA</div>
+        <div>للاستفسارات أو المراجعة، يرجى الاتصال بالطبيب البيطري المختص</div>
+      </div>
+    </div>
+  )
+}

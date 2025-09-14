@@ -15,6 +15,8 @@ import { Label } from '@/components/ui/label'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
+import { PrintButton } from '@/components/print/PrintButton'
+import { BoxLabelPrintButton } from '@/components/labels/BoxLabelPrintButton'
 
 export default function CatNutritionCalculator() {
   const {
@@ -43,6 +45,8 @@ export default function CatNutritionCalculator() {
   } = useCatNutrition()
 
   const [isSaving, setIsSaving] = useState(false)
+  const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'success' | 'error'>('idle')
+  const [saveMessage, setSaveMessage] = useState('')
   const [clients, setClients] = useState<Array<{id: string, name: string, phone: string, address: string, createdAt: string, updatedAt: string}>>([])
   const [isLoadingClients, setIsLoadingClients] = useState(false)
   const [isLoadingClientData, setIsLoadingClientData] = useState(false)
@@ -179,14 +183,58 @@ export default function CatNutritionCalculator() {
   return (
     <div className="min-h-screen bg-gray-50" dir="rtl">
       {/* Header */}
-      <header className="bg-gradient-to-r from-sky-500 to-teal-500 text-white p-4 md:p-6">
+      <header className="bg-gradient-to-r from-sky-500 to-teal-500 text-white p-4 md:p-6 shadow-lg">
         <div className="max-w-6xl mx-auto">
-          <h1 className="text-xl md:text-2xl font-bold mb-2">حاسبة تغذية القطة + صانع البوكسات</h1>
-          <p className="text-sm md:text-base opacity-90">سعرات محسوبة علميًا + جدول أسبوعي + بوكس شهري 30 يوم</p>
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center">
+                <span className="text-2xl">🐱</span>
+              </div>
+              <div>
+                <h1 className="text-xl md:text-2xl font-bold mb-1">حاسبة تغذية القطة + صانع البوكسات</h1>
+                <p className="text-sm md:text-base opacity-90">سعرات محسوبة علميًا + جدول أسبوعي + بوكس شهري 30 يوم</p>
+              </div>
+            </div>
+            <div className="flex flex-col md:flex-row gap-2 text-sm opacity-90">
+              <div className="flex items-center gap-2">
+                <span className="w-2 h-2 bg-green-400 rounded-full"></span>
+                <span>معتمد على NRC & WSAVA</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="w-2 h-2 bg-blue-400 rounded-full"></span>
+                <span>حساب علمي دقيق</span>
+              </div>
+            </div>
+          </div>
         </div>
       </header>
 
       <div className="max-w-6xl mx-auto p-4 md:p-6 space-y-6">
+        {/* Progress Indicator - Mobile Friendly */}
+        <div className="md:hidden bg-white rounded-lg p-4 shadow-sm">
+          <div className="flex items-center justify-between text-sm">
+            <span className={`px-3 py-1 rounded-full text-xs ${
+              catData.clientName ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'
+            }`}>
+              دبيانات العميل
+            </span>
+            <span className={`px-3 py-1 rounded-full text-xs ${
+              catData.name && catData.weight ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'
+            }`}>
+              بيانات القطة
+            </span>
+            <span className={`px-3 py-1 rounded-full text-xs ${
+              foodData.dry100 ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'
+            }`}>
+              بيانات الطعام
+            </span>
+            <span className={`px-3 py-1 rounded-full text-xs ${
+              results ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-500'
+            }`}>
+              النتائج
+            </span>
+          </div>
+        </div>
         {/* Client Information Section */}
         <Card>
           <CardHeader>
@@ -667,16 +715,44 @@ export default function CatNutritionCalculator() {
         </Card>
 
         {/* Calculate Button */}
-        <div className="flex justify-center">
+        <div className="flex flex-col sm:flex-row justify-center gap-4">
           <Button 
             onClick={calculateNutrition}
             disabled={isCalculating}
             size="lg"
-            className="min-w-[200px]"
+            className="min-w-[200px] h-12 text-lg"
           >
             {isCalculating ? 'جاري الحساب...' : 'احسب الجدول'}
           </Button>
         </div>
+
+        {/* Print Button - placed before results as per convention */}
+        {results && (
+          <div className="flex flex-col sm:flex-row justify-center gap-4">
+            <PrintButton
+              catData={catData}
+              foodData={foodData}
+              results={results}
+              costs={costs}
+              pricing={pricing}
+              boxSummary={results.boxSummary}
+              variant="default"
+              size="lg"
+              className="min-w-[200px] h-12 bg-green-600 hover:bg-green-700"
+            />
+            <BoxLabelPrintButton
+              catData={catData}
+              foodData={foodData}
+              results={results}
+              boxSummary={results.boxSummary}
+              pricing={pricing}
+              costs={costs}
+              variant="outline"
+              size="lg"
+              className="min-w-[200px] h-12 border-orange-200 text-orange-700 hover:bg-orange-50"
+            />
+          </div>
+        )}
 
         {/* Errors Display */}
         {errors.length > 0 && (
@@ -773,38 +849,78 @@ export default function CatNutritionCalculator() {
               </CardHeader>
               <CardContent>
                 <div className="overflow-x-auto">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead className="text-right">اليوم</TableHead>
-                        <TableHead className="text-right">النوع</TableHead>
-                        <TableHead className="text-right">DER</TableHead>
-                        <TableHead className="text-right">ويت (كيلو كالوري)</TableHead>
-                        <TableHead className="text-right">دراي (كيلو كالوري)</TableHead>
-                        <TableHead className="text-right">ويت (جرام)</TableHead>
-                        <TableHead className="text-right">دراي (جرام)</TableHead>
-                        <TableHead className="text-right">عدد الوحدات</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {results.weeklyData.map((day, index) => (
-                        <TableRow key={index} className={day.type === 'wet' ? 'bg-blue-50' : ''}>
-                          <TableCell className="font-medium">{day.day}</TableCell>
-                          <TableCell>
-                            <Badge variant={day.type === 'wet' ? 'default' : 'secondary'}>
-                              {day.type === 'wet' ? 'ويت' : 'دراي'}
-                            </Badge>
-                          </TableCell>
-                          <TableCell>{formatNumber(day.der, 0)}</TableCell>
-                          <TableCell>{formatNumber(day.wetKcal, 0)}</TableCell>
-                          <TableCell>{formatNumber(day.dryKcal, 0)}</TableCell>
-                          <TableCell>{formatNumber(day.wetGrams, 0)}</TableCell>
-                          <TableCell>{formatNumber(day.dryGrams, 0)}</TableCell>
-                          <TableCell>{formatNumber(day.units, 1)}</TableCell>
+                  <div className="min-w-[800px]">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead className="text-right">اليوم</TableHead>
+                          <TableHead className="text-right">النوع</TableHead>
+                          <TableHead className="text-right">DER</TableHead>
+                          <TableHead className="text-right">ويت (كيلو كالوري)</TableHead>
+                          <TableHead className="text-right">دراي (كيلو كالوري)</TableHead>
+                          <TableHead className="text-right">ويت (جرام)</TableHead>
+                          <TableHead className="text-right">دراي (جرام)</TableHead>
+                          <TableHead className="text-right">عدد الوحدات</TableHead>
                         </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
+                      </TableHeader>
+                      <TableBody>
+                        {results.weeklyData.map((day, index) => (
+                          <TableRow key={index} className={day.type === 'wet' ? 'bg-blue-50' : ''}>
+                            <TableCell className="font-medium">{day.day}</TableCell>
+                            <TableCell>
+                              <Badge variant={day.type === 'wet' ? 'default' : 'secondary'}>
+                                {day.type === 'wet' ? 'ويت' : 'دراي'}
+                              </Badge>
+                            </TableCell>
+                            <TableCell>{formatNumber(day.der, 0)}</TableCell>
+                            <TableCell>{formatNumber(day.wetKcal, 0)}</TableCell>
+                            <TableCell>{formatNumber(day.dryKcal, 0)}</TableCell>
+                            <TableCell>{formatNumber(day.wetGrams, 0)}</TableCell>
+                            <TableCell>{formatNumber(day.dryGrams, 0)}</TableCell>
+                            <TableCell>{formatNumber(day.units, 1)}</TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                </div>
+                
+                {/* Mobile-friendly cards for smaller screens */}
+                <div className="md:hidden mt-4 space-y-4">
+                  {results.weeklyData.map((day, index) => (
+                    <div key={index} className={`p-4 rounded-lg border ${
+                      day.type === 'wet' ? 'bg-blue-50 border-blue-200' : 'bg-gray-50 border-gray-200'
+                    }`}>
+                      <div className="flex justify-between items-center mb-3">
+                        <h4 className="font-semibold">{day.day}</h4>
+                        <Badge variant={day.type === 'wet' ? 'default' : 'secondary'}>
+                          {day.type === 'wet' ? 'ويت' : 'دراي'}
+                        </Badge>
+                      </div>
+                      <div className="grid grid-cols-2 gap-3 text-sm">
+                        <div>
+                          <span className="text-gray-600">DER:</span>
+                          <span className="ml-2 font-medium">{formatNumber(day.der, 0)}</span>
+                        </div>
+                        {day.wetKcal > 0 && (
+                          <div>
+                            <span className="text-gray-600">ويت:</span>
+                            <span className="ml-2 font-medium">{formatNumber(day.wetGrams, 0)}ج</span>
+                          </div>
+                        )}
+                        <div>
+                          <span className="text-gray-600">دراي:</span>
+                          <span className="ml-2 font-medium">{formatNumber(day.dryGrams, 0)}ج</span>
+                        </div>
+                        {day.units > 0 && (
+                          <div>
+                            <span className="text-gray-600">وحدات:</span>
+                            <span className="ml-2 font-medium">{formatNumber(day.units, 1)}</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </CardContent>
             </Card>
@@ -920,7 +1036,21 @@ export default function CatNutritionCalculator() {
 
                 {/* Box Summary */}
                 <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                  <h4 className="font-semibold mb-3">ملخص البوكس</h4>
+                  <div className="flex justify-between items-center mb-3">
+                    <h4 className="font-semibold">ملخص البوكس</h4>
+                    {results && (
+                      <BoxLabelPrintButton
+                        catData={catData}
+                        foodData={foodData}
+                        results={results}
+                        boxSummary={results.boxSummary}
+                        pricing={pricing}
+                        costs={costs}
+                        variant="secondary"
+                        size="sm"
+                      />
+                    )}
+                  </div>
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
                     <div>
                       <div className="font-medium">فترة البوكس</div>
@@ -1032,10 +1162,16 @@ export default function CatNutritionCalculator() {
                           variant="outline" 
                           onClick={async () => {
                             if (!catData.clientName.trim()) {
-                              alert('الرجاء إدخال اسم العميل أولاً')
+                              setSaveStatus('error')
+                              setSaveMessage('الرجاء إدخال اسم العميل أولاً')
+                              setTimeout(() => setSaveStatus('idle'), 3000)
                               return
                             }
+                            
+                            setSaveStatus('saving')
                             setIsSaving(true)
+                            setSaveMessage('جاري حفظ البيانات...')
+                            
                             try {
                               const res = await fetch('/api/clients', {
                                 method: 'POST',
@@ -1054,12 +1190,20 @@ export default function CatNutritionCalculator() {
                                 })
                               })
                               const json = await res.json()
+                              
                               if (!res.ok) throw new Error(json?.error || 'فشل في الحفظ')
-                              alert('تم حفظ بيانات العميل بنجاح')
+                              
+                              setSaveStatus('success')
+                              setSaveMessage('تم حفظ بيانات العميل بنجاح ✓')
                               await loadClients() // Refresh client list
+                              
+                              // Reset status after success message
+                              setTimeout(() => setSaveStatus('idle'), 3000)
                             } catch (e) {
                               console.error('Save failed:', e)
-                              alert('فشل في حفظ البيانات: ' + (e as Error).message)
+                              setSaveStatus('error')
+                              setSaveMessage('فشل في حفظ البيانات: ' + (e as Error).message)
+                              setTimeout(() => setSaveStatus('idle'), 5000)
                             } finally {
                               setIsSaving(false)
                             }
@@ -1082,9 +1226,15 @@ export default function CatNutritionCalculator() {
                           variant="outline"
                           onClick={async () => {
                             if (!catData.clientName.trim()) {
-                              alert('الرجاء اختيار عميل أولاً')
+                              setSaveStatus('error')
+                              setSaveMessage('الرجاء اختيار عميل أولاً')
+                              setTimeout(() => setSaveStatus('idle'), 3000)
                               return
                             }
+                            
+                            setSaveStatus('saving')
+                            setSaveMessage('جاري تحميل بيانات العميل...')
+                            
                             try {
                               const res = await fetch(`/api/clients?name=${encodeURIComponent(catData.clientName)}`)
                               const json = await res.json()
@@ -1120,10 +1270,14 @@ export default function CatNutritionCalculator() {
                                 })
                               }
                               
-                              alert('تم تحميل بيانات العميل بنجاح')
+                              setSaveStatus('success')
+                              setSaveMessage('تم تحميل بيانات العميل بنجاح ✓')
+                              setTimeout(() => setSaveStatus('idle'), 3000)
                             } catch (e) {
                               console.error('Load failed:', e)
-                              alert('فشل في تحميل بيانات العميل: ' + (e as Error).message)
+                              setSaveStatus('error')
+                              setSaveMessage('فشل في تحميل بيانات العميل: ' + (e as Error).message)
+                              setTimeout(() => setSaveStatus('idle'), 5000)
                             }
                           }}
                           disabled={!catData.clientName.trim()}
@@ -1136,7 +1290,58 @@ export default function CatNutritionCalculator() {
                       </TooltipContent>
                     </Tooltip>
                   </TooltipProvider>
+
+                  {/* Additional Print Button in Save/Load Section */}
+                  {results && (
+                    <PrintButton
+                      catData={catData}
+                      foodData={foodData}
+                      results={results}
+                      costs={costs}
+                      pricing={pricing}
+                      boxSummary={results.boxSummary}
+                      variant="secondary"
+                      size="default"
+                    />
+                  )}
+
+                  {/* Box Label Print Button */}
+                  {results && (
+                    <BoxLabelPrintButton
+                      catData={catData}
+                      foodData={foodData}
+                      results={results}
+                      boxSummary={results.boxSummary}
+                      pricing={pricing}
+                      costs={costs}
+                      variant="outline"
+                      size="default"
+                      className="border-orange-200 text-orange-700 hover:bg-orange-50"
+                    />
+                  )}
                 </div>
+
+                {/* Save/Load Status Indicator */}
+                {saveStatus !== 'idle' && (
+                  <div className={`mt-4 p-3 rounded-lg text-sm ${
+                    saveStatus === 'saving' ? 'bg-blue-50 text-blue-700 border border-blue-200' :
+                    saveStatus === 'success' ? 'bg-green-50 text-green-700 border border-green-200' :
+                    'bg-red-50 text-red-700 border border-red-200'
+                  }`}>
+                    <div className="flex items-center gap-2">
+                      {saveStatus === 'saving' && (
+                        <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+                      )}
+                      {saveStatus === 'success' && (
+                        <div className="w-4 h-4 bg-green-600 rounded-full flex items-center justify-center text-white text-xs">✓</div>
+                      )}
+                      {saveStatus === 'error' && (
+                        <div className="w-4 h-4 bg-red-600 rounded-full flex items-center justify-center text-white text-xs">✗</div>
+                      )}
+                      <span>{saveMessage}</span>
+                    </div>
+                  </div>
+                )}
               </CardContent>
             </Card>
           </div>
