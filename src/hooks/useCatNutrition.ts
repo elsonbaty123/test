@@ -260,7 +260,7 @@ export function useCatNutrition() {
 
   const [weeklyPlan, setWeeklyPlan] = useState<WeeklyPlan>({
     wetDaysCount: 0,
-    wetMealIndex: 0,
+    wetMealIndex: 1,
     wetDays: [false,false,false,false,false,false,false],
   })
 
@@ -570,50 +570,70 @@ export function useCatNutrition() {
           }
         }
 
-        // Split energy into two equal meals
-        const half = der / 2
-        let breakfastWetKcal = 0
-        let dinnerWetKcal = 0
+        // Distribute energy across the selected number of meals
+        const mealsCount = Math.max(1, toNumber(catData.meals, 2))
+        const perMealTarget = der / mealsCount
+        const wetKcalPerMeal = Array.from({ length: mealsCount }, () => 0)
         if (isWet) {
-          const idx = Math.max(0, Math.min(1, weeklyPlan.wetMealIndex || 0))
-          if (wetKcal <= half) {
-            // place wet entirely in selected meal and top up with dry to equalize
-            breakfastWetKcal = idx === 0 ? wetKcal : 0
-            dinnerWetKcal = idx === 1 ? wetKcal : 0
-          } else {
-            // if wet exceeds half, split to keep meals equal
-            breakfastWetKcal = half
-            dinnerWetKcal = Math.min(half, wetKcal - half)
+          const idxInput = toNumber(weeklyPlan.wetMealIndex, 1)
+          const idx = Math.max(0, Math.min(mealsCount - 1, idxInput - 1))
+          let remainingWet = wetKcal
+          // allocate to selected meal first
+          const allocFirst = Math.min(perMealTarget, remainingWet)
+          wetKcalPerMeal[idx] = allocFirst
+          remainingWet -= allocFirst
+          // allocate remainder to other meals to keep meals equal
+          for (let k = 0; k < mealsCount && remainingWet > 0; k++) {
+            if (k === idx) continue
+            const alloc = Math.min(perMealTarget, remainingWet)
+            wetKcalPerMeal[k] = alloc
+            remainingWet -= alloc
           }
         }
-        const breakfastDryKcal = Math.max(0, half - breakfastWetKcal)
-        const dinnerDryKcal = Math.max(0, half - dinnerWetKcal)
+        const dryKcalPerMeal = wetKcalPerMeal.map(wk => Math.max(0, perMealTarget - wk))
 
-        // Totals
-        const dryKcal = Math.max(0, breakfastDryKcal + dinnerDryKcal)
-        const dryGrams = (dryKcal / Math.max(1, dry100)) * 100
+        const breakfastWetKcal = wetKcalPerMeal[0] || 0
+        const dinnerWetKcal = wetKcalPerMeal[1] || 0
 
-        // Per-meal grams
+        const breakfastDryKcal = (dryKcalPerMeal[0] ?? Math.max(0, perMealTarget - breakfastWetKcal))
+        const dinnerDryKcal = (dryKcalPerMeal[1] ?? Math.max(0, perMealTarget - dinnerWetKcal))
+
+        // Per-meal grams and totals (ensure sums match displayed values)
         const dryGramsPerKcal = 100 / Math.max(1, dry100)
-        const breakfastDryGrams = breakfastDryKcal * dryGramsPerKcal
-        const dinnerDryGrams = dinnerDryKcal * dryGramsPerKcal
+        const breakfastDryGramsRaw = breakfastDryKcal * dryGramsPerKcal
+        const dinnerDryGramsRaw = dinnerDryKcal * dryGramsPerKcal
+        const otherDryGramsRaw = dryKcalPerMeal.slice(2).reduce((s, v) => s + v * dryGramsPerKcal, 0)
         const wetKcalPerGram = foodData.wetMode === 'per100'
           ? Math.max(1, wetKcalPer100) / 100
           : Math.max(1, wetKcalPerUnit) / Math.max(1, wetUnitGrams)
-        const breakfastWetGrams = breakfastWetKcal / Math.max(1e-6, wetKcalPerGram)
-        const dinnerWetGrams = dinnerWetKcal / Math.max(1e-6, wetKcalPerGram)
+        const breakfastWetGramsRaw = breakfastWetKcal / Math.max(1e-6, wetKcalPerGram)
+        const dinnerWetGramsRaw = dinnerWetKcal / Math.max(1e-6, wetKcalPerGram)
+        const otherWetGramsRaw = wetKcalPerMeal.slice(2).reduce((s, v) => s + (v / Math.max(1e-6, wetKcalPerGram)), 0)
+
+        const breakfastDryGrams = Math.round(breakfastDryGramsRaw)
+        const dinnerDryGrams = Math.round(dinnerDryGramsRaw)
+        const othersDryGrams = Math.round(otherDryGramsRaw)
+        const breakfastWetGrams = Math.round(breakfastWetGramsRaw)
+        const dinnerWetGrams = Math.round(dinnerWetGramsRaw)
+        const othersWetGrams = Math.round(otherWetGramsRaw)
+
+        // Totals
+        const dryKcal = Math.max(0, dryKcalPerMeal.reduce((s, v) => s + v, 0))
+        const dryGrams = Math.round(breakfastDryGrams + dinnerDryGrams + othersDryGrams)
+        const wetKcalTotal = Math.max(0, wetKcalPerMeal.reduce((s, v) => s + v, 0))
+        const wetGramsTotal = Math.round(breakfastWetGrams + dinnerWetGrams + othersWetGrams)
         return {
           day: d,
           type: isWet ? 'wet' : 'dry',
           der: round1(der),
-          wetKcal: round1(wetKcal),
+          wetKcal: round1(wetKcalTotal),
           dryKcal: round1(dryKcal),
-          wetGrams: round1(wetGrams),
+          wetGrams: round1(wetGramsTotal),
           dryGrams: round1(dryGrams),
           units: Math.round(units * 100) / 100,
           servingSize: wetUnitGrams,
-          breakfastKcal: round1(half),
-          dinnerKcal: round1(half),
+          breakfastKcal: round1(perMealTarget),
+          dinnerKcal: round1(perMealTarget),
           breakfastWetGrams: round1(breakfastWetGrams),
           breakfastDryGrams: round1(breakfastDryGrams),
           dinnerWetGrams: round1(dinnerWetGrams),
