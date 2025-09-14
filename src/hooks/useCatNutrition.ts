@@ -54,6 +54,10 @@ interface Pricing {
   currency: string;
   priceDryPerKg: string;
   priceWetUnit: string;
+  packagingCost: string;
+  deliveryCost: string;
+  additionalCosts: string;
+  profitPercentage: string;
 }
 
 interface SpecialCondition {
@@ -133,7 +137,14 @@ interface Results {
 interface Costs {
   dryCost: number;
   wetCost: number;
-  totalCost: number;
+  packagingCost: number;
+  additionalCosts: number;
+  subtotalCost: number;
+  totalCostBeforeProfit: number;
+  profitAmount: number;
+  totalCostWithProfit: number;
+  totalCostWithDelivery: number;
+  deliveryCost: number;
   perDay: number;
 }
 
@@ -289,11 +300,27 @@ export function useCatNutrition() {
     currency: 'EGP',
     priceDryPerKg: '0',
     priceWetUnit: '0',
+    packagingCost: '0',
+    deliveryCost: '0',
+    additionalCosts: '0',
+    profitPercentage: '20',
   })
 
   const [results, setResults] = useState<Results | null>(null)
   const [errors, setErrors] = useState<string[]>([])
-  const [costs, setCosts] = useState<Costs>({ dryCost: 0, wetCost: 0, totalCost: 0, perDay: 0 })
+  const [costs, setCosts] = useState<Costs>({
+    dryCost: 0,
+    wetCost: 0,
+    packagingCost: 0,
+    additionalCosts: 0,
+    subtotalCost: 0,
+    totalCostBeforeProfit: 0,
+    profitAmount: 0,
+    totalCostWithProfit: 0,
+    totalCostWithDelivery: 0,
+    deliveryCost: 0,
+    perDay: 0
+  })
   const [isCalculating, setIsCalculating] = useState(false)
 
   const dayNames = DAY_NAMES_AR
@@ -724,14 +751,36 @@ export function useCatNutrition() {
         recommendations,
       })
 
-      // Costs
+      // Costs calculation
       const priceDryPerKg = toNumber(pricing.priceDryPerKg, 0)
       const priceWetUnit = toNumber(pricing.priceWetUnit, 0)
+      const packagingCost = toNumber(pricing.packagingCost, 0)
+      const additionalCosts = toNumber(pricing.additionalCosts, 0)
+      const deliveryCost = toNumber(pricing.deliveryCost, 0)
+      const profitPercentage = toNumber(pricing.profitPercentage, 0)
+      
       const totalDryKg = totalDryGrams / 1000
       const dryCost = totalDryKg * priceDryPerKg
       const wetCost = unitsUsed * priceWetUnit
-      const totalCost = dryCost + wetCost
-      setCosts({ dryCost, wetCost, totalCost, perDay: totalDays > 0 ? (totalCost / totalDays) : 0 })
+      const subtotalCost = dryCost + wetCost
+      const totalCostBeforeProfit = subtotalCost + packagingCost + additionalCosts
+      const profitAmount = (totalCostBeforeProfit * profitPercentage) / 100
+      const totalCostWithProfit = totalCostBeforeProfit + profitAmount
+      const totalCostWithDelivery = totalCostWithProfit + deliveryCost
+      
+      setCosts({
+        dryCost,
+        wetCost,
+        packagingCost,
+        additionalCosts,
+        subtotalCost,
+        totalCostBeforeProfit,
+        profitAmount,
+        totalCostWithProfit,
+        totalCostWithDelivery,
+        deliveryCost,
+        perDay: totalDays > 0 ? (totalCostWithDelivery / totalDays) : 0
+      })
 
       setErrors(Array.from(new Set(newErrors)))
     } finally {

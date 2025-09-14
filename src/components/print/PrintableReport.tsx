@@ -124,17 +124,23 @@ export const PrintableReport: React.FC<PrintableReportProps> = ({
           .print-field {
             display: flex;
             justify-content: space-between;
+            align-items: flex-start;
             padding: 5px 0;
             border-bottom: 1px dotted #ccc;
+            gap: 10px;
           }
           
           .print-field-label {
             font-weight: bold;
             color: #374151;
+            min-width: 80px;
+            flex-shrink: 0;
           }
           
           .print-field-value {
             color: #000;
+            text-align: right;
+            flex: 1;
           }
           
           .print-table {
@@ -205,7 +211,7 @@ export const PrintableReport: React.FC<PrintableReportProps> = ({
       <div className="print-header">
         <div className="print-title">تقرير تغذية القطة</div>
         <div className="print-subtitle">حساب علمي للسعرات اليومية وخطة التغذية الأسبوعية</div>
-        <div className="print-subtitle">تاريخ التقرير: {formatDate()}</div>
+        <div className="print-subtitle">{formatDate()}</div>
       </div>
 
       {/* Client Information */}
@@ -255,11 +261,16 @@ export const PrintableReport: React.FC<PrintableReportProps> = ({
           </div>
           <div className="print-field">
             <span className="print-field-label">التعقيم:</span>
-            <span className="print-field-value">{catData.neuter === 'neutered' ? 'معقّمة' : 'غير معقّمة'}</span>
+            <span className="print-field-value">
+              {catData.neuter === 'neutered' 
+                ? (catData.sex === 'male' ? 'معقم' : 'معقمة') 
+                : (catData.sex === 'male' ? 'غير معقم' : 'غير معقمة')
+              }
+            </span>
           </div>
           <div className="print-field">
             <span className="print-field-label">حالة الجسم (BCS):</span>
-            <span className="print-field-value">{catData.bcs}/9</span>
+            <span className="print-field-value">{catData.bcs}/9 (يعني مستوى {catData.bcs} من أصل 9)</span>
           </div>
         </div>
       </div>
@@ -362,16 +373,28 @@ export const PrintableReport: React.FC<PrintableReportProps> = ({
                   </span>
                 </div>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(70px, 1fr))', gap: '4px' }}>
-                  {day.mealsBreakdown.map((meal: any, mealIndex: number) => (
-                    <div key={mealIndex} style={{ backgroundColor: '#f9fafb', border: '1px solid #e5e7eb', borderRadius: '3px', padding: '4px' }}>
-                      <div style={{ fontWeight: 'bold', fontSize: '9px', marginBottom: '2px' }}>وجبة {meal.mealIndex}</div>
-                      <div style={{ fontSize: '8px', lineHeight: '1.2' }}>
-                        <div>{formatNumber(meal.kcal, 0)} ك.ك</div>
-                        {meal.wetGrams > 0 && <div>ويت: {formatNumber(meal.wetGrams, 0)}ج</div>}
-                        {meal.dryGrams > 0 && <div>دراي: {formatNumber(meal.dryGrams, 0)}ج</div>}
+                  {day.mealsBreakdown.map((meal: any, mealIndex: number) => {
+                    // Determine display based on package type
+                    const isPouch = foodData.wetPackType === 'pouch'
+                    
+                    return (
+                      <div key={mealIndex} style={{ backgroundColor: '#f9fafb', border: '1px solid #e5e7eb', borderRadius: '3px', padding: '4px' }}>
+                        <div style={{ fontWeight: 'bold', fontSize: '9px', marginBottom: '2px' }}>وجبة {meal.mealIndex}</div>
+                        <div style={{ fontSize: '8px', lineHeight: '1.2' }}>
+                          <div>{formatNumber(meal.kcal, 0)} ك.ك</div>
+                          {meal.wetGrams > 0 && (
+                            <div>
+                              {isPouch 
+                                ? `باوتش: ${formatNumber(meal.wetUnits || 0, 1)} وحدة`
+                                : `ويت: ${formatNumber(meal.wetGrams, 0)}ج`
+                              }
+                            </div>
+                          )}
+                          {meal.dryGrams > 0 && <div>دراي: {formatNumber(meal.dryGrams, 0)}ج</div>}
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    )
+                  })}
                 </div>
               </div>
             ))}

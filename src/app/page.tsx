@@ -758,18 +758,6 @@ export default function CatNutritionCalculator() {
             )}
 
             <div className="space-y-2">
-              <Label htmlFor="wetUnitGrams">وزن الوحدة (جرام) - للعرض</Label>
-              <Input
-                id="wetUnitGrams"
-                type="number"
-                placeholder="مثال: 85"
-                value={foodData.wetUnitGrams}
-                onChange={(e) => handleFoodDataChange('wetUnitGrams', e.target.value)}
-              />
-              <p className="text-xs text-gray-500">يستخدم في عرض أحجام التقديم</p>
-            </div>
-
-            <div className="space-y-2">
               <Label>نوع العبوة</Label>
               <Select value={foodData.wetPackType} onValueChange={(value) => handleFoodDataChange('wetPackType', value)}>
                 <SelectTrigger>
@@ -1337,26 +1325,111 @@ export default function CatNutritionCalculator() {
                   </div>
                 </div>
 
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                  <div className="space-y-2">
+                    <Label>تكاليف التغليف</Label>
+                    <Input
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      placeholder="0.00"
+                      value={pricing.packagingCost}
+                      onChange={(e) => handlePricingChange('packagingCost', e.target.value)}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>سعر الدلفري</Label>
+                    <Input
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      placeholder="0.00"
+                      value={pricing.deliveryCost}
+                      onChange={(e) => handlePricingChange('deliveryCost', e.target.value)}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>تكاليف إضافية</Label>
+                    <Input
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      placeholder="0.00"
+                      value={pricing.additionalCosts}
+                      onChange={(e) => handlePricingChange('additionalCosts', e.target.value)}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>نسبة الأرباح (%)</Label>
+                    <Input
+                      type="number"
+                      min="0"
+                      max="100"
+                      step="0.1"
+                      placeholder="20"
+                      value={pricing.profitPercentage}
+                      onChange={(e) => handlePricingChange('profitPercentage', e.target.value)}
+                    />
+                    <p className="text-xs text-gray-500">محسوبة من (دراي + ويت + تغليف + إضافي)</p>
+                  </div>
+                </div>
+
                 {/* Cost Summary */}
                 <div className="mt-6 p-4 bg-green-50 border border-green-200 rounded-lg">
                   <h4 className="font-semibold mb-3">ملخص التكاليف</h4>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                    <div>
-                      <div className="font-medium">تكلفة الدراي</div>
-                      <div className="text-green-600">{formatNumber(costs.dryCost, 2)} {pricing.currency}</div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-3">
+                      <div className="text-sm">
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">تكلفة الدراي:</span>
+                          <span className="font-medium">{formatNumber(costs.dryCost, 2)} {pricing.currency}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">تكلفة الويت:</span>
+                          <span className="font-medium">{formatNumber(costs.wetCost, 2)} {pricing.currency}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">تكاليف التغليف:</span>
+                          <span className="font-medium">{formatNumber(costs.packagingCost, 2)} {pricing.currency}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">تكاليف إضافية:</span>
+                          <span className="font-medium">{formatNumber(costs.additionalCosts, 2)} {pricing.currency}</span>
+                        </div>
+                        <div className="flex justify-between border-t pt-2 mt-2">
+                          <span className="font-medium">المجموع قبل الأرباح:</span>
+                          <span className="font-bold text-blue-600">{formatNumber(costs.totalCostBeforeProfit, 2)} {pricing.currency}</span>
+                        </div>
+                      </div>
                     </div>
-                    <div>
-                      <div className="font-medium">تكلفة الويت</div>
-                      <div className="text-green-600">{formatNumber(costs.wetCost, 2)} {pricing.currency}</div>
+                    
+                    <div className="space-y-3">
+                      <div className="text-sm">
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">مبلغ الأرباح ({pricing.profitPercentage}%):</span>
+                          <span className="font-medium text-green-600">+{formatNumber(costs.profitAmount, 2)} {pricing.currency}</span>
+                        </div>
+                        <div className="flex justify-between border-t pt-2 mt-2">
+                          <span className="font-medium">المجموع بعد الأرباح:</span>
+                          <span className="font-bold text-green-600">{formatNumber(costs.totalCostWithProfit, 2)} {pricing.currency}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">سعر الدلفري:</span>
+                          <span className="font-medium">+{formatNumber(costs.deliveryCost, 2)} {pricing.currency}</span>
+                        </div>
+                        <div className="flex justify-between border-t pt-2 mt-2 bg-green-100 -mx-3 px-3 py-2 rounded">
+                          <span className="font-bold">المبلغ النهائي شامل الدلفري:</span>
+                          <span className="font-bold text-lg text-green-700">{formatNumber(costs.totalCostWithDelivery, 2)} {pricing.currency}</span>
+                        </div>
+                      </div>
                     </div>
-                    <div>
-                      <div className="font-medium">التكلفة الإجمالية</div>
-                      <div className="text-green-600 font-bold">{formatNumber(costs.totalCost, 2)} {pricing.currency}</div>
-                    </div>
-                    <div>
-                      <div className="font-medium">التكلفة في اليوم</div>
-                      <div className="text-green-600">{formatNumber(costs.perDay, 2)} {pricing.currency}</div>
-                    </div>
+                  </div>
+                  
+                  <div className="mt-4 text-center text-sm text-gray-600">
+                    التكلفة اليومية: {formatNumber(costs.perDay, 2)} {pricing.currency}
                   </div>
                 </div>
               </CardContent>

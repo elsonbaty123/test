@@ -348,71 +348,42 @@ export const BoxLabel: React.FC<BoxLabelProps> = ({
         <div className="label-info">
           {/* Client Information */}
           <div className="label-section">
-            <div className="label-section-title">العميل</div>
+            <div className="label-section-title">بيانات العميل</div>
             <div className="label-field">
               <span className="label-field-name">الاسم:</span>
               <span className="label-field-value">{catData.clientName || 'غير محدد'}</span>
             </div>
             {catData.clientPhone && (
               <div className="label-field">
-                <span className="label-field-name">الهاتف:</span>
+                <span className="label-field-name">رقم الهاتف:</span>
                 <span className="label-field-value">{catData.clientPhone}</span>
               </div>
             )}
-          </div>
-
-          {/* Cat Information */}
-          <div className="label-section">
-            <div className="label-section-title">القطة</div>
-            <div className="label-field">
-              <span className="label-field-name">الاسم:</span>
-              <span className="label-field-value">{catData.name || 'غير محدد'}</span>
-            </div>
-            <div className="label-field">
-              <span className="label-field-name">العمر:</span>
-              <span className="label-field-value">{catData.ageValue} {catData.ageUnit === 'months' ? 'ش' : 'س'}</span>
-            </div>
-            <div className="label-field">
-              <span className="label-field-name">الوزن:</span>
-              <span className="label-field-value">{catData.weight} كجم</span>
-            </div>
-            <div className="label-field">
-              <span className="label-field-name">السلالة:</span>
-              <span className="label-field-value">{breedLabel(catData.breed).substring(0, 15)}</span>
-            </div>
-          </div>
-
-          {/* Box Information */}
-          <div className="label-section">
-            <div className="label-section-title">البوكس</div>
-            <div className="label-field">
-              <span className="label-field-name">المدة:</span>
-              <span className="label-field-value">{boxSummary.totalDays} يوم</span>
-            </div>
-            <div className="label-field">
-              <span className="label-field-name">DER يومي:</span>
-              <span className="label-field-value">{formatNumber(results.der, 0)} ك.ك</span>
-            </div>
-          </div>
-
-          {/* Contents */}
-          <div className="label-contents">
-            <div className="label-contents-title">المحتويات:</div>
-            <div className="label-contents-item">
-              <span>دراي فود:</span>
-              <span>{formatNumber(boxSummary.totalDryGrams / 1000, 2)} كجم</span>
-            </div>
-            <div className="label-contents-item">
-              <span>ويت فود:</span>
-              <span>{formatNumber(boxSummary.unitsUsed, 0)} وحدة</span>
-            </div>
-            {costs && costs.totalCost > 0 && (
-              <div className="label-contents-item">
-                <span>التكلفة:</span>
-                <span>{formatNumber(costs.totalCost, 0)} {pricing.currency}</span>
+            {catData.clientAddress && (
+              <div className="label-field">
+                <span className="label-field-name">العنوان:</span>
+                <span className="label-field-value">{catData.clientAddress}</span>
               </div>
             )}
           </div>
+
+          {/* Order Total */}
+          <div className="label-section">
+            <div className="label-section-title">معلومات الأوردر</div>
+            {costs && costs.totalCostWithProfit > 0 && (
+              <div className="label-field">
+                <span className="label-field-name">المبلغ قبل الدلفري:</span>
+                <span className="label-field-value">{formatNumber(costs.totalCostWithProfit, 0)} {pricing.currency}</span>
+              </div>
+            )}
+            {costs && costs.totalCostWithDelivery > 0 && (
+              <div className="label-field">
+                <span className="label-field-name">المبلغ شامل الدلفري:</span>
+                <span className="label-field-value">{formatNumber(costs.totalCostWithDelivery, 0)} {pricing.currency}</span>
+              </div>
+            )}
+          </div>
+
         </div>
 
         {/* QR Code */}
