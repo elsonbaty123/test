@@ -257,6 +257,10 @@ export const PrintableReport: React.FC<PrintableReportProps> = ({
             <span className="print-field-label">التعقيم:</span>
             <span className="print-field-value">{catData.neuter === 'neutered' ? 'معقّمة' : 'غير معقّمة'}</span>
           </div>
+          <div className="print-field">
+            <span className="print-field-label">حالة الجسم (BCS):</span>
+            <span className="print-field-value">{catData.bcs}/9</span>
+          </div>
         </div>
       </div>
 
@@ -265,16 +269,16 @@ export const PrintableReport: React.FC<PrintableReportProps> = ({
         <div className="print-section-title">الحسابات الغذائية</div>
         <div className="print-highlights">
           <div className="print-highlight">
-            <div className="print-highlight-value">{formatNumber(results.rer, 1)}</div>
-            <div className="print-highlight-label">RER - الطاقة الأساسية<br/>(كيلو كالوري/يوم)</div>
-          </div>
-          <div className="print-highlight">
             <div className="print-highlight-value">{formatNumber(results.factor, 2)}x</div>
             <div className="print-highlight-label">معامل النشاط<br/>{results.activityInfo.label}</div>
           </div>
           <div className="print-highlight">
             <div className="print-highlight-value">{formatNumber(results.der, 1)}</div>
             <div className="print-highlight-label">DER - الطاقة اليومية<br/>(كيلو كالوري/يوم)</div>
+          </div>
+          <div className="print-highlight">
+            <div className="print-highlight-value">{catData.meals}</div>
+            <div className="print-highlight-label">عدد الوجبات<br/>في اليوم</div>
           </div>
         </div>
       </div>
@@ -340,6 +344,39 @@ export const PrintableReport: React.FC<PrintableReportProps> = ({
         </table>
       </div>
 
+      {/* Meal Details */}
+      <div className="print-section">
+        <div className="print-section-title">تفاصيل الوجبات</div>
+        {results.weeklyData.map((day: any, dayIndex: number) => (
+          <div key={dayIndex} style={{ marginBottom: '15px', border: '1px solid #e5e7eb', borderRadius: '4px', padding: '8px' }}>
+            <div style={{ fontWeight: 'bold', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span>{day.day}</span>
+              <span style={{ 
+                backgroundColor: day.type === 'wet' ? '#dbeafe' : '#f3f4f6',
+                color: day.type === 'wet' ? '#1e40af' : '#374151',
+                padding: '2px 8px',
+                borderRadius: '12px',
+                fontSize: '10px'
+              }}>
+                {day.type === 'wet' ? 'ويت' : 'دراي'}
+              </span>
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '8px' }}>
+              {day.mealsBreakdown.map((meal: any, mealIndex: number) => (
+                <div key={mealIndex} style={{ backgroundColor: '#f9fafb', border: '1px solid #e5e7eb', borderRadius: '4px', padding: '6px' }}>
+                  <div style={{ fontWeight: 'bold', fontSize: '11px', marginBottom: '4px' }}>الوجبة {meal.mealIndex}</div>
+                  <div style={{ fontSize: '10px', lineHeight: '1.4' }}>
+                    <div>الطاقة: {formatNumber(meal.kcal, 0)} ك.ك</div>
+                    {meal.wetGrams > 0 && <div>ويت: {formatNumber(meal.wetGrams, 0)} جرام</div>}
+                    {meal.dryGrams > 0 && <div>دراي: {formatNumber(meal.dryGrams, 0)} جرام</div>}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+
       {/* Box Summary */}
       {boxSummary && (
         <div className="print-section">
@@ -360,31 +397,6 @@ export const PrintableReport: React.FC<PrintableReportProps> = ({
             <div className="print-field">
               <span className="print-field-label">وحدات الويت:</span>
               <span className="print-field-value">{formatNumber(boxSummary.unitsUsed, 0)} وحدة</span>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Cost Summary */}
-      {costs && costs.totalCost > 0 && (
-        <div className="print-section">
-          <div className="print-section-title">ملخص التكاليف</div>
-          <div className="print-grid">
-            <div className="print-field">
-              <span className="print-field-label">تكلفة الدراي:</span>
-              <span className="print-field-value">{formatNumber(costs.dryCost, 2)} {pricing.currency}</span>
-            </div>
-            <div className="print-field">
-              <span className="print-field-label">تكلفة الويت:</span>
-              <span className="print-field-value">{formatNumber(costs.wetCost, 2)} {pricing.currency}</span>
-            </div>
-            <div className="print-field">
-              <span className="print-field-label">التكلفة الإجمالية:</span>
-              <span className="print-field-value">{formatNumber(costs.totalCost, 2)} {pricing.currency}</span>
-            </div>
-            <div className="print-field">
-              <span className="print-field-label">التكلفة يومياً:</span>
-              <span className="print-field-value">{formatNumber(costs.perDay, 2)} {pricing.currency}</span>
             </div>
           </div>
         </div>

@@ -479,6 +479,27 @@ export default function CatNutritionCalculator() {
                 />
               )}
             </div>
+
+            <div className="space-y-2">
+              <Label>حالة الجسم (BCS)</Label>
+              <Select value={catData.bcs.toString()} onValueChange={(value) => handleCatDataChange('bcs', parseInt(value))}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="1">1 - نحيف جداً</SelectItem>
+                  <SelectItem value="2">2 - نحيف</SelectItem>
+                  <SelectItem value="3">3 - تحت الوزن</SelectItem>
+                  <SelectItem value="4">4 - أقل من المثالي</SelectItem>
+                  <SelectItem value="5">5 - مثالي</SelectItem>
+                  <SelectItem value="6">6 - فوق المثالي قليلاً</SelectItem>
+                  <SelectItem value="7">7 - زيادة وزن</SelectItem>
+                  <SelectItem value="8">8 - بدانة</SelectItem>
+                  <SelectItem value="9">9 - بدانة مفرطة</SelectItem>
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-gray-500">مقياس 1-9 حسب WSAVA. يؤثر على حساب السعرات للبالغين.</p>
+            </div>
           </CardContent>
         </Card>
 
