@@ -41,6 +41,87 @@ export default function CatNutritionCalculator() {
   } = useCatNutrition()
 
   const [isSaving, setIsSaving] = useState(false)
+  const breedLabel = (code: string) => {
+    const map: Record<string, string> = {
+      domestic_shorthair: 'منزلية شعر قصير',
+      domestic_longhair: 'منزلية شعر طويل',
+      persian: 'Persian (شيرازي)',
+      british_shorthair: 'British Shorthair',
+      maine_coon: 'Maine Coon',
+      ragdoll: 'Ragdoll',
+      siamese: 'Siamese',
+      bengal: 'Bengal',
+      sphynx: 'Sphynx',
+      scottish_fold: 'Scottish Fold',
+      norwegian_forest: 'Norwegian Forest',
+      american_shorthair: 'American Shorthair',
+      abyssinian: 'Abyssinian',
+      turkish_angora: 'Turkish Angora',
+      russian_blue: 'Russian Blue',
+      oriental: 'Oriental',
+      burmese: 'Burmese (بورميز)',
+      tonkinese: 'Tonkinese (تونكينيز)',
+      himalayan: 'Himalayan (هيمالايا)',
+      devon_rex: 'Devon Rex (ديفون ريكس)',
+      cornish_rex: 'Cornish Rex (كورنيش ريكس)',
+      manx: 'Manx (مانكس)',
+      savannah: 'Savannah (سافانا)',
+      bombay: 'Bombay (بومباي)',
+      egyptian_mau: 'Egyptian Mau (مصري ماو)',
+      egyptian_baladi: 'بلدي مصري (Baladi)'
+    }
+    return map[code] || code
+  }
+
+  const loadClient = async () => {
+    try {
+      const clientName = (catData.clientName || '').trim()
+      if (!clientName) {
+        alert('أدخل اسم العميل أولاً')
+        return
+      }
+      const res = await fetch(`/api/clients?name=${encodeURIComponent(clientName)}`)
+      const json = await res.json()
+      if (!res.ok) throw new Error(json?.error || 'غير موجود')
+      const data = json?.data
+      if (data?.catData) {
+        Object.entries(data.catData).forEach(([k, v]) => {
+          // @ts-ignore
+          handleCatDataChange(k as any, v as any)
+        })
+      }
+      if (data?.foodData) {
+        Object.entries(data.foodData).forEach(([k, v]) => {
+          // @ts-ignore
+          handleFoodDataChange(k as any, v as any)
+        })
+      }
+      if (data?.weeklyPlan) {
+        const wp = data.weeklyPlan
+        if (Array.isArray(wp.wetDays)) {
+          handleWeeklyPlanChange('wetDays', wp.wetDays)
+          handleWeeklyPlanChange('wetDaysCount', wp.wetDays.filter((b: boolean) => !!b).length)
+        }
+        if (typeof wp.wetMealIndex !== 'undefined') handleWeeklyPlanChange('wetMealIndex', wp.wetMealIndex)
+      }
+      if (data?.boxBuilder) {
+        Object.entries(data.boxBuilder).forEach(([k, v]) => {
+          // @ts-ignore
+          handleBoxBuilderChange(k as any, v as any)
+        })
+      }
+      if (data?.pricing) {
+        Object.entries(data.pricing).forEach(([k, v]) => {
+          // @ts-ignore
+          handlePricingChange(k as any, v as any)
+        })
+      }
+      alert('تم تحميل بيانات العميل')
+    } catch (e) {
+      console.error('Load client failed:', e)
+      alert('فشل تحميل بيانات العميل')
+    }
+  }
 
   // Auto-load saved data on mount
   useEffect(() => {
@@ -88,6 +169,11 @@ export default function CatNutritionCalculator() {
   const saveData = async () => {
     setIsSaving(true)
     try {
+      const clientName = (catData.clientName || '').trim()
+      if (!clientName) {
+        alert('الرجاء إدخال اسم العميل')
+        return
+      }
       const dataToSave = {
         catData,
         foodData,
@@ -95,10 +181,20 @@ export default function CatNutritionCalculator() {
         boxBuilder,
         pricing
       }
+      // Save to server (persistent)
+      const res = await fetch('/api/clients', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ clientName, data: dataToSave })
+      })
+      const json = await res.json()
+      if (!res.ok) throw new Error(json?.error || 'خطأ غير معروف')
+      alert(json.created ? 'تم إنشاء ملف جديد للعميل' : 'تم تحديث ملف العميل')
+      // Fallback local cache
       localStorage.setItem('catNutritionData', JSON.stringify(dataToSave))
-      // Could add toast notification here
     } catch (error) {
       console.error('Save failed:', error)
+      alert('فشل الحفظ. تحقق من الاتصال بالسيرفر.')
     } finally {
       setIsSaving(false)
     }
@@ -125,8 +221,11 @@ export default function CatNutritionCalculator() {
       <div style="direction: rtl; font-family: Arial, sans-serif; padding: 20px; max-width: 400px; margin: 0 auto;">
         <h2 style="text-align: center; margin-bottom: 15px; color: #333;">ملصق بوكس تغذية القطة</h2>
         <div style="border: 2px solid #333; padding: 15px; border-radius: 8px;">
+          <p><strong>اسم العميل:</strong> ${catData.clientName || 'غير محدد'}</p>
           <p><strong>اسم القطة:</strong> ${catData.name || 'غير محدد'}</p>
           <p><strong>الوزن:</strong> ${catData.weight} كجم</p>
+          <p><strong>السلالة:</strong> ${catData.breed === 'other' ? (catData.breedOther || '—') : breedLabel(catData.breed)}</p>
+          <p><strong>التعقيم:</strong> ${catData.neuter === 'neutered' ? 'معقّم/مخصي' : 'غير معقّم/سليم'}</p>
           <p><strong>مستوى النشاط:</strong> ${results.activityInfo.label}</p>
           <p><strong>مدة البوكس:</strong> ${results.boxSummary.totalDays} يوم</p>
           <p><strong>السعرات اليومية:</strong> ${results.der} كيلو كالوري</p>
@@ -192,6 +291,16 @@ export default function CatNutritionCalculator() {
             <CardTitle>بيانات القطة</CardTitle>
           </CardHeader>
           <CardContent className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="clientName">اسم العميل</Label>
+              <Input
+                id="clientName"
+                placeholder="مثال: د. أحمد"
+                value={catData.clientName}
+                onChange={(e) => handleCatDataChange('clientName', e.target.value)}
+              />
+            </div>
+
             <div className="space-y-2">
               <Label htmlFor="name">اسم القطة</Label>
               <Input
@@ -1194,6 +1303,9 @@ export default function CatNutritionCalculator() {
               <Button variant="outline" onClick={saveData} disabled={isSaving}>
                 {isSaving ? 'جاري الحفظ...' : 'حفظ البيانات'}
               </Button>
+              <Button variant="outline" onClick={loadClient}>
+                تحميل بيانات العميل
+              </Button>
               <Button variant="outline" onClick={resetData}>
                 إعادة الضبط
               </Button>
@@ -1228,10 +1340,13 @@ export default function CatNutritionCalculator() {
               {/* Client Details */}
               <div className="flex flex-wrap gap-2">
                 <Badge variant="secondary">الاسم: {catData.name || '—'}</Badge>
+                <Badge variant="secondary">اسم العميل: {catData.clientName || '—'}</Badge>
                 <Badge variant="secondary">العمر: {catData.ageValue} {catData.ageUnit === 'years' ? 'سنة' : 'شهر'}</Badge>
                 <Badge variant="secondary">الوزن: {catData.weight} كجم</Badge>
                 <Badge variant="secondary">الجنس: {catData.sex === 'female' ? 'أنثى' : 'ذكر'}</Badge>
                 <Badge variant="outline">النشاط: {results.activityInfo.label}</Badge>
+                <Badge variant="secondary">السلالة: {catData.breed === 'other' ? (catData.breedOther || '—') : breedLabel(catData.breed)}</Badge>
+                <Badge variant="secondary">التعقيم: {catData.neuter === 'neutered' ? 'معقّم/مخصي' : 'غير معقّم/سليم'}</Badge>
                 {results.weightStatus !== 'na' && (
                   <Badge variant={results.weightStatus === 'ok' ? "default" : results.weightStatus === 'low' ? "secondary" : "destructive"}>
                     {results.weightStatus === 'ok'
@@ -1245,49 +1360,7 @@ export default function CatNutritionCalculator() {
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <Card className="bg-gray-50">
                   <CardContent className="p-4 text-center">
-                    <TooltipProvider>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <p className="text-sm text-gray-600">RER (Resting)</p>
-                        </TooltipTrigger>
-                        <TooltipContent>
-                          <p className="text-sm">RER = متطلبات الطاقة أثناء الراحة</p>
-                          <p className="text-xs text-gray-500">70 × (الوزن^0.75) كيلو كالوري/يوم (NRC 2006)</p>
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
-                    <p className="text-xl font-bold">{formatNumber(results.rer, 1)}</p>
-                  </CardContent>
-                </Card>
-                <Card className="bg-gray-50">
-                  <CardContent className="p-4 text-center">
-                    <TooltipProvider>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <p className="text-sm text-gray-600">العامل المستخدم (MER)</p>
-                        </TooltipTrigger>
-                        <TooltipContent>
-                          <p className="text-sm">MER = متطلبات الطاقة الحافظة</p>
-                          <p className="text-xs text-gray-500">عامل مشتق من النشاط والحالة (NRC 2006)</p>
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
-                    <p className="text-xl font-bold">{results.factor.toFixed(1)}×RER</p>
-                  </CardContent>
-                </Card>
-                <Card className="bg-gray-50">
-                  <CardContent className="p-4 text-center">
-                    <TooltipProvider>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <p className="text-sm text-gray-600">السعرات اليومية المطلوبة (DER)</p>
-                        </TooltipTrigger>
-                        <TooltipContent>
-                          <p className="text-sm">DER = متطلبات الطاقة اليومية</p>
-                          <p className="text-xs text-gray-500">RER × عامل MER (NRC 2006)</p>
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
+                    <p className="text-sm text-gray-600">السعرات اليومية المطلوبة (DER)</p>
                     <p className="text-xl font-bold">{formatNumber(results.der, 1)}</p>
                   </CardContent>
                 </Card>
@@ -1305,8 +1378,7 @@ export default function CatNutritionCalculator() {
                   <h3 className="font-semibold mb-2">تفاصيل مستوى النشاط</h3>
                   <p className="text-sm mb-2"><strong>{results.activityInfo.label}</strong></p>
                   <p className="text-sm mb-2">{results.activityInfo.description}</p>
-                  <p className="text-sm text-blue-700">{results.activityInfo.scientificNote}</p>
-                  <p className="text-xs text-gray-600 mt-2">أمثلة: {results.activityInfo.examples.join('، ')}</p>
+                  {/* Removed RER mention and examples line as requested */}
                 </CardContent>
               </Card>
 

@@ -4,6 +4,7 @@ import { useState, useCallback } from 'react'
 
 interface CatData {
   name: string;
+  clientName: string;
   ageValue: string;
   ageUnit: 'months' | 'years';
   lifeStage: 'auto' | 'kitten_young' | 'kitten_older' | 'adult' | 'senior';
@@ -221,6 +222,7 @@ export function useCatNutrition() {
   // State
   const [catData, setCatData] = useState<CatData>({
     name: '',
+    clientName: '',
     ageValue: '',
     ageUnit: 'months',
     lifeStage: 'auto',
