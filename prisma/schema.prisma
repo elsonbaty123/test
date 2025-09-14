@@ -9,8 +9,8 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlserver"
-  url      = env("DATABASE_URL")
+  provider = "postgresql"
+  url      = env("POSTGRES_PRISMA_URL")
 }
 
 model User {
@@ -34,7 +34,8 @@ model Post {
 model Customer {
   id        String   @id @default(cuid())
   name      String   @unique
-  data      String   @db.NVarChar(4000)
+  data      String   @db.Text
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
+
