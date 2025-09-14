@@ -44,6 +44,7 @@ export default function CatNutritionCalculator() {
   const [isSaving, setIsSaving] = useState(false)
   const [clients, setClients] = useState<Array<{id: string, name: string, phone: string, createdAt: string, updatedAt: string}>>([])
   const [isLoadingClients, setIsLoadingClients] = useState(false)
+  const [isLoadingClientData, setIsLoadingClientData] = useState(false)
   const [showNewClientDialog, setShowNewClientDialog] = useState(false)
   const [newClientName, setNewClientName] = useState('')
   const [newClientPhone, setNewClientPhone] = useState('')
@@ -94,10 +95,59 @@ export default function CatNutritionCalculator() {
     }
   }
 
-  const selectClient = (client: {name: string, phone: string}) => {
+  const selectClient = async (client: {name: string, phone: string}) => {
+    setIsLoadingClientData(true)
     handleCatDataChange('clientName', client.name)
     handleCatDataChange('clientPhone', client.phone)
-    loadClient()
+    
+    // Automatically load client data
+    try {
+      const res = await fetch(`/api/clients?name=${encodeURIComponent(client.name)}`)
+      const json = await res.json()
+      if (!res.ok) throw new Error(json?.error || 'غير موجود')
+      const data = json?.data
+      
+      if (data?.catData) {
+        Object.entries(data.catData).forEach(([k, v]) => {
+          // @ts-ignore
+          handleCatDataChange(k as any, v as any)
+        })
+      }
+      if (data?.foodData) {
+        Object.entries(data.foodData).forEach(([k, v]) => {
+          // @ts-ignore
+          handleFoodDataChange(k as any, v as any)
+        })
+      }
+      if (data?.weeklyPlan) {
+        const wp = data.weeklyPlan
+        if (Array.isArray(wp.wetDays)) {
+          handleWeeklyPlanChange('wetDays', wp.wetDays)
+          handleWeeklyPlanChange('wetDaysCount', wp.wetDays.filter((b: boolean) => !!b).length)
+        }
+        if (typeof wp.wetMealIndex !== 'undefined') handleWeeklyPlanChange('wetMealIndex', wp.wetMealIndex)
+      }
+      if (data?.boxBuilder) {
+        Object.entries(data.boxBuilder).forEach(([k, v]) => {
+          // @ts-ignore
+          handleBoxBuilderChange(k as any, v as any)
+        })
+      }
+      if (data?.pricing) {
+        Object.entries(data.pricing).forEach(([k, v]) => {
+          // @ts-ignore
+          handlePricingChange(k as any, v as any)
+        })
+      }
+      
+      // Show success message
+      alert('تم تحميل بيانات العميل تلقائياً')
+    } catch (e) {
+      console.error('Auto-load client failed:', e)
+      // Don't show error for auto-load, just silently fail
+    } finally {
+      setIsLoadingClientData(false)
+    }
   }
 
   const createNewClient = async () => {
@@ -344,9 +394,10 @@ export default function CatNutritionCalculator() {
                       }
                     }
                   }}
+                  disabled={isLoadingClientData}
                 >
                   <SelectTrigger className="flex-1">
-                    <SelectValue placeholder="اختر عميل موجود أو أضف جديد" />
+                    <SelectValue placeholder={isLoadingClientData ? "جاري تحميل البيانات..." : "اختر عميل (تحميل تلقائي)"} />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="__new__">+ إضافة عميل جديد</SelectItem>
@@ -365,17 +416,18 @@ export default function CatNutritionCalculator() {
                 <Button 
                   variant="outline" 
                   onClick={loadClients}
-                  disabled={isLoadingClients}
+                  disabled={isLoadingClients || isLoadingClientData}
                   size="sm"
                 >
-                  تحديث
+                  {isLoadingClients ? 'جاري...' : 'تحديث'}
                 </Button>
               </div>
               <Input
-                placeholder="أو اكتب اسم العميل مباشرة"
+                placeholder="أو اكتب اسم جديد (تحميل يدوي)"
                 value={catData.clientName}
                 onChange={(e) => handleCatDataChange('clientName', e.target.value)}
                 className="text-sm"
+                disabled={isLoadingClientData}
               />
             </div>
 
