@@ -1423,6 +1423,8 @@ export default function CatNutritionCalculator() {
                         <TableHead>سعرات دراي</TableHead>
                         <TableHead>فطار (كcal)</TableHead>
                         <TableHead>عشاء (كcal)</TableHead>
+                        <TableHead>الفطار (مكونات)</TableHead>
+                        <TableHead>العشاء (مكونات)</TableHead>
                         <TableHead>جرامات ويت</TableHead>
                         <TableHead>جرامات دراي</TableHead>
                         <TableHead>وحدات ويت</TableHead>
@@ -1438,6 +1440,42 @@ export default function CatNutritionCalculator() {
                           <TableCell className="text-center">{formatNumber(day.dryKcal, 1)}</TableCell>
                           <TableCell className="text-center">{formatNumber(day.breakfastKcal, 1)}</TableCell>
                           <TableCell className="text-center">{formatNumber(day.dinnerKcal, 1)}</TableCell>
+                          <TableCell className="text-center">
+                            {(() => {
+                              const round5 = (n: number) => Math.round(n / 5) * 5
+                              const packLabel = foodData.wetPackType === 'can' ? 'علبة ويت' : 'كيس ويت'
+                              if (day.breakfastWetGrams > 0) {
+                                const dry = round5(day.breakfastDryGrams)
+                                let base = `ويت ${formatNumber(day.breakfastWetGrams, 0)} جم`
+                                if (foodData.wetMode === 'perUnit') {
+                                  const fullUnit = Math.abs(day.breakfastWetGrams - day.servingSize) <= 1
+                                  base = fullUnit ? packLabel : `ويت ${formatNumber(day.breakfastWetGrams, 0)} جم`
+                                }
+                                return dry > 0 ? `${base} + ${dry} جم دراي` : base
+                              } else {
+                                const dry = round5(day.breakfastDryGrams)
+                                return dry > 0 ? `دراي ${dry} جم` : '-'
+                              }
+                            })()}
+                          </TableCell>
+                          <TableCell className="text-center">
+                            {(() => {
+                              const round5 = (n: number) => Math.round(n / 5) * 5
+                              const packLabel = foodData.wetPackType === 'can' ? 'علبة ويت' : 'كيس ويت'
+                              if (day.dinnerWetGrams > 0) {
+                                const dry = round5(day.dinnerDryGrams)
+                                let base = `ويت ${formatNumber(day.dinnerWetGrams, 0)} جم`
+                                if (foodData.wetMode === 'perUnit') {
+                                  const fullUnit = Math.abs(day.dinnerWetGrams - day.servingSize) <= 1
+                                  base = fullUnit ? packLabel : `ويت ${formatNumber(day.dinnerWetGrams, 0)} جم`
+                                }
+                                return dry > 0 ? `${base} + ${dry} جم دراي` : base
+                              } else {
+                                const dry = round5(day.dinnerDryGrams)
+                                return dry > 0 ? `دراي ${dry} جم` : '-'
+                              }
+                            })()}
+                          </TableCell>
                           <TableCell className="text-center">{formatNumber(day.wetGrams, 1)}</TableCell>
                           <TableCell className="text-center">{formatNumber(day.dryGrams, 1)}</TableCell>
                           <TableCell className="text-center">{day.units.toFixed(2)}</TableCell>
