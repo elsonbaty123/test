@@ -43,7 +43,8 @@ export default function CatNutritionCalculator() {
     DEFAULT_RANGE,
     autoDistributeWetDays,
     calculateNutrition,
-    formatNumber
+    formatNumber,
+    bcsSuggestedLive,
   } = useCatNutrition()
 
   const [isSaving, setIsSaving] = useState(false)
@@ -58,6 +59,9 @@ export default function CatNutritionCalculator() {
   const [newClientAddress, setNewClientAddress] = useState('')
   const [clientSearchTerm, setClientSearchTerm] = useState('')
   const [showClientDropdown, setShowClientDropdown] = useState(false)
+
+  // BCS suggestion prefers calculated results; falls back to live suggestion
+  const bcsSuggestion = results?.bcsSuggested ?? bcsSuggestedLive
 
   // Breed search state
   const [breedPickerOpen, setBreedPickerOpen] = useState(false)
@@ -794,7 +798,23 @@ export default function CatNutritionCalculator() {
                   <SelectItem value="9">9 - بدانة مفرطة</SelectItem>
                 </SelectContent>
               </Select>
-              <p className="text-xs text-gray-500">مقياس 1-9 حسب WSAVA. يؤثر على حساب السعرات للبالغين.</p>
+              <div className="flex flex-col gap-1">
+                <p className="text-xs text-gray-500">مقياس 1-9 حسب WSAVA. هذا الاختيار يدوي؛ سنعرض توصية علمية عند الحساب دون إجبار.</p>
+                {catData.weight && !isNaN(parseFloat(catData.weight)) && (
+                  <div className="flex items-center gap-2 text-xs">
+                    <span className="px-2 py-1 rounded bg-blue-50 text-blue-700 border border-blue-200">التوصية العلمية: BCS = {bcsSuggestion}</span>
+                    {catData.bcs !== bcsSuggestion && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleCatDataChange('bcs', bcsSuggestion)}
+                      >
+                        تطبيق التوصية
+                      </Button>
+                    )}
+                  </div>
+                )}
+              </div>
             </div>
           </CardContent>
         </Card>

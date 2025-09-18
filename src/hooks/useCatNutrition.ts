@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useMemo } from 'react'
 
 interface CatData {
   name: string;
@@ -135,6 +135,8 @@ interface Results {
   weightRange: [number, number];
   idealWeight: number;
   usedWeight: number;
+  bcsSuggested: number;
+  bcsSuggestionReason?: string;
   recommendations: string[];
 }
 
@@ -353,6 +355,17 @@ export function useCatNutrition() {
   const [isCalculating, setIsCalculating] = useState(false)
 
   const dayNames = DAY_NAMES_AR
+
+  // Live BCS suggestion based on current inputs (advisory; UI remains manual)
+  const bcsSuggestedLive = useMemo(() => {
+    const weight = toNumber(catData.weight, NaN)
+    if (!Number.isFinite(weight)) return catData.bcs
+    const ageMonths = ageToMonths(catData.ageValue, catData.ageUnit)
+    const stage = catData.lifeStage === 'auto' ? deriveLifeStage(ageMonths) : catData.lifeStage
+    const [minW, maxW] = getBreedRangeForCat(catData)
+    const idealWeight = (minW + maxW) / 2
+    return suggestBCS(weight, minW, maxW, idealWeight, stage)
+  }, [catData])
 
   const handleCatDataChange = useCallback((key: keyof CatData, value: any) => {
     setCatData(prev => {
@@ -591,8 +604,8 @@ export function useCatNutrition() {
       const [minW, maxW] = getBreedRangeForCat(catData)
       const idealWeight = (minW + maxW) / 2
       const bcsSuggested = suggestBCS(weight, minW, maxW, idealWeight, stage)
-      const catForFactor = { ...catData, bcs: bcsSuggested }
-      const factor = computeFactor(rerRaw, stage, activityInfo, catForFactor)
+      // Use user's chosen BCS for factor; suggestion is advisory only
+      const factor = computeFactor(rerRaw, stage, activityInfo, catData)
       const rer = round1(rerRaw)
       const der = round1(rer * factor)
       let weightStatus: Results['weightStatus'] = 'ok'
@@ -779,12 +792,6 @@ export function useCatNutrition() {
         unitsForCost: unitsUsed,
       }
 
-      // Auto-assign BCS recommendation and update state to reflect it
-      if ((stage === 'adult' || stage === 'senior') && catData.bcs !== bcsSuggested) {
-        recommendations.push(`تم اختيار BCS تلقائيًا بقيمة ${bcsSuggested} استنادًا إلى الانحراف عن الوزن المثالي للسلالة.`)
-        setCatData(prev => ({ ...prev, bcs: bcsSuggested }))
-      }
-
       setResults({
         rer,
         factor,
@@ -796,6 +803,7 @@ export function useCatNutrition() {
         weightRange: [minW, maxW],
         idealWeight,
         usedWeight: weight,
+        bcsSuggested,
         recommendations,
       })
 
@@ -864,5 +872,6 @@ export function useCatNutrition() {
     autoDistributeWetDays,
     calculateNutrition,
     formatNumber,
+    bcsSuggestedLive,
   }
 }
