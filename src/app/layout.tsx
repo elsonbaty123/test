@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import { Tajawal } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/toaster";
+import branding from "@/config/branding";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -36,6 +37,11 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "حاسبة تغذية القطة",
     description: "أداة شاملة لحساب تغذية القطط مع خطط أسبوعية وشهرية",
+  },
+  icons: {
+    icon: [{ url: branding.logoUrl }],
+    shortcut: ["/favicon.ico"],
+    apple: [{ url: branding.logoUrl }],
   },
 };
 

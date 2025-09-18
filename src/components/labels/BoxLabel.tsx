@@ -3,6 +3,7 @@
 import React from 'react'
 import { QRCode } from './QRCode'
 import { formatNumber } from '@/lib/utils'
+import branding from '@/config/branding'
 
 interface BoxLabelProps {
   catData: any
@@ -11,6 +12,7 @@ interface BoxLabelProps {
   boxSummary: any
   pricing: any
   costs: any
+  orderNo?: string
 }
 
 export const BoxLabel: React.FC<BoxLabelProps> = ({
@@ -19,7 +21,8 @@ export const BoxLabel: React.FC<BoxLabelProps> = ({
   results,
   boxSummary,
   pricing,
-  costs
+  costs,
+  orderNo: orderNoProp
 }) => {
   const formatDate = () => {
     return new Date().toLocaleDateString('ar-EG', {
@@ -71,6 +74,19 @@ export const BoxLabel: React.FC<BoxLabelProps> = ({
   }
 
   if (!results || !boxSummary) return null
+
+  // Build order number (prefix + date + short id)
+  const buildOrderNo = () => {
+    const d = new Date()
+    const y = d.getFullYear()
+    const m = String(d.getMonth() + 1).padStart(2, '0')
+    const day = String(d.getDate()).padStart(2, '0')
+    const hh = String(d.getHours()).padStart(2, '0')
+    const mm = String(d.getMinutes()).padStart(2, '0')
+    const rand = Math.random().toString(36).slice(2, 5).toUpperCase()
+    return `${branding.orderPrefix}-${y}${m}${day}-${hh}${mm}-${rand}`
+  }
+  const orderNo = (orderNoProp && String(orderNoProp).trim()) ? String(orderNoProp).trim() : buildOrderNo()
 
   return (
     <div className="box-label" dir="rtl">
@@ -203,6 +219,25 @@ export const BoxLabel: React.FC<BoxLabelProps> = ({
             border-top: 1px solid #eee;
             padding-top: 1mm;
           }
+          /* Side-by-side row for two fields */
+          .label-row-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2mm;
+            margin-bottom: 1mm;
+          }
+          .brand-header {
+            display: grid;
+            grid-template-columns: 50px 1fr 1fr;
+            align-items: center;
+            gap: 4mm;
+          }
+          .label-logo {
+            width: 50px; height: 50px; object-fit: contain; border-radius: 6px; border: 1px solid #e5e7eb;
+          }
+          .store-name { font-size: 12px; font-weight: bold; color: #0ea5e9; }
+          .store-meta { font-size: 8px; color: #555; }
+          .order-no { font-size: 9px; color: #111; text-align: left; }
         }
         
         @media screen {
@@ -334,13 +369,40 @@ export const BoxLabel: React.FC<BoxLabelProps> = ({
             border-top: 1px solid #eee;
             padding-top: 2px;
           }
+          .label-row-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 6px;
+            margin-bottom: 4px;
+          }
+          .brand-header {
+            display: grid;
+            grid-template-columns: 60px 1fr 1fr;
+            align-items: center;
+            gap: 8px;
+          }
+          .label-logo { width: 60px; height: 60px; object-fit: contain; border-radius: 8px; border: 1px solid #e5e7eb; }
+          .store-name { font-size: 14px; font-weight: bold; color: #0ea5e9; }
+          .store-meta { font-size: 10px; color: #555; }
+          .order-no { font-size: 10px; color: #111; text-align: left; }
         }
       `}</style>
 
       {/* Header */}
       <div className="label-header">
-        <div className="label-title">إيصال بوكس التغذية</div>
-        <div className="label-subtitle">تاريخ الإنشاء: {formatDate()}</div>
+        <div className="brand-header">
+          <img src={branding.logoUrl} alt="Logo" className="label-logo" />
+          <div>
+            <div className="store-name">{branding.storeName}</div>
+            <div className="store-meta">{branding.storeAddress}</div>
+            <div className="store-meta">{branding.storePhone}</div>
+          </div>
+          <div className="order-no">
+            <div>رقم الطلب:</div>
+            <div style={{ fontWeight: 600 }}>{orderNo}</div>
+            <div style={{ color: '#666', fontSize: '8px' }}>التاريخ: {formatDate()}</div>
+          </div>
+        </div>
       </div>
 
       {/* Content */}
@@ -374,13 +436,15 @@ export const BoxLabel: React.FC<BoxLabelProps> = ({
               <span className="label-field-name">قبل الخصم (بعد الأرباح):</span>
               <span className="label-field-value">{formatNumber(costs.totalCostWithProfit, 0)} {pricing.currency}</span>
             </div>
-            <div className="label-field">
-              <span className="label-field-name">بعد الخصم:</span>
-              <span className="label-field-value">{formatNumber(costs.totalCostAfterDiscount, 0)} {pricing.currency}</span>
-            </div>
-            <div className="label-field">
-              <span className="label-field-name">الدلفري:</span>
-              <span className="label-field-value">{formatNumber(costs.deliveryCost, 0)} {pricing.currency}</span>
+            <div className="label-row-2">
+              <div className="label-field">
+                <span className="label-field-name">بعد الخصم:</span>
+                <span className="label-field-value">{formatNumber(costs.totalCostAfterDiscount, 0)} {pricing.currency}</span>
+              </div>
+              <div className="label-field">
+                <span className="label-field-name">الدلفري:</span>
+                <span className="label-field-value">{formatNumber(costs.deliveryCost, 0)} {pricing.currency}</span>
+              </div>
             </div>
             <div className="label-field" style={{ borderTop: '1px dotted #ccc', paddingTop: '2px' }}>
               <span className="label-field-name">الإجمالي النهائي (بعد الخصم + الدلفري):</span>
@@ -390,16 +454,20 @@ export const BoxLabel: React.FC<BoxLabelProps> = ({
 
         </div>
 
-        {/* QR Code */}
+        {/* QR Codes */}
         <div className="label-qr">
           <QRCode 
             data={generateQRData()} 
             size={80} 
             className="label-qr-code"
           />
-          <div className="label-qr-text">
-            مسح للمعلومات<br/>الكاملة
-          </div>
+          <div className="label-qr-text">معلومات الطلب</div>
+          <QRCode 
+            data={JSON.stringify({ order: orderNo, total: costs.totalCostWithDelivery, currency: pricing.currency })}
+            size={80}
+            className="label-qr-code"
+          />
+          <div className="label-qr-text">دفع/طلب</div>
         </div>
       </div>
 

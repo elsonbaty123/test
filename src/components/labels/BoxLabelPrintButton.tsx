@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Tag, Printer } from 'lucide-react'
 import { BoxLabel } from './BoxLabel'
 import ReactDOM from 'react-dom/client'
+import branding from '@/config/branding'
 
 interface BoxLabelPrintButtonProps {
   catData: any
@@ -29,10 +30,54 @@ export const BoxLabelPrintButton: React.FC<BoxLabelPrintButtonProps> = ({
   size = 'default',
   className = ''
 }) => {
-  const handlePrintLabel = () => {
+  const handlePrintLabel = async () => {
     if (!results || !boxSummary) {
       alert('لا توجد بيانات بوكس للطباعة. يرجى حساب النتائج أولاً.')
       return
+    }
+
+    const name = (catData?.clientName || '').trim()
+    if (!name) {
+      alert('الرجاء إدخال اسم العميل قبل الطباعة لحفظ رقم الطلب')
+      return
+    }
+
+    const buildOrderNo = () => {
+      const d = new Date()
+      const y = d.getFullYear()
+      const m = String(d.getMonth() + 1).padStart(2, '0')
+      const day = String(d.getDate()).padStart(2, '0')
+      const hh = String(d.getHours()).padStart(2, '0')
+      const mm = String(d.getMinutes()).padStart(2, '0')
+      const rand = Math.random().toString(36).slice(2, 5).toUpperCase()
+      return `${branding.orderPrefix}-${y}${m}${day}-${hh}${mm}-${rand}`
+    }
+    const orderNo = buildOrderNo()
+
+    // Persist order number linked to the client
+    try {
+      await fetch('/api/orders', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name,
+          orderNo,
+          currency: pricing?.currency,
+          catName: catData?.name,
+          totals: {
+            totalCostWithProfit: costs?.totalCostWithProfit,
+            totalCostAfterDiscount: costs?.totalCostAfterDiscount,
+            deliveryCost: costs?.deliveryCost,
+            totalCostWithDelivery: costs?.totalCostWithDelivery,
+          },
+          payload: {
+            boxSummary,
+          }
+        })
+      })
+      // ignore response errors; printing can proceed regardless
+    } catch (e) {
+      console.warn('Failed to save order number, will continue printing:', e)
     }
 
     // Create a new window for printing
@@ -55,6 +100,7 @@ export const BoxLabelPrintButton: React.FC<BoxLabelPrintButtonProps> = ({
         boxSummary={boxSummary}
         pricing={pricing}
         costs={costs}
+        orderNo={orderNo}
       />
     )
 
@@ -114,118 +160,17 @@ export const BoxLabelPrintButton: React.FC<BoxLabelPrintButtonProps> = ({
                 page-break-after: always;
                 margin: 0 auto;
               }
-              
-              .label-header {
-                text-align: center;
-                border-bottom: 1px solid #0ea5e9;
-                padding-bottom: 4mm;
-                margin-bottom: 4mm;
+
+              /* Thermal receipt overrides */
+              body.thermal .box-label {
+                width: 80mm !important;
+                height: auto !important;
+                padding: 6mm !important;
+                border-width: 1px !important;
               }
-              
-              .label-title {
-                font-size: 14px;
-                font-weight: bold;
-                color: #0ea5e9;
-                margin-bottom: 2px;
-              }
-              
-              .label-subtitle {
-                font-size: 9px;
-                color: #666;
-              }
-              
-              .label-content {
-                display: grid;
-                grid-template-columns: 1fr 80px;
-                gap: 4mm;
-                height: calc(100% - 30px);
-              }
-              
-              .label-info {
-                display: flex;
-                flex-direction: column;
-                gap: 2mm;
-              }
-              
-              .label-section {
-                margin-bottom: 3mm;
-              }
-              
-              .label-section-title {
-                font-weight: bold;
-                color: #0ea5e9;
-                font-size: 9px;
-                margin-bottom: 1mm;
-                border-bottom: 1px dotted #ccc;
-              }
-              
-              .label-field {
-                display: flex;
-                justify-content: space-between;
-                margin-bottom: 1mm;
-                font-size: 8px;
-              }
-              
-              .label-field-name {
-                font-weight: bold;
-                color: #333;
-              }
-              
-              .label-field-value {
-                color: #000;
-              }
-              
-              .label-qr {
-                display: flex;
-                flex-direction: column;
-                align-items: center;
-                justify-content: flex-start;
-                gap: 2mm;
-              }
-              
-              .label-qr-code {
-                width: 60px;
-                height: 60px;
-              }
-              
-              .label-qr-text {
-                font-size: 7px;
-                text-align: center;
-                color: #666;
-              }
-              
-              .label-contents {
-                background-color: #f8fafc;
-                border: 1px solid #e2e8f0;
-                border-radius: 4px;
-                padding: 2mm;
-                margin-top: 2mm;
-              }
-              
-              .label-contents-title {
-                font-weight: bold;
-                color: #0ea5e9;
-                font-size: 9px;
-                margin-bottom: 1mm;
-              }
-              
-              .label-contents-item {
-                font-size: 8px;
-                margin-bottom: 0.5mm;
-                display: flex;
-                justify-content: space-between;
-              }
-              
-              .label-footer {
-                position: absolute;
-                bottom: 2mm;
-                left: 2mm;
-                right: 2mm;
-                text-align: center;
-                font-size: 7px;
-                color: #999;
-                border-top: 1px solid #eee;
-                padding-top: 1mm;
+              body.thermal .label-content {
+                grid-template-columns: 1fr 60px !important;
+                gap: 3mm !important;
               }
             }
             
@@ -260,6 +205,13 @@ export const BoxLabelPrintButton: React.FC<BoxLabelPrintButtonProps> = ({
               .print-btn.secondary:hover {
                 background: #4b5563;
               }
+              .print-toggle {
+                display: inline-flex;
+                align-items: center;
+                gap: 8px;
+                margin: 0 10px;
+                font-size: 14px;
+              }
             }
           </style>
         </head>
@@ -267,8 +219,37 @@ export const BoxLabelPrintButton: React.FC<BoxLabelPrintButtonProps> = ({
           <div class="print-controls no-print">
             <button class="print-btn" onclick="window.print()">🏷️ طباعة الملصق</button>
             <button class="print-btn secondary" onclick="window.close()">❌ إغلاق</button>
+            <label class="print-toggle">
+              <input type="checkbox" id="thermalToggle" /> إيصال حراري 80مم
+            </label>
           </div>
           ${printContent.innerHTML}
+
+          <script>
+            (function() {
+              const toggle = document.getElementById('thermalToggle');
+              function applyThermal(on) {
+                if (on) {
+                  document.body.classList.add('thermal');
+                  // Append a style tag to override @page to 80mm
+                  let s = document.getElementById('thermalPageStyle');
+                  if (!s) {
+                    s = document.createElement('style');
+                    s.id = 'thermalPageStyle';
+                    document.head.appendChild(s);
+                  }
+                  s.textContent = '@media print { @page { size: 80mm auto; margin: 4mm; } }';
+                } else {
+                  document.body.classList.remove('thermal');
+                  const s = document.getElementById('thermalPageStyle');
+                  if (s) s.textContent = '';
+                }
+              }
+              if (toggle) {
+                toggle.addEventListener('change', function() { applyThermal(this.checked); });
+              }
+            })();
+          </script>
         </body>
         </html>
       `
