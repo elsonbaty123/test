@@ -553,6 +553,59 @@ export default function CatNutritionCalculator() {
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>
+
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className="text-red-600 border-red-300 hover:bg-red-50"
+                      onClick={async () => {
+                        const name = catData.clientName.trim()
+                        if (!name) {
+                          setSaveStatus('error')
+                          setSaveMessage('الرجاء إدخال/اختيار اسم العميل أولاً')
+                          setTimeout(() => setSaveStatus('idle'), 3000)
+                          return
+                        }
+                        const ok = window.confirm(`سيتم حذف بيانات العميل "${name}" نهائياً. هل أنت متأكد؟`)
+                        if (!ok) return
+                        try {
+                          setSaveStatus('saving')
+                          setSaveMessage('جاري حذف العميل...')
+                          const res = await fetch('/api/clients', {
+                            method: 'DELETE',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ name })
+                          })
+                          const json = await res.json().catch(() => ({}))
+                          if (!res.ok) throw new Error(json?.error || 'فشل حذف العميل')
+                          // Clear client fields
+                          handleCatDataChange('clientName', '')
+                          handleCatDataChange('clientPhone', '')
+                          handleCatDataChange('clientAddress', '')
+                          setClientSearchTerm('')
+                          setShowClientDropdown(false)
+                          await loadClients('')
+                          setSaveStatus('success')
+                          setSaveMessage('تم حذف العميل بنجاح ✓')
+                          setTimeout(() => setSaveStatus('idle'), 3000)
+                        } catch (e) {
+                          console.error('Delete client failed:', e)
+                          setSaveStatus('error')
+                          setSaveMessage('فشل في حذف العميل: ' + (e as Error).message)
+                          setTimeout(() => setSaveStatus('idle'), 5000)
+                        }
+                      }}
+                    >
+                      حذف العميل
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>حذف العميل والبيانات المرتبطة به</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
             </div>
 
             {/* Save/Load Status Indicator */}

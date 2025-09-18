@@ -339,7 +339,7 @@ export const BoxLabel: React.FC<BoxLabelProps> = ({
 
       {/* Header */}
       <div className="label-header">
-        <div className="label-title">ملصق بوكس التغذية</div>
+        <div className="label-title">إيصال بوكس التغذية</div>
         <div className="label-subtitle">تاريخ الإنشاء: {formatDate()}</div>
       </div>
 
@@ -367,15 +367,25 @@ export const BoxLabel: React.FC<BoxLabelProps> = ({
             )}
           </div>
 
-          {/* Order Total */}
+          {/* Receipt Section */}
           <div className="label-section">
-            <div className="label-section-title">معلومات الأوردر</div>
-            {costs && costs.totalCostWithDelivery > 0 && (
-              <div className="label-field">
-                <span className="label-field-name">المبلغ الكلي شامل الدلفري:</span>
-                <span className="label-field-value">{formatNumber(costs.totalCostWithDelivery, 0)} {pricing.currency}</span>
-              </div>
-            )}
+            <div className="label-section-title">الإيصال</div>
+            <div className="label-field">
+              <span className="label-field-name">قبل الخصم (بعد الأرباح):</span>
+              <span className="label-field-value">{formatNumber(costs.totalCostWithProfit, 0)} {pricing.currency}</span>
+            </div>
+            <div className="label-field">
+              <span className="label-field-name">بعد الخصم:</span>
+              <span className="label-field-value">{formatNumber(costs.totalCostAfterDiscount, 0)} {pricing.currency}</span>
+            </div>
+            <div className="label-field">
+              <span className="label-field-name">الدلفري:</span>
+              <span className="label-field-value">{formatNumber(costs.deliveryCost, 0)} {pricing.currency}</span>
+            </div>
+            <div className="label-field" style={{ borderTop: '1px dotted #ccc', paddingTop: '2px' }}>
+              <span className="label-field-name">الإجمالي النهائي (بعد الخصم + الدلفري):</span>
+              <span className="label-field-value" style={{ fontWeight: 'bold', color: '#0ea5e9' }}>{formatNumber(costs.totalCostWithDelivery, 0)} {pricing.currency}</span>
+            </div>
           </div>
 
         </div>

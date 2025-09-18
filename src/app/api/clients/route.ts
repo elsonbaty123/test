@@ -58,3 +58,26 @@ export async function GET(req: Request) {
     return NextResponse.json({ error: 'Server error' }, { status: 500 })
   }
 }
+
+export async function DELETE(req: Request) {
+  try {
+    const body = await req.json().catch(() => null)
+    const { name } = (body || {}) as { name?: string }
+    const targetName = (name || '').trim()
+    if (!targetName) {
+      return NextResponse.json({ error: 'اسم العميل مطلوب للحذف' }, { status: 400 })
+    }
+
+    const db = getDb()
+    const exists = await db.customer.findUnique({ where: { name: targetName } })
+    if (!exists) {
+      return NextResponse.json({ error: 'العميل غير موجود' }, { status: 404 })
+    }
+
+    await db.customer.delete({ where: { name: targetName } })
+    return NextResponse.json({ ok: true })
+  } catch (e) {
+    console.error('DELETE /api/clients error:', e)
+    return NextResponse.json({ error: 'Server error' }, { status: 500 })
+  }
+}
