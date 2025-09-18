@@ -668,6 +668,12 @@ export function useCatNutrition() {
         const wetKcalTotal = Math.max(0, wetKcalPerMeal.reduce((s, v) => s + v, 0))
         const wetGramsTotal = Math.round(breakfastWetGrams + dinnerWetGrams + othersWetGrams)
         
+        // Compute units for the day (fallback to grams -> units when per100 mode)
+        let dayUnits = units
+        if (foodData.wetMode !== 'perUnit' && wetUnitGrams > 0 && wetGramsTotal > 0) {
+          dayUnits = wetGramsTotal / wetUnitGrams
+        }
+
         // Create meals breakdown for all meals
         const mealsBreakdown = wetKcalPerMeal.map((wetKcal, idx) => {
           const dryKcal = dryKcalPerMeal[idx] || 0
@@ -697,7 +703,7 @@ export function useCatNutrition() {
           dryKcal: round1(dryKcal),
           wetGrams: round1(wetGramsTotal),
           dryGrams: round1(dryGrams),
-          units: Math.round(units * 100) / 100,
+          units: Math.round(dayUnits * 100) / 100,
           servingSize: wetUnitGrams,
           mealsBreakdown,
           // Legacy fields for backward compatibility
@@ -715,9 +721,10 @@ export function useCatNutrition() {
       if (boxBuilder.boxType === 'weekly') totalDays = 7
       else if (boxBuilder.boxType === 'custom') totalDays = boxBuilder.customDays > 0 ? boxBuilder.customDays : 30
 
-      const weekWetUnits = dailyData.reduce((s, d) => s + d.units, 0)
+      // Calculate wet units, falling back to grams-based estimation when per100 mode is used
+      const weekWetUnits = dailyData.reduce((s, d) => s + (d.units > 0 ? d.units : (wetUnitGrams > 0 ? d.wetGrams / wetUnitGrams : 0)), 0)
       const weeksInBox = Math.ceil(totalDays / 7)
-      let unitsUsed = Math.round(weekWetUnits * weeksInBox)
+      let unitsUsed = Math.ceil(weekWetUnits * weeksInBox)
       if (boxBuilder.boxWetMode === 'fixed_total') {
         unitsUsed = Math.max(0, Math.floor(boxBuilder.boxTotalUnits))
       }
