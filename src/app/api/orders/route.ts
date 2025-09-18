@@ -89,3 +89,28 @@ export async function GET(req: Request) {
     return NextResponse.json({ error: 'Server error' }, { status: 500 })
   }
 }
+
+export async function DELETE(req: Request) {
+  try {
+    const body = await req.json().catch(() => null)
+    const name = (body?.name || '').trim()
+    const orderNo = (body?.orderNo || '').trim()
+    if (!name || !orderNo) return NextResponse.json({ error: 'اسم العميل ورقم الطلب مطلوبان' }, { status: 400 })
+
+    const db = getDb()
+    const customer = await db.customer.findUnique({ where: { name } })
+    if (!customer) return NextResponse.json({ error: 'العميل غير موجود' }, { status: 404 })
+
+    let dataObj: any = {}
+    try { dataObj = JSON.parse((customer.data as unknown as string) || '{}') } catch {}
+    const orders: any[] = Array.isArray(dataObj?.orders) ? dataObj.orders : []
+    const filtered = orders.filter(o => o && o.orderNo !== orderNo)
+    dataObj.orders = filtered
+
+    await db.customer.update({ where: { name }, data: { data: JSON.stringify(dataObj) } })
+    return NextResponse.json({ ok: true })
+  } catch (e) {
+    console.error('DELETE /api/orders error:', e)
+    return NextResponse.json({ error: 'Server error' }, { status: 500 })
+  }
+}

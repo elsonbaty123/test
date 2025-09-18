@@ -19,6 +19,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { PrintButton } from '@/components/print/PrintButton'
 import { BoxLabelPrintButton } from '@/components/labels/BoxLabelPrintButton'
+import { ReprintReceiptButton } from '@/components/labels/ReprintReceiptButton'
 
 export default function CatNutritionCalculator() {
   const {
@@ -60,6 +61,64 @@ export default function CatNutritionCalculator() {
   const [newClientAddress, setNewClientAddress] = useState('')
   const [clientSearchTerm, setClientSearchTerm] = useState('')
   const [showClientDropdown, setShowClientDropdown] = useState(false)
+
+  // Orders history state
+  type OrderRecord = {
+    orderNo: string
+    createdAt?: string
+    currency?: string
+    totals: {
+      totalCostWithProfit?: number
+      totalCostAfterDiscount?: number
+      deliveryCost?: number
+      totalCostWithDelivery?: number
+    }
+    catName?: string
+    payload?: any
+  }
+  const [ordersClientName, setOrdersClientName] = useState('')
+  const [orders, setOrders] = useState<OrderRecord[]>([])
+  const [isLoadingOrders, setIsLoadingOrders] = useState(false)
+  const [ordersError, setOrdersError] = useState<string>('')
+
+  // Keep ordersClientName in sync with selected client
+  useEffect(() => {
+    setOrdersClientName(catData.clientName || '')
+  }, [catData.clientName])
+
+  const loadOrdersForClient = async (name: string) => {
+    if (!name.trim()) { setOrders([]); return }
+    try {
+      setIsLoadingOrders(true)
+      setOrdersError('')
+      const res = await fetch(`/api/orders?name=${encodeURIComponent(name.trim())}`)
+      const json = await res.json()
+      if (!res.ok) throw new Error(json?.error || 'فشل تحميل الطلبات')
+      setOrders(Array.isArray(json.orders) ? json.orders : [])
+    } catch (e) {
+      console.error('Load orders failed:', e)
+      setOrdersError((e as Error).message)
+    } finally {
+      setIsLoadingOrders(false)
+    }
+  }
+
+  const deleteOrder = async (name: string, orderNo: string) => {
+    const ok = window.confirm(`سيتم حذف الطلب ${orderNo} للعميل "${name}". هل أنت متأكد؟`)
+    if (!ok) return
+    try {
+      const res = await fetch('/api/orders', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, orderNo })
+      })
+      const json = await res.json().catch(() => ({}))
+      if (!res.ok) throw new Error(json?.error || 'فشل حذف الطلب')
+      await loadOrdersForClient(name)
+    } catch (e) {
+      alert('فشل حذف الطلب: ' + (e as Error).message)
+    }
+  }
 
   // BCS suggestion prefers calculated results; falls back to live suggestion
   const bcsSuggestion = results?.bcsSuggested ?? bcsSuggestedLive
@@ -407,6 +466,81 @@ export default function CatNutritionCalculator() {
                 disabled={isLoadingClientData}
               />
             </div>
+          </CardContent>
+        </Card>
+
+        {/* Orders History Section */}
+        <Card>
+          <CardHeader>
+            <CardTitle>سجل الطلبات</CardTitle>
+            <CardDescription>استعرض وأعد طباعة أو احذف طلبات العميل</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex flex-col sm:flex-row gap-3">
+              <Input
+                placeholder="اسم العميل"
+                value={ordersClientName}
+                onChange={(e) => setOrdersClientName(e.target.value)}
+                className="sm:max-w-xs"
+              />
+              <Button
+                variant="outline"
+                onClick={() => loadOrdersForClient(ordersClientName)}
+                disabled={isLoadingOrders || !ordersClientName.trim()}
+              >
+                {isLoadingOrders ? 'جاري التحميل...' : 'تحميل طلبات العميل'}
+              </Button>
+            </div>
+
+            {ordersError && (
+              <Alert className="border-red-200 bg-red-50">
+                <AlertDescription>{ordersError}</AlertDescription>
+              </Alert>
+            )}
+
+            {orders.length > 0 ? (
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>رقم الطلب</TableHead>
+                      <TableHead>التاريخ</TableHead>
+                      <TableHead>القطة</TableHead>
+                      <TableHead>الإجمالي النهائي</TableHead>
+                      <TableHead className="text-left">إجراءات</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {orders.map((o) => (
+                      <TableRow key={o.orderNo}>
+                        <TableCell className="font-mono text-sm">{o.orderNo}</TableCell>
+                        <TableCell>{o.createdAt ? new Date(o.createdAt).toLocaleString('ar-EG') : '-'}</TableCell>
+                        <TableCell>{o.catName || '-'}</TableCell>
+                        <TableCell>{(o.totals?.totalCostWithDelivery ?? 0).toLocaleString('ar-EG')} {o.currency || pricing.currency}</TableCell>
+                        <TableCell className="flex gap-2">
+                          <ReprintReceiptButton
+                            client={{ name: ordersClientName, phone: catData.clientPhone, address: catData.clientAddress }}
+                            order={o}
+                            variant="outline"
+                            size="sm"
+                          />
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="text-red-600 border-red-300 hover:bg-red-50"
+                            onClick={() => deleteOrder(ordersClientName, o.orderNo)}
+                          >
+                            حذف
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            ) : (
+              <p className="text-sm text-gray-500">لا توجد طلبات لهذا العميل بعد.</p>
+            )}
           </CardContent>
         </Card>
 

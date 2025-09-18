@@ -46,7 +46,7 @@ export async function GET(req: Request) {
       if (!item) return NextResponse.json({ error: 'Not found' }, { status: 404 })
       let parsed: any = null
       try { parsed = JSON.parse(item.data as unknown as string) } catch {}
-      return NextResponse.json({ data: parsed })
+      return NextResponse.json({ data: parsed, name: item.name, phone: item.phone, address: item.address })
     }
     const db = getDb()
     const items = await db.customer.findMany({
