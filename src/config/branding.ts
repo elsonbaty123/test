@@ -10,7 +10,7 @@ const branding: BrandingConfig = {
   storeName: 'Bastet Pets',
   storeAddress: 'اكتب عنوان المحل هنا',
   storePhone: 'اكتب رقم المحل هنا',
-  logoUrl: '/logo.png',
+  logoUrl: '/logo.svg',
   orderPrefix: 'BP'
 }
 
