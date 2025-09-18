@@ -1,7 +1,6 @@
 'use client'
 
 import React from 'react'
-import { QRCode } from './QRCode'
 import { formatNumber } from '@/lib/utils'
 import branding from '@/config/branding'
 
@@ -32,14 +31,7 @@ export const BoxLabel: React.FC<BoxLabelProps> = ({
     })
   }
 
-  const generateQRData = () => {
-    return JSON.stringify({
-      client: catData.clientName,
-      cat: catData.name,
-      period: boxSummary.totalDays,
-      created: new Date().toISOString().split('T')[0]
-    })
-  }
+  // QR Codes removed as requested
 
   const breedLabel = (code: string) => {
     const map: Record<string, string> = {
@@ -127,16 +119,14 @@ export const BoxLabel: React.FC<BoxLabelProps> = ({
           }
           
           .label-content {
-            display: grid;
-            grid-template-columns: 1fr 80px;
+            display: flex;
+            flex-direction: column;
             gap: 4mm;
-            height: calc(100% - 30px);
           }
           
           .label-info {
             display: flex;
             flex-direction: column;
-            gap: 2mm;
           }
           
           .label-section {
@@ -167,25 +157,6 @@ export const BoxLabel: React.FC<BoxLabelProps> = ({
             color: #000;
           }
           
-          .label-qr {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: flex-start;
-            gap: 2mm;
-          }
-          
-          .label-qr-code {
-            width: 60px;
-            height: 60px;
-          }
-          
-          .label-qr-text {
-            font-size: 7px;
-            text-align: center;
-            color: #666;
-          }
-          
           .label-contents {
             background-color: #f8fafc;
             border: 1px solid #e2e8f0;
@@ -208,6 +179,29 @@ export const BoxLabel: React.FC<BoxLabelProps> = ({
             justify-content: space-between;
           }
           
+          .label-total {
+            display: flex;
+            align-items: center;
+            gap: 2mm;
+            font-size: 10px;
+          }
+          .label-total .num {
+            background: #f1f5f9;
+            border: 1px solid #e2e8f0;
+            padding: 0.5mm 1.5mm;
+            border-radius: 4px;
+            font-weight: 600;
+          }
+          .label-total .final {
+            background: #ecfeff;
+            border: 1px solid #67e8f9;
+            padding: 0.5mm 2mm;
+            border-radius: 6px;
+            color: #0ea5e9;
+            font-weight: 700;
+            font-size: 11px;
+          }
+          
           .label-footer {
             position: absolute;
             bottom: 2mm;
@@ -218,13 +212,6 @@ export const BoxLabel: React.FC<BoxLabelProps> = ({
             color: #999;
             border-top: 1px solid #eee;
             padding-top: 1mm;
-          }
-          /* Side-by-side row for two fields */
-          .label-row-2 {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 2mm;
-            margin-bottom: 1mm;
           }
           .brand-header {
             display: grid;
@@ -277,16 +264,14 @@ export const BoxLabel: React.FC<BoxLabelProps> = ({
           }
           
           .label-content {
-            display: grid;
-            grid-template-columns: 1fr 100px;
+            display: flex;
+            flex-direction: column;
             gap: 8px;
-            height: calc(100% - 60px);
           }
           
           .label-info {
             display: flex;
             flex-direction: column;
-            gap: 4px;
           }
           
           .label-section {
@@ -317,25 +302,6 @@ export const BoxLabel: React.FC<BoxLabelProps> = ({
             color: #000;
           }
           
-          .label-qr {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: flex-start;
-            gap: 4px;
-          }
-          
-          .label-qr-code {
-            width: 80px;
-            height: 80px;
-          }
-          
-          .label-qr-text {
-            font-size: 8px;
-            text-align: center;
-            color: #666;
-          }
-          
           .label-contents {
             background-color: #f8fafc;
             border: 1px solid #e2e8f0;
@@ -358,6 +324,29 @@ export const BoxLabel: React.FC<BoxLabelProps> = ({
             justify-content: space-between;
           }
           
+          .label-total {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 12px;
+          }
+          .label-total .num {
+            background: #f1f5f9;
+            border: 1px solid #e2e8f0;
+            padding: 2px 8px;
+            border-radius: 6px;
+            font-weight: 600;
+          }
+          .label-total .final {
+            background: #ecfeff;
+            border: 1px solid #67e8f9;
+            padding: 2px 10px;
+            border-radius: 8px;
+            color: #0ea5e9;
+            font-weight: 700;
+            font-size: 14px;
+          }
+          
           .label-footer {
             position: absolute;
             bottom: 4px;
@@ -368,12 +357,6 @@ export const BoxLabel: React.FC<BoxLabelProps> = ({
             color: #999;
             border-top: 1px solid #eee;
             padding-top: 2px;
-          }
-          .label-row-2 {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 6px;
-            margin-bottom: 4px;
           }
           .brand-header {
             display: grid;
@@ -429,45 +412,17 @@ export const BoxLabel: React.FC<BoxLabelProps> = ({
             )}
           </div>
 
-          {/* Receipt Section */}
+          {/* Receipt Section - simplified formula only */}
           <div className="label-section">
             <div className="label-section-title">الإيصال</div>
-            <div className="label-field">
-              <span className="label-field-name">قبل الخصم (بعد الأرباح):</span>
-              <span className="label-field-value">{formatNumber(costs.totalCostWithProfit, 0)} {pricing.currency}</span>
-            </div>
-            <div className="label-row-2">
-              <div className="label-field">
-                <span className="label-field-name">بعد الخصم:</span>
-                <span className="label-field-value">{formatNumber(costs.totalCostAfterDiscount, 0)} {pricing.currency}</span>
-              </div>
-              <div className="label-field">
-                <span className="label-field-name">الدلفري:</span>
-                <span className="label-field-value">{formatNumber(costs.deliveryCost, 0)} {pricing.currency}</span>
-              </div>
-            </div>
-            <div className="label-field" style={{ borderTop: '1px dotted #ccc', paddingTop: '2px' }}>
-              <span className="label-field-name">الإجمالي النهائي (بعد الخصم + الدلفري):</span>
-              <span className="label-field-value" style={{ fontWeight: 'bold', color: '#0ea5e9' }}>{formatNumber(costs.totalCostWithDelivery, 0)} {pricing.currency}</span>
+            <div className="label-total">
+              <span className="label-field-name">المبلغ النهائي =</span>
+              <span className="num">{formatNumber(costs.totalCostAfterDiscount, 0)} {pricing.currency}</span>
+              <span className="label-field-name">+ الدلفري =</span>
+              <span className="final">{formatNumber(costs.totalCostWithDelivery, 0)} {pricing.currency}</span>
             </div>
           </div>
 
-        </div>
-
-        {/* QR Codes */}
-        <div className="label-qr">
-          <QRCode 
-            data={generateQRData()} 
-            size={80} 
-            className="label-qr-code"
-          />
-          <div className="label-qr-text">معلومات الطلب</div>
-          <QRCode 
-            data={JSON.stringify({ order: orderNo, total: costs.totalCostWithDelivery, currency: pricing.currency })}
-            size={80}
-            className="label-qr-code"
-          />
-          <div className="label-qr-text">دفع/طلب</div>
         </div>
       </div>
 

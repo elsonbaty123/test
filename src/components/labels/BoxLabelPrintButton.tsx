@@ -212,6 +212,8 @@ export const BoxLabelPrintButton: React.FC<BoxLabelPrintButtonProps> = ({
                 margin: 0 10px;
                 font-size: 14px;
               }
+              /* Make thermal toggle affect screen size too for image export */
+              body.thermal .box-label { width: 320px; height: auto; border-width: 1px; }
             }
           </style>
         </head>
@@ -222,10 +224,12 @@ export const BoxLabelPrintButton: React.FC<BoxLabelPrintButtonProps> = ({
             <label class="print-toggle">
               <input type="checkbox" id="thermalToggle" /> إيصال حراري 80مم
             </label>
+            <button class="print-btn" id="saveImgBtn">💾 حفظ كصورة</button>
           </div>
           ${printContent.innerHTML}
 
           <script>
+            var __ORDER_NO__ = ${JSON.stringify(orderNo)};
             (function() {
               const toggle = document.getElementById('thermalToggle');
               function applyThermal(on) {
@@ -248,6 +252,32 @@ export const BoxLabelPrintButton: React.FC<BoxLabelPrintButtonProps> = ({
               if (toggle) {
                 toggle.addEventListener('change', function() { applyThermal(this.checked); });
               }
+
+              // Save receipt as image using html2canvas CDN
+              function ensureHtml2Canvas(cb){
+                if (window.html2canvas) return cb();
+                const s = document.createElement('script');
+                s.src = 'https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js';
+                s.onload = () => cb();
+                document.head.appendChild(s);
+              }
+              function downloadImage(){
+                const el = document.querySelector('.box-label');
+                if(!el){ alert('لم يتم العثور على الإيصال'); return }
+                ensureHtml2Canvas(function(){
+                  window.html2canvas(el, {scale: 2, useCORS: true, backgroundColor: '#ffffff'}).then(function(canvas){
+                    const url = canvas.toDataURL('image/png');
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = 'receipt-' + __ORDER_NO__ + '.png';
+                    document.body.appendChild(a);
+                    a.click();
+                    a.remove();
+                  });
+                });
+              }
+              const btn = document.getElementById('saveImgBtn');
+              if(btn){ btn.addEventListener('click', downloadImage); }
             })();
           </script>
         </body>
@@ -257,13 +287,8 @@ export const BoxLabelPrintButton: React.FC<BoxLabelPrintButtonProps> = ({
       printWindow.document.write(htmlContent)
       printWindow.document.close()
       
-      // Focus the print window and trigger print dialog
+      // Focus the print window (no auto-print; prefer saving as image)
       printWindow.focus()
-      
-      // Auto-trigger print dialog after a short delay
-      setTimeout(() => {
-        printWindow.print()
-      }, 500)
     }, 100)
   }
 

@@ -88,7 +88,7 @@ export const ReprintReceiptButton: React.FC<ReprintReceiptButtonProps> = ({
               .print-controls { display: none !important; }
               @page { size: A4; margin: 10mm; }
               .box-label { width: 10cm; height: 7cm; padding: 8mm; font-size: 10px; line-height: 1.2; color: #000; background: white; border: 2px solid #0ea5e9; border-radius: 8px; box-sizing: border-box; page-break-after: always; margin: 0 auto; }
-              body.thermal .box-label { width: 80mm !important; height: auto !important; padding: 6mm !important; border-width: 1px !important; }
+              body.thermal .box-label { width: 320px; height: auto; border-width: 1px; }
             }
             @media screen {
               .print-controls { text-align: center; margin: 20px 0; padding: 20px; background: #f9f9f9; border-radius: 8px; }
@@ -107,6 +107,7 @@ export const ReprintReceiptButton: React.FC<ReprintReceiptButtonProps> = ({
             <label class="print-toggle">
               <input type="checkbox" id="thermalToggle" /> إيصال حراري 80مم
             </label>
+            <button class="print-btn" id="saveImgBtn">💾 حفظ كصورة</button>
           </div>
           ${printContent.innerHTML}
 
@@ -126,6 +127,31 @@ export const ReprintReceiptButton: React.FC<ReprintReceiptButtonProps> = ({
                 }
               }
               if (toggle) { toggle.addEventListener('change', function() { applyThermal(this.checked); }); }
+
+              function ensureHtml2Canvas(cb){
+                if (window.html2canvas) return cb();
+                const s = document.createElement('script');
+                s.src = 'https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js';
+                s.onload = () => cb();
+                document.head.appendChild(s);
+              }
+              function downloadImage(){
+                const el = document.querySelector('.box-label');
+                if(!el){ alert('لم يتم العثور على الإيصال'); return }
+                ensureHtml2Canvas(function(){
+                  window.html2canvas(el, {scale: 2, useCORS: true, backgroundColor: '#ffffff'}).then(function(canvas){
+                    const url = canvas.toDataURL('image/png');
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = 'receipt-' + (Date.now()) + '.png';
+                    document.body.appendChild(a);
+                    a.click();
+                    a.remove();
+                  });
+                });
+              }
+              const btn = document.getElementById('saveImgBtn');
+              if(btn){ btn.addEventListener('click', downloadImage); }
             })();
           </script>
         </body>
@@ -135,7 +161,6 @@ export const ReprintReceiptButton: React.FC<ReprintReceiptButtonProps> = ({
       printWindow.document.write(htmlContent)
       printWindow.document.close()
       printWindow.focus()
-      setTimeout(() => { printWindow.print() }, 500)
     }, 100)
   }
 
