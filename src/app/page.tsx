@@ -7,6 +7,8 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { CommandDialog, CommandInput, CommandList, CommandEmpty, CommandGroup, CommandItem } from '@/components/ui/command'
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Badge } from '@/components/ui/badge'
@@ -56,7 +58,69 @@ export default function CatNutritionCalculator() {
   const [newClientAddress, setNewClientAddress] = useState('')
   const [clientSearchTerm, setClientSearchTerm] = useState('')
   const [showClientDropdown, setShowClientDropdown] = useState(false)
-  
+
+  // Breed search state
+  const [breedPickerOpen, setBreedPickerOpen] = useState(false)
+  const [breedPickerTarget, setBreedPickerTarget] = useState<'pure' | 'mixA' | 'mixB'>('pure')
+
+  // Comprehensive breed list for selection/search
+  const ALL_BREEDS: Array<{ code: string; label: string }> = [
+    { code: 'domestic_shorthair', label: 'منزلية شعر قصير' },
+    { code: 'domestic_longhair', label: 'منزلية شعر طويل' },
+    { code: 'persian', label: 'Persian (شيرازي)' },
+    { code: 'british_shorthair', label: 'British Shorthair' },
+    { code: 'british_longhair', label: 'British Longhair' },
+    { code: 'maine_coon', label: 'Maine Coon' },
+    { code: 'ragdoll', label: 'Ragdoll' },
+    { code: 'siamese', label: 'Siamese' },
+    { code: 'bengal', label: 'Bengal' },
+    { code: 'sphynx', label: 'Sphynx' },
+    { code: 'scottish_fold', label: 'Scottish Fold' },
+    { code: 'norwegian_forest', label: 'Norwegian Forest' },
+    { code: 'american_shorthair', label: 'American Shorthair' },
+    { code: 'abyssinian', label: 'Abyssinian' },
+    { code: 'turkish_angora', label: 'Turkish Angora' },
+    { code: 'russian_blue', label: 'Russian Blue' },
+    { code: 'oriental', label: 'Oriental' },
+    { code: 'burmese', label: 'Burmese (بورميز)' },
+    { code: 'tonkinese', label: 'Tonkinese (تونكينيز)' },
+    { code: 'himalayan', label: 'Himalayan (هيمالايا)' },
+    { code: 'devon_rex', label: 'Devon Rex (ديفون ريكس)' },
+    { code: 'cornish_rex', label: 'Cornish Rex (كورنيش ريكس)' },
+    { code: 'manx', label: 'Manx (مانكس)' },
+    { code: 'savannah', label: 'Savannah (سافانا)' },
+    { code: 'bombay', label: 'Bombay (بومباي)' },
+    { code: 'egyptian_mau', label: 'Egyptian Mau (مصري ماو)' },
+    { code: 'egyptian_baladi', label: 'بلدي مصري (Baladi)' },
+    { code: 'chartreux', label: 'Chartreux' },
+    { code: 'turkish_van', label: 'Turkish Van' },
+    { code: 'birman', label: 'Birman' },
+    { code: 'somali', label: 'Somali' },
+    { code: 'exotic_shorthair', label: 'Exotic Shorthair' },
+    { code: 'american_curl', label: 'American Curl' },
+    { code: 'american_bobtail', label: 'American Bobtail' },
+    { code: 'scottish_straight', label: 'Scottish Straight' },
+    { code: 'munchkin', label: 'Munchkin' },
+    { code: 'siberian', label: 'Siberian' },
+    { code: 'neva_masquerade', label: 'Neva Masquerade' },
+    { code: 'peterbald', label: 'Peterbald' },
+    { code: 'ocicat', label: 'Ocicat' },
+    { code: 'singapura', label: 'Singapura' },
+    { code: 'toyger', label: 'Toyger' },
+  ]
+
+  const openBreedPicker = (target: 'pure' | 'mixA' | 'mixB') => {
+    setBreedPickerTarget(target)
+    setBreedPickerOpen(true)
+  }
+
+  const pickBreed = (code: string) => {
+    if (breedPickerTarget === 'pure') handleCatDataChange('breed', code)
+    if (breedPickerTarget === 'mixA') handleCatDataChange('breedMixA', code)
+    if (breedPickerTarget === 'mixB') handleCatDataChange('breedMixB', code)
+    setBreedPickerOpen(false)
+  }
+
   const breedLabel = (code: string) => {
     const map: Record<string, string> = {
       domestic_shorthair: 'منزلية شعر قصير',
@@ -84,7 +148,22 @@ export default function CatNutritionCalculator() {
       savannah: 'Savannah (سافانا)',
       bombay: 'Bombay (بومباي)',
       egyptian_mau: 'Egyptian Mau (مصري ماو)',
-      egyptian_baladi: 'بلدي مصري (Baladi)'
+      egyptian_baladi: 'بلدي مصري (Baladi)',
+      chartreux: 'Chartreux',
+      turkish_van: 'Turkish Van',
+      birman: 'Birman',
+      somali: 'Somali',
+      exotic_shorthair: 'Exotic Shorthair',
+      american_curl: 'American Curl',
+      american_bobtail: 'American Bobtail',
+      scottish_straight: 'Scottish Straight',
+      munchkin: 'Munchkin',
+      siberian: 'Siberian',
+      neva_masquerade: 'Neva Masquerade',
+      peterbald: 'Peterbald',
+      ocicat: 'Ocicat',
+      singapura: 'Singapura',
+      toyger: 'Toyger',
     }
     return map[code] || code
   }
@@ -620,49 +699,82 @@ export default function CatNutritionCalculator() {
             </div>
 
             <div className="space-y-2">
-              <Label>السلالة</Label>
-              <Select value={catData.breed} onValueChange={(value) => handleCatDataChange('breed', value)}>
+              <Label>نوع السلالة</Label>
+              <Select value={catData.breedMode || 'pure'} onValueChange={(value) => handleCatDataChange('breedMode', value)}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="domestic_shorthair">منزلية شعر قصير</SelectItem>
-                  <SelectItem value="domestic_longhair">منزلية شعر طويل</SelectItem>
-                  <SelectItem value="persian">Persian (شيرازي)</SelectItem>
-                  <SelectItem value="british_shorthair">British Shorthair</SelectItem>
-                  <SelectItem value="maine_coon">Maine Coon</SelectItem>
-                  <SelectItem value="ragdoll">Ragdoll</SelectItem>
-                  <SelectItem value="siamese">Siamese</SelectItem>
-                  <SelectItem value="bengal">Bengal</SelectItem>
-                  <SelectItem value="sphynx">Sphynx</SelectItem>
-                  <SelectItem value="scottish_fold">Scottish Fold</SelectItem>
-                  <SelectItem value="norwegian_forest">Norwegian Forest</SelectItem>
-                  <SelectItem value="american_shorthair">American Shorthair</SelectItem>
-                  <SelectItem value="abyssinian">Abyssinian</SelectItem>
-                  <SelectItem value="turkish_angora">Turkish Angora</SelectItem>
-                  <SelectItem value="russian_blue">Russian Blue</SelectItem>
-                  <SelectItem value="oriental">Oriental</SelectItem>
-                  <SelectItem value="burmese">Burmese (بورميز)</SelectItem>
-                  <SelectItem value="tonkinese">Tonkinese (تونكينيز)</SelectItem>
-                  <SelectItem value="himalayan">Himalayan (هيمالايا)</SelectItem>
-                  <SelectItem value="devon_rex">Devon Rex (ديفون ريكس)</SelectItem>
-                  <SelectItem value="cornish_rex">Cornish Rex (كورنيش ريكس)</SelectItem>
-                  <SelectItem value="manx">Manx (مانكس)</SelectItem>
-                  <SelectItem value="savannah">Savannah (سافانا)</SelectItem>
-                  <SelectItem value="bombay">Bombay (بومباي)</SelectItem>
-                  <SelectItem value="egyptian_mau">Egyptian Mau (مصري ماو)</SelectItem>
-                  <SelectItem value="egyptian_baladi">بلدي مصري (Baladi)</SelectItem>
-                  <SelectItem value="other">أخرى</SelectItem>
+                  <SelectItem value="pure">سلالة نقية</SelectItem>
+                  <SelectItem value="mixed">خليط (هجينة)</SelectItem>
+                  <SelectItem value="other">غير موجودة (مخصص)</SelectItem>
                 </SelectContent>
               </Select>
-              {catData.breed === 'other' && (
+            </div>
+
+            {(!catData.breedMode || catData.breedMode === 'pure') && (
+              <div className="space-y-2">
+                <Label>السلالة (نقية)</Label>
+                <div className="flex items-center gap-2">
+                  <Select value={catData.breed} onValueChange={(value) => handleCatDataChange('breed', value)}>
+                    <SelectTrigger className="flex-1">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {ALL_BREEDS.map((b) => (
+                        <SelectItem key={b.code} value={b.code}>{b.label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Button variant="outline" onClick={() => openBreedPicker('pure')}>بحث</Button>
+                </div>
+              </div>
+            )}
+
+            {catData.breedMode === 'mixed' && (
+              <div className="space-y-2">
+                <Label>السلالة (خليط بين سلالتين)</Label>
+                <div className="grid grid-cols-1 gap-2">
+                  <div className="flex items-center gap-2">
+                    <Select value={catData.breedMixA || ''} onValueChange={(value) => handleCatDataChange('breedMixA', value)}>
+                      <SelectTrigger className="flex-1">
+                        <SelectValue placeholder="اختر السلالة الأولى" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {ALL_BREEDS.map((b) => (
+                          <SelectItem key={b.code} value={b.code}>{b.label}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <Button variant="outline" onClick={() => openBreedPicker('mixA')}>بحث</Button>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Select value={catData.breedMixB || ''} onValueChange={(value) => handleCatDataChange('breedMixB', value)}>
+                      <SelectTrigger className="flex-1">
+                        <SelectValue placeholder="اختر السلالة الثانية" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {ALL_BREEDS.map((b) => (
+                          <SelectItem key={b.code} value={b.code}>{b.label}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <Button variant="outline" onClick={() => openBreedPicker('mixB')}>بحث</Button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {catData.breedMode === 'other' && (
+              <div className="space-y-2">
+                <Label>السلالة (مخصصة)</Label>
                 <Input
-                  placeholder="اكتب السلالة"
+                  placeholder="اكتب اسم السلالة غير الموجودة"
                   value={catData.breedOther}
                   onChange={(e) => handleCatDataChange('breedOther', e.target.value)}
                 />
-              )}
-            </div>
+              </div>
+            )}
 
             <div className="space-y-2">
               <Label>حالة الجسم (BCS)</Label>
@@ -1463,6 +1575,21 @@ export default function CatNutritionCalculator() {
 
           </div>
         )}
+
+        {/* Breed Search Dialog */}
+        <CommandDialog open={breedPickerOpen} onOpenChange={setBreedPickerOpen} title="بحث عن السلالة" description="ابحث واختر السلالة">
+          <CommandInput placeholder="اكتب اسم السلالة..." />
+          <CommandList>
+            <CommandEmpty>لا توجد نتائج</CommandEmpty>
+            <CommandGroup heading="السلالات">
+              {ALL_BREEDS.map((b) => (
+                <CommandItem key={b.code} onSelect={() => pickBreed(b.code)}>
+                  {b.label}
+                </CommandItem>
+              ))}
+            </CommandGroup>
+          </CommandList>
+        </CommandDialog>
 
         {/* New Client Dialog */}
         <Dialog open={showNewClientDialog} onOpenChange={setShowNewClientDialog}>

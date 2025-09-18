@@ -15,6 +15,9 @@ interface CatData {
   sex: 'female' | 'male';
   breed: string;
   breedOther: string;
+  breedMode?: 'pure' | 'mixed' | 'other';
+  breedMixA?: string;
+  breedMixB?: string;
   neuter: 'neutered' | 'intact';
   activity: string;
   meals: number;
@@ -248,6 +251,23 @@ function getBreedRange(breed: string, sex: Sex): [number, number] {
   return r[sex]
 }
 
+// Enhanced: get breed range from full cat data, supporting mixed and other modes
+function getBreedRangeForCat(cat: CatData): [number, number] {
+  const mode = cat.breedMode || 'pure'
+  if (mode === 'mixed') {
+    const a = cat.breedMixA ? getBreedRange(cat.breedMixA, cat.sex) : getBreedRange(cat.breed, cat.sex)
+    const b = cat.breedMixB ? getBreedRange(cat.breedMixB, cat.sex) : getBreedRange(cat.breed, cat.sex)
+    const minW = (a[0] + b[0]) / 2
+    const maxW = (a[1] + b[1]) / 2
+    return [minW, maxW]
+  }
+  if (mode === 'other') {
+    // If custom breed with no known range, fallback to default typical range
+    return DEFAULT_RANGE
+  }
+  return getBreedRange(cat.breed, cat.sex)
+}
+
 export function useCatNutrition() {
   // State
   const [catData, setCatData] = useState<CatData>({
@@ -263,6 +283,9 @@ export function useCatNutrition() {
     sex: 'female',
     breed: 'domestic_shorthair',
     breedOther: '',
+    breedMode: 'pure',
+    breedMixA: '',
+    breedMixB: '',
     neuter: 'neutered',
     activity: 'moderate',
     meals: 2,
@@ -534,6 +557,18 @@ export function useCatNutrition() {
         newErrors.push('سعرات الدراي يجب أن تكون بين 200 و 600')
       }
 
+      // Breed validations for mixed/custom modes
+      if ((catData.breedMode || 'pure') === 'mixed') {
+        if (!catData.breedMixA || !catData.breedMixB) {
+          newErrors.push('الرجاء اختيار السلالة الأولى والثانية عند اختيار خليط')
+        }
+      }
+      if (catData.breedMode === 'other') {
+        if (!catData.breedOther || !String(catData.breedOther).trim()) {
+          newErrors.push('الرجاء كتابة اسم السلالة (مخصص)')
+        }
+      }
+
       // Fatal error: impossible pregnancy (male)
       if (newErrors.includes('الحمل غير ممكن للذكور')) {
         setErrors(Array.from(new Set(newErrors)))
@@ -552,8 +587,8 @@ export function useCatNutrition() {
       const activityInfo = getActivityInfo(catData.activity)
 
       const rerRaw = calcRER(weight)
-      // Breed range & ideal weight
-      const [minW, maxW] = getBreedRange(catData.breed, catData.sex)
+      // Breed range & ideal weight (supports pure/mixed/other)
+      const [minW, maxW] = getBreedRangeForCat(catData)
       const idealWeight = (minW + maxW) / 2
       const bcsSuggested = suggestBCS(weight, minW, maxW, idealWeight, stage)
       const catForFactor = { ...catData, bcs: bcsSuggested }

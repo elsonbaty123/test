@@ -60,6 +60,18 @@ export const PrintableReport: React.FC<PrintableReportProps> = ({
     return map[code] || code
   }
 
+  const breedDisplay = () => {
+    if (catData?.breedMode === 'mixed') {
+      const a = breedLabel(catData?.breedMixA || catData?.breed)
+      const b = breedLabel(catData?.breedMixB || catData?.breed)
+      return `${a} × ${b} (خليط)`
+    }
+    if (catData?.breedMode === 'other') {
+      return catData?.breedOther || 'غير محدد'
+    }
+    return breedLabel(catData?.breed)
+  }
+
   const getBCSDescription = (bcs: number) => {
     const descriptions: Record<number, string> = {
       1: 'نحيف جداً - ضلوع وعظام واضحة جداً',
@@ -272,7 +284,7 @@ export const PrintableReport: React.FC<PrintableReportProps> = ({
           </div>
           <div className="print-field">
             <span className="print-field-label">السلالة:</span>
-            <span className="print-field-value">{breedLabel(catData.breed)}</span>
+            <span className="print-field-value">{breedDisplay()}</span>
           </div>
           <div className="print-field">
             <span className="print-field-label">التعقيم:</span>
