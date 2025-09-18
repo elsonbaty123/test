@@ -136,7 +136,7 @@ interface Results {
   idealWeight: number;
   usedWeight: number;
   bcsSuggested: number;
-  bcsSuggestionReason?: string;
+  bcsSuggestionReason: string;
   recommendations: string[];
 }
 
@@ -365,6 +365,29 @@ export function useCatNutrition() {
     const [minW, maxW] = getBreedRangeForCat(catData)
     const idealWeight = (minW + maxW) / 2
     return suggestBCS(weight, minW, maxW, idealWeight, stage)
+  }, [catData])
+
+  // Live reason for suggested BCS
+  const bcsSuggestionReasonLive = useMemo(() => {
+    const weight = toNumber(catData.weight, NaN)
+    const ageMonths = ageToMonths(catData.ageValue, catData.ageUnit)
+    const stage = catData.lifeStage === 'auto' ? deriveLifeStage(ageMonths) : catData.lifeStage
+    if (!Number.isFinite(weight)) return ''
+    const [minW, maxW] = getBreedRangeForCat(catData)
+    const idealWeight = (minW + maxW) / 2
+    if (stage === 'kitten_young' || stage === 'kitten_older') {
+      return 'عمر صغير: التوصية الافتراضية BCS = 5 لدعم النمو؛ يفضل التقييم البصري.'
+    }
+    if (idealWeight <= 0) return ''
+    const dev = (weight - idealWeight) / idealWeight
+    const perc = Math.round(Math.abs(dev) * 100)
+    if (Math.abs(dev) < 0.05) {
+      return `الوزن قريب من المثالي (±5%) — نطاق السلالة ${formatNumber(minW, 1)}–${formatNumber(maxW, 1)} كجم، المثالي ≈ ${formatNumber(idealWeight, 1)} كجم.`
+    }
+    if (dev > 0) {
+      return `الوزن أعلى من المثالي بنسبة ≈ ${perc}% — نطاق السلالة ${formatNumber(minW, 1)}–${formatNumber(maxW, 1)} كجم، المثالي ≈ ${formatNumber(idealWeight, 1)} كجم.`
+    }
+    return `الوزن أقل من المثالي بنسبة ≈ ${perc}% — نطاق السلالة ${formatNumber(minW, 1)}–${formatNumber(maxW, 1)} كجم، المثالي ≈ ${formatNumber(idealWeight, 1)} كجم.`
   }, [catData])
 
   const handleCatDataChange = useCallback((key: keyof CatData, value: any) => {
@@ -792,6 +815,22 @@ export function useCatNutrition() {
         unitsForCost: unitsUsed,
       }
 
+      // Build BCS suggestion reason (final after calculation)
+      let bcsSuggestionReason = ''
+      if (stage === 'kitten_young' || stage === 'kitten_older') {
+        bcsSuggestionReason = 'عمر صغير: التوصية الافتراضية BCS = 5 لدعم النمو؛ يفضل التقييم البصري.'
+      } else if (idealWeight > 0) {
+        const dev = (weight - idealWeight) / idealWeight
+        const perc = Math.round(Math.abs(dev) * 100)
+        if (Math.abs(dev) < 0.05) {
+          bcsSuggestionReason = `الوزن قريب من المثالي (±5%) — نطاق السلالة ${formatNumber(minW, 1)}–${formatNumber(maxW, 1)} كجم، المثالي ≈ ${formatNumber(idealWeight, 1)} كجم.`
+        } else if (dev > 0) {
+          bcsSuggestionReason = `الوزن أعلى من المثالي بنسبة ≈ ${perc}% — نطاق السلالة ${formatNumber(minW, 1)}–${formatNumber(maxW, 1)} كجم، المثالي ≈ ${formatNumber(idealWeight, 1)} كجم.`
+        } else {
+          bcsSuggestionReason = `الوزن أقل من المثالي بنسبة ≈ ${perc}% — نطاق السلالة ${formatNumber(minW, 1)}–${formatNumber(maxW, 1)} كجم، المثالي ≈ ${formatNumber(idealWeight, 1)} كجم.`
+        }
+      }
+
       setResults({
         rer,
         factor,
@@ -804,6 +843,7 @@ export function useCatNutrition() {
         idealWeight,
         usedWeight: weight,
         bcsSuggested,
+        bcsSuggestionReason,
         recommendations,
       })
 
@@ -873,5 +913,6 @@ export function useCatNutrition() {
     calculateNutrition,
     formatNumber,
     bcsSuggestedLive,
+    bcsSuggestionReasonLive,
   }
 }

@@ -45,6 +45,7 @@ export default function CatNutritionCalculator() {
     calculateNutrition,
     formatNumber,
     bcsSuggestedLive,
+    bcsSuggestionReasonLive,
   } = useCatNutrition()
 
   const [isSaving, setIsSaving] = useState(false)
@@ -62,6 +63,7 @@ export default function CatNutritionCalculator() {
 
   // BCS suggestion prefers calculated results; falls back to live suggestion
   const bcsSuggestion = results?.bcsSuggested ?? bcsSuggestedLive
+  const bcsReason = results?.bcsSuggestionReason ?? bcsSuggestionReasonLive
 
   // Breed search state
   const [breedPickerOpen, setBreedPickerOpen] = useState(false)
@@ -812,6 +814,11 @@ export default function CatNutritionCalculator() {
                         تطبيق التوصية
                       </Button>
                     )}
+                  </div>
+                )}
+                {catData.weight && !isNaN(parseFloat(catData.weight)) && bcsReason && (
+                  <div className="text-[11px] leading-snug text-gray-600 mt-1">
+                    سبب التوصية: {bcsReason}
                   </div>
                 )}
               </div>
