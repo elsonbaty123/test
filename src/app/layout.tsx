@@ -40,13 +40,15 @@ export const metadata: Metadata = {
   },
   icons: {
     icon: [
+      { url: "/favicon.svg", type: "image/svg+xml" },
+      { url: "/favicon.png", type: "image/png" },
+      { url: branding.logoUrl, type: "image/x-icon" },
       { url: "/icon.svg", type: "image/svg+xml" },
-      { url: branding.logoUrl, type: "image/svg+xml" },
     ],
     shortcut: ["/favicon.ico"],
     apple: [
       // iOS Safari prefers PNG; if you add apple-touch-icon.png in public/, it will override this
-      { url: branding.logoUrl },
+      { url: "/favicon.png" },
     ],
   },
 };
@@ -58,6 +60,13 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="ar" dir="rtl" suppressHydrationWarning>
+      <head>
+        <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+        <link rel="icon" href="/favicon.png" type="image/png" />
+        <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon" />
+        <link rel="apple-touch-icon" href="/favicon.png" />
+        <meta name="theme-color" content="#4a90e2" />
+      </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} ${tajawal.variable} antialiased bg-background text-foreground font-tajawal`}
       >

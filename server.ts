@@ -6,7 +6,7 @@ import next from 'next';
 
 const dev = process.env.NODE_ENV !== 'production';
 const currentPort = parseInt(process.env.PORT || '3010', 10);
-const hostname = '0.0.0.0';
+const hostname = process.env.HOST || 'localhost';
 
 // Custom server with Socket.IO integration
 async function createCustomServer() {

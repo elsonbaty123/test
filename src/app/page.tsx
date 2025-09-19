@@ -331,8 +331,12 @@ export default function CatNutritionCalculator() {
         <div className="max-w-6xl mx-auto">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <div className="flex items-center gap-4">
-              <div className="w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center">
-                <span className="text-2xl">🐱</span>
+              <div className="w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center overflow-hidden">
+                <img 
+                  src="/logo.ico" 
+                  alt="Bastet Pets Logo" 
+                  className="w-full h-full object-contain"
+                />
               </div>
               <div>
                 <h1 className="text-xl md:text-2xl font-bold mb-1">حاسبة تغذية القطة + صانع البوكسات</h1>
