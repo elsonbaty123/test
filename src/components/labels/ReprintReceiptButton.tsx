@@ -3,7 +3,7 @@
 import React from 'react'
 import { Button } from '@/components/ui/button'
 import { Tag } from 'lucide-react'
-import { BoxLabel } from './BoxLabel'
+import { StyledInvoice } from './StyledInvoice'
 import ReactDOM from 'react-dom/client'
 
 interface ReprintReceiptButtonProps {
@@ -60,7 +60,7 @@ export const ReprintReceiptButton: React.FC<ReprintReceiptButtonProps> = ({
     const printContent = document.createElement('div')
     const root = ReactDOM.createRoot(printContent)
     root.render(
-      <BoxLabel
+      <StyledInvoice
         catData={catData}
         foodData={{}}
         results={{}}

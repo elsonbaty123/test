@@ -39,9 +39,15 @@ export const metadata: Metadata = {
     description: "أداة شاملة لحساب تغذية القطط مع خطط أسبوعية وشهرية",
   },
   icons: {
-    icon: [{ url: branding.logoUrl }],
+    icon: [
+      { url: "/icon.svg", type: "image/svg+xml" },
+      { url: branding.logoUrl, type: "image/svg+xml" },
+    ],
     shortcut: ["/favicon.ico"],
-    apple: [{ url: branding.logoUrl }],
+    apple: [
+      // iOS Safari prefers PNG; if you add apple-touch-icon.png in public/, it will override this
+      { url: branding.logoUrl },
+    ],
   },
 };
 

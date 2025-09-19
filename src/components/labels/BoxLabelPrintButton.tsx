@@ -4,6 +4,7 @@ import React from 'react'
 import { Button } from '@/components/ui/button'
 import { Tag, Printer } from 'lucide-react'
 import { BoxLabel } from './BoxLabel'
+import { StyledInvoice } from './StyledInvoice'
 import ReactDOM from 'react-dom/client'
 import branding from '@/config/branding'
 
@@ -93,7 +94,7 @@ export const BoxLabelPrintButton: React.FC<BoxLabelPrintButtonProps> = ({
     const root = ReactDOM.createRoot(printContent)
     
     root.render(
-      <BoxLabel
+      <StyledInvoice
         catData={catData}
         foodData={foodData}
         results={results}
