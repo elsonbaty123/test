@@ -81,354 +81,394 @@ export const BoxLabel: React.FC<BoxLabelProps> = ({
   const orderNo = (orderNoProp && String(orderNoProp).trim()) ? String(orderNoProp).trim() : buildOrderNo()
 
   return (
-    <div className="box-label" dir="rtl">
+    <div className="invoice-receipt" dir="rtl">
       <style jsx>{`
         @media print {
-          .box-label {
-            width: 10cm;
-            height: 7cm;
-            padding: 8mm;
+          .invoice-receipt {
+            width: 8.5cm;
+            height: auto;
+            min-height: 12cm;
+            padding: 0;
             font-family: 'Arial', sans-serif;
-            font-size: 10px;
-            line-height: 1.2;
-            color: #000;
             background: white;
-            border: 2px solid #0ea5e9;
-            border-radius: 8px;
+            border: 2px solid #ddd;
+            border-radius: 12px;
             box-sizing: border-box;
             page-break-after: always;
+            margin: 0 auto;
+            overflow: hidden;
           }
           
-          .label-header {
+          .invoice-header {
+            background: linear-gradient(135deg, #4a90e2 0%, #357abd 100%);
+            color: white;
+            padding: 8mm;
             text-align: center;
-            border-bottom: 1px solid #0ea5e9;
-            padding-bottom: 4mm;
-            margin-bottom: 4mm;
-          }
-          
-          .label-title {
-            font-size: 14px;
-            font-weight: bold;
-            color: #0ea5e9;
-            margin-bottom: 2px;
-          }
-          
-          .label-subtitle {
-            font-size: 9px;
-            color: #666;
-          }
-          
-          .label-content {
-            display: flex;
-            flex-direction: column;
-            gap: 4mm;
-          }
-          
-          .label-info {
-            display: flex;
-            flex-direction: column;
-          }
-          
-          .label-section {
-            margin-bottom: 3mm;
-          }
-          
-          .label-section-title {
-            font-weight: bold;
-            color: #0ea5e9;
-            font-size: 9px;
-            margin-bottom: 1mm;
-            border-bottom: 1px dotted #ccc;
-          }
-          
-          .label-field {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 1mm;
-            font-size: 8px;
-          }
-          
-          .label-field-name {
-            font-weight: bold;
-            color: #333;
-          }
-          
-          .label-field-value {
-            color: #000;
-          }
-          
-          .label-contents {
-            background-color: #f8fafc;
-            border: 1px solid #e2e8f0;
-            border-radius: 4px;
-            padding: 2mm;
-            margin-top: 2mm;
-          }
-          
-          .label-contents-title {
-            font-weight: bold;
-            color: #0ea5e9;
-            font-size: 9px;
-            margin-bottom: 1mm;
-          }
-          
-          .label-contents-item {
-            font-size: 8px;
-            margin-bottom: 0.5mm;
-            display: flex;
-            justify-content: space-between;
-          }
-          
-          .label-total {
-            display: flex;
-            align-items: center;
-            gap: 2mm;
-            font-size: 10px;
-          }
-          .label-total .num {
-            background: #f1f5f9;
-            border: 1px solid #e2e8f0;
-            padding: 0.5mm 1.5mm;
-            border-radius: 4px;
-            font-weight: 600;
-          }
-          .label-total .final {
-            background: #ecfeff;
-            border: 1px solid #67e8f9;
-            padding: 0.5mm 2mm;
-            border-radius: 6px;
-            color: #0ea5e9;
-            font-weight: 700;
-            font-size: 11px;
-          }
-          
-          .label-footer {
-            position: absolute;
-            bottom: 2mm;
-            left: 2mm;
-            right: 2mm;
-            text-align: center;
-            font-size: 7px;
-            color: #999;
-            border-top: 1px solid #eee;
-            padding-top: 1mm;
-          }
-          .brand-header {
-            display: grid;
-            grid-template-columns: 50px 1fr 1fr;
-            align-items: center;
-            gap: 4mm;
-          }
-          .label-logo {
-            width: 50px; height: 50px; object-fit: contain; border-radius: 6px; border: 1px solid #e5e7eb;
-          }
-          .store-name { font-size: 12px; font-weight: bold; color: #0ea5e9; }
-          .store-meta { font-size: 8px; color: #555; }
-          .order-no { font-size: 9px; color: #111; text-align: left; }
-        }
-        
-        @media screen {
-          .box-label {
-            width: 400px;
-            height: 280px;
-            padding: 16px;
-            font-family: 'Arial', sans-serif;
-            font-size: 12px;
-            line-height: 1.4;
-            color: #000;
-            background: white;
-            border: 2px solid #0ea5e9;
-            border-radius: 8px;
-            box-sizing: border-box;
-            margin: 20px auto;
             position: relative;
           }
           
-          .label-header {
-            text-align: center;
-            border-bottom: 1px solid #0ea5e9;
-            padding-bottom: 8px;
-            margin-bottom: 8px;
+          .invoice-title {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 2mm;
+            letter-spacing: 1px;
           }
           
-          .label-title {
-            font-size: 16px;
+          .invoice-subtitle {
+            font-size: 10px;
+            opacity: 0.9;
+          }
+          
+          .invoice-logo {
+            position: absolute;
+            top: 4mm;
+            right: 4mm;
+            width: 25px;
+            height: 25px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+          }
+          
+          .invoice-logo img {
+            width: 20px;
+            height: 20px;
+            filter: brightness(0) invert(1);
+          }
+          
+          .invoice-body {
+            padding: 6mm;
+          }
+          
+          .invoice-meta {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 4mm;
+            margin-bottom: 6mm;
+            font-size: 8px;
+          }
+          
+          .meta-item {
+            display: flex;
+            flex-direction: column;
+          }
+          
+          .meta-label {
+            color: #666;
             font-weight: bold;
-            color: #0ea5e9;
+            margin-bottom: 1mm;
+          }
+          
+          .meta-value {
+            color: #333;
+            font-weight: normal;
+          }
+          
+          .invoice-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 6mm;
+            font-size: 8px;
+          }
+          
+          .invoice-table th {
+            background: #f8f9fa;
+            padding: 2mm;
+            text-align: center;
+            font-weight: bold;
+            color: #4a90e2;
+            border-bottom: 1px solid #ddd;
+          }
+          
+          .invoice-table td {
+            padding: 2mm;
+            text-align: center;
+            border-bottom: 1px solid #eee;
+          }
+          
+          .invoice-totals {
+            border-top: 2px solid #4a90e2;
+            padding-top: 4mm;
+          }
+          
+          .total-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 2mm;
+            font-size: 9px;
+          }
+          
+          .total-row.final {
+            font-size: 12px;
+            font-weight: bold;
+            color: #4a90e2;
+            border-top: 1px solid #ddd;
+            padding-top: 2mm;
+          }
+          
+          .invoice-footer {
+            text-align: center;
+            margin-top: 6mm;
+            padding-top: 4mm;
+            border-top: 1px solid #eee;
+          }
+          
+          .cat-icon {
+            width: 20px;
+            height: 20px;
+            fill: #4a90e2;
+            margin: 0 auto 2mm;
+          }
+          
+          .thank-you {
+            font-size: 10px;
+            font-weight: bold;
+            color: #4a90e2;
+            margin-bottom: 1mm;
+          }
+          
+          .footer-note {
+            font-size: 7px;
+            color: #666;
+          }
+        }
+        
+        @media screen {
+          .invoice-receipt {
+            width: 340px;
+            height: auto;
+            min-height: 480px;
+            padding: 0;
+            font-family: 'Arial', sans-serif;
+            background: white;
+            border: 2px solid #ddd;
+            border-radius: 12px;
+            box-sizing: border-box;
+            margin: 20px auto;
+            overflow: hidden;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+          }
+          
+          .invoice-header {
+            background: linear-gradient(135deg, #4a90e2 0%, #357abd 100%);
+            color: white;
+            padding: 20px;
+            text-align: center;
+            position: relative;
+          }
+          
+          .invoice-title {
+            font-size: 22px;
+            font-weight: bold;
+            margin-bottom: 8px;
+            letter-spacing: 1px;
+          }
+          
+          .invoice-subtitle {
+            font-size: 12px;
+            opacity: 0.9;
+          }
+          
+          .invoice-logo {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            width: 35px;
+            height: 35px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+          }
+          
+          .invoice-logo img {
+            width: 28px;
+            height: 28px;
+            filter: brightness(0) invert(1);
+          }
+          
+          .invoice-body {
+            padding: 20px;
+          }
+          
+          .invoice-meta {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-bottom: 20px;
+            font-size: 11px;
+          }
+          
+          .meta-item {
+            display: flex;
+            flex-direction: column;
+          }
+          
+          .meta-label {
+            color: #666;
+            font-weight: bold;
             margin-bottom: 4px;
           }
           
-          .label-subtitle {
+          .meta-value {
+            color: #333;
+            font-weight: normal;
+          }
+          
+          .invoice-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+            font-size: 11px;
+          }
+          
+          .invoice-table th {
+            background: #f8f9fa;
+            padding: 8px;
+            text-align: center;
+            font-weight: bold;
+            color: #4a90e2;
+            border-bottom: 1px solid #ddd;
+          }
+          
+          .invoice-table td {
+            padding: 8px;
+            text-align: center;
+            border-bottom: 1px solid #eee;
+          }
+          
+          .invoice-totals {
+            border-top: 2px solid #4a90e2;
+            padding-top: 16px;
+          }
+          
+          .total-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 12px;
+          }
+          
+          .total-row.final {
+            font-size: 16px;
+            font-weight: bold;
+            color: #4a90e2;
+            border-top: 1px solid #ddd;
+            padding-top: 8px;
+          }
+          
+          .invoice-footer {
+            text-align: center;
+            margin-top: 20px;
+            padding-top: 16px;
+            border-top: 1px solid #eee;
+          }
+          
+          .cat-icon {
+            width: 32px;
+            height: 32px;
+            fill: #4a90e2;
+            margin: 0 auto 8px;
+          }
+          
+          .thank-you {
+            font-size: 14px;
+            font-weight: bold;
+            color: #4a90e2;
+            margin-bottom: 4px;
+          }
+          
+          .footer-note {
             font-size: 10px;
             color: #666;
           }
-          
-          .label-content {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-          }
-          
-          .label-info {
-            display: flex;
-            flex-direction: column;
-          }
-          
-          .label-section {
-            margin-bottom: 6px;
-          }
-          
-          .label-section-title {
-            font-weight: bold;
-            color: #0ea5e9;
-            font-size: 10px;
-            margin-bottom: 2px;
-            border-bottom: 1px dotted #ccc;
-          }
-          
-          .label-field {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 2px;
-            font-size: 9px;
-          }
-          
-          .label-field-name {
-            font-weight: bold;
-            color: #333;
-          }
-          
-          .label-field-value {
-            color: #000;
-          }
-          
-          .label-contents {
-            background-color: #f8fafc;
-            border: 1px solid #e2e8f0;
-            border-radius: 4px;
-            padding: 4px;
-            margin-top: 4px;
-          }
-          
-          .label-contents-title {
-            font-weight: bold;
-            color: #0ea5e9;
-            font-size: 10px;
-            margin-bottom: 2px;
-          }
-          
-          .label-contents-item {
-            font-size: 9px;
-            margin-bottom: 1px;
-            display: flex;
-            justify-content: space-between;
-          }
-          
-          .label-total {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-size: 12px;
-          }
-          .label-total .num {
-            background: #f1f5f9;
-            border: 1px solid #e2e8f0;
-            padding: 2px 8px;
-            border-radius: 6px;
-            font-weight: 600;
-          }
-          .label-total .final {
-            background: #ecfeff;
-            border: 1px solid #67e8f9;
-            padding: 2px 10px;
-            border-radius: 8px;
-            color: #0ea5e9;
-            font-weight: 700;
-            font-size: 14px;
-          }
-          
-          .label-footer {
-            position: absolute;
-            bottom: 4px;
-            left: 4px;
-            right: 4px;
-            text-align: center;
-            font-size: 8px;
-            color: #999;
-            border-top: 1px solid #eee;
-            padding-top: 2px;
-          }
-          .brand-header {
-            display: grid;
-            grid-template-columns: 60px 1fr 1fr;
-            align-items: center;
-            gap: 8px;
-          }
-          .label-logo { width: 60px; height: 60px; object-fit: contain; border-radius: 8px; border: 1px solid #e5e7eb; }
-          .store-name { font-size: 14px; font-weight: bold; color: #0ea5e9; }
-          .store-meta { font-size: 10px; color: #555; }
-          .order-no { font-size: 10px; color: #111; text-align: left; }
         }
       `}</style>
 
       {/* Header */}
-      <div className="label-header">
-        <div className="brand-header">
-          <img src={branding.logoUrl} alt="Logo" className="label-logo" />
-          <div>
-            <div className="store-name">{branding.storeName}</div>
-            <div className="store-meta">{branding.storeAddress}</div>
-            <div className="store-meta">{branding.storePhone}</div>
-          </div>
-          <div className="order-no">
-            <div>رقم الطلب:</div>
-            <div style={{ fontWeight: 600 }}>{orderNo}</div>
-            <div style={{ color: '#666', fontSize: '8px' }}>التاريخ: {formatDate()}</div>
-          </div>
+      <div className="invoice-header">
+        <div className="invoice-logo">
+          <img src={branding.logoUrl} alt="Logo" />
         </div>
+        <div className="invoice-title">إيصال دفع</div>
+        <div className="invoice-subtitle">{branding.storeName}</div>
       </div>
 
-      {/* Content */}
-      <div className="label-content">
-        <div className="label-info">
-          {/* Client Information */}
-          <div className="label-section">
-            <div className="label-section-title">بيانات العميل</div>
-            <div className="label-field">
-              <span className="label-field-name">الاسم:</span>
-              <span className="label-field-value">{catData.clientName || 'غير محدد'}</span>
-            </div>
-            {catData.clientPhone && (
-              <div className="label-field">
-                <span className="label-field-name">رقم الهاتف:</span>
-                <span className="label-field-value">{catData.clientPhone}</span>
-              </div>
-            )}
-            {catData.clientAddress && (
-              <div className="label-field">
-                <span className="label-field-name">العنوان:</span>
-                <span className="label-field-value">{catData.clientAddress}</span>
-              </div>
-            )}
+      {/* Body */}
+      <div className="invoice-body">
+        {/* Meta Information */}
+        <div className="invoice-meta">
+          <div className="meta-item">
+            <div className="meta-label">رقم الإيصال:</div>
+            <div className="meta-value">{orderNo}</div>
           </div>
-
-          {/* Receipt Section - simplified formula only */}
-          <div className="label-section">
-            <div className="label-section-title">الإيصال</div>
-            <div className="label-total">
-              <span className="label-field-name">المبلغ النهائي =</span>
-              <span className="num">{formatNumber(costs.totalCostAfterDiscount, 0)} {pricing.currency}</span>
-              <span className="label-field-name">+ الدلفري =</span>
-              <span className="final">{formatNumber(costs.totalCostWithDelivery, 0)} {pricing.currency}</span>
-            </div>
+          <div className="meta-item">
+            <div className="meta-label">التاريخ:</div>
+            <div className="meta-value">{formatDate()}</div>
           </div>
-
+          <div className="meta-item">
+            <div className="meta-label">العميل:</div>
+            <div className="meta-value">{catData.clientName || 'غير محدد'}</div>
+          </div>
+          <div className="meta-item">
+            <div className="meta-label">الهاتف:</div>
+            <div className="meta-value">{catData.clientPhone || '-'}</div>
+          </div>
         </div>
-      </div>
 
-      {/* Footer */}
-      <div className="label-footer">
-        حاسبة تغذية القطة - نظام علمي معتمد
+        {/* Service Table */}
+        <table className="invoice-table">
+          <thead>
+            <tr>
+              <th>الكمية</th>
+              <th>السعر</th>
+              <th>الوصف</th>
+              <th>الإجمالي</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>1</td>
+              <td>{formatNumber(costs.totalCostAfterDiscount, 0)}</td>
+              <td>خطة تغذية القطة</td>
+              <td>{formatNumber(costs.totalCostAfterDiscount, 0)}</td>
+            </tr>
+            <tr>
+              <td>1</td>
+              <td>{formatNumber(costs.deliveryCost, 0)}</td>
+              <td>خدمة التوصيل</td>
+              <td>{formatNumber(costs.deliveryCost, 0)}</td>
+            </tr>
+          </tbody>
+        </table>
+
+        {/* Totals */}
+        <div className="invoice-totals">
+          <div className="total-row">
+            <span>المجموع الفرعي:</span>
+            <span>{formatNumber(costs.totalCostAfterDiscount, 0)} {pricing.currency}</span>
+          </div>
+          <div className="total-row">
+            <span>التوصيل:</span>
+            <span>{formatNumber(costs.deliveryCost, 0)} {pricing.currency}</span>
+          </div>
+          <div className="total-row final">
+            <span>المبلغ الإجمالي:</span>
+            <span>{formatNumber(costs.totalCostWithDelivery, 0)} {pricing.currency}</span>
+          </div>
+        </div>
+
+        {/* Footer */}
+        <div className="invoice-footer">
+          <svg className="cat-icon" viewBox="0 0 24 24">
+            <path d="M12 2C13.1 2 14 2.9 14 4C14 5.1 13.1 6 12 6C10.9 6 10 5.1 10 4C10 2.9 10.9 2 12 2ZM21 9V7L15 1H5C3.9 1 3 1.9 3 3V21C3 22.1 3.9 23 5 23H19C20.1 23 21 22.1 21 21V9ZM19 9H14V4H19V9Z"/>
+          </svg>
+          <div className="thank-you">شكراً لك على الشراء</div>
+          <div className="footer-note">نظام تغذية علمي معتمد للقطط</div>
+        </div>
       </div>
     </div>
   )
