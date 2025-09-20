@@ -209,8 +209,8 @@ export const BoxLabel: React.FC<BoxLabelProps> = ({
           
           .invoice-summary {
             margin-top: 2mm;
-            background: #f1f5fb;
-            border: 1px solid #dbe3f2;
+            background: #f8f9fa;
+            border: 1px solid #ddd;
             border-radius: 6px;
             padding: 3mm;
           }
@@ -374,8 +374,8 @@ export const BoxLabel: React.FC<BoxLabelProps> = ({
           
           .invoice-summary {
             margin-top: 8px;
-            background: #f1f5fb;
-            border: 1px solid #dbe3f2;
+            background: #f8f9fa;
+            border: 1px solid #ddd;
             border-radius: 8px;
             padding: 12px;
           }
