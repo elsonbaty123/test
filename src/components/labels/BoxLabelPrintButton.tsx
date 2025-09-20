@@ -67,6 +67,7 @@ export const BoxLabelPrintButton: React.FC<BoxLabelPrintButtonProps> = ({
       boxSummary,
       pricing,
       costs,
+      paidAmount: 0, // Default to 0, can be updated in receipt page
       timestamp: new Date().toISOString()
     }
 

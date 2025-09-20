@@ -55,6 +55,7 @@ export const ReprintReceiptButton: React.FC<ReprintReceiptButtonProps> = ({
       boxSummary,
       pricing,
       costs,
+      paidAmount: 0, // Default to 0, can be updated in receipt page
       timestamp: order.createdAt || new Date().toISOString()
     }
 

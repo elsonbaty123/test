@@ -11,6 +11,7 @@ function ReceiptContent() {
   const searchParams = useSearchParams()
   const [receiptData, setReceiptData] = useState<any>(null)
   const [loading, setLoading] = useState(true)
+  const [paidAmount, setPaidAmount] = useState<number>(0)
 
   useEffect(() => {
     // Get receipt data from URL params or localStorage
@@ -23,6 +24,8 @@ function ReceiptContent() {
         try {
           const data = JSON.parse(savedData)
           setReceiptData(data)
+          // Load saved paid amount if exists
+          setPaidAmount(data.paidAmount || 0)
         } catch (error) {
           console.error('Error parsing receipt data:', error)
         }
@@ -34,6 +37,15 @@ function ReceiptContent() {
 
   const handlePrint = () => {
     window.print()
+  }
+
+  const handlePaidAmountChange = (value: number) => {
+    setPaidAmount(value)
+    // Save to localStorage
+    if (receiptData) {
+      const updatedData = { ...receiptData, paidAmount: value }
+      localStorage.setItem(`receipt_${receiptData.orderNo}`, JSON.stringify(updatedData))
+    }
   }
 
   const handleDownload = () => {
@@ -179,6 +191,18 @@ function ReceiptContent() {
             </div>
             
             <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2">
+                <label className="text-sm font-medium text-gray-700">المبلغ المدفوع:</label>
+                <input
+                  type="number"
+                  value={paidAmount}
+                  onChange={(e) => handlePaidAmountChange(Number(e.target.value) || 0)}
+                  className="w-24 px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="0"
+                  min="0"
+                />
+                <span className="text-sm text-gray-600">جنيه</span>
+              </div>
               <Button onClick={handleDownload} variant="outline" size="sm">
                 <Download className="w-4 h-4 ml-2" />
                 تحميل
@@ -201,6 +225,7 @@ function ReceiptContent() {
             pricing={receiptData.pricing}
             costs={receiptData.costs}
             orderNo={receiptData.orderNo}
+            paidAmount={paidAmount}
           />
         </div>
         

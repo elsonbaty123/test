@@ -10,6 +10,7 @@ interface CustomerReceiptProps {
   pricing: any
   costs: any
   orderNo?: string
+  paidAmount?: number
 }
 
 export const CustomerReceipt: React.FC<CustomerReceiptProps> = ({
@@ -17,7 +18,8 @@ export const CustomerReceipt: React.FC<CustomerReceiptProps> = ({
   boxSummary,
   pricing,
   costs,
-  orderNo: orderNoProp
+  orderNo: orderNoProp,
+  paidAmount = 0
 }) => {
   const formatDate = () => {
     return new Date().toLocaleDateString('ar-EG', {
@@ -49,6 +51,8 @@ export const CustomerReceipt: React.FC<CustomerReceiptProps> = ({
   const delivery = Number(costs?.deliveryCost || 0)
   const amountDue = Number(costs?.totalCostWithDelivery || (afterDiscount + delivery))
   const discountValue = Math.max(0, total - afterDiscount)
+  const paid = Number(paidAmount || 0)
+  const remaining = Math.max(0, amountDue - paid)
 
   return (
     <div className="customer-receipt" dir="rtl" style={{
@@ -295,7 +299,11 @@ export const CustomerReceipt: React.FC<CustomerReceiptProps> = ({
               textAlign: 'center'
             }}>
               <div style={{ fontSize: '11px', color: '#3498db', fontWeight: '600', marginBottom: '3px' }}>عدد المنتجات</div>
-              <div style={{ fontSize: '12px', color: '#2c3e50', fontWeight: '500' }}>{boxSummary?.items?.length || 0} منتج</div>
+              <div style={{ fontSize: '12px', color: '#2c3e50', fontWeight: '500' }}>
+                {boxSummary?.items ? 
+                  boxSummary.items.reduce((total: number, item: any) => total + (item.quantity || item.daysCount || 1), 0) : 0
+                } منتج
+              </div>
             </div>
           </div>
           
@@ -389,6 +397,53 @@ export const CustomerReceipt: React.FC<CustomerReceiptProps> = ({
               <span>المبلغ الإجمالي:</span>
               <span>{formatNumber(amountDue, 0)} {currency}</span>
             </div>
+            
+            {paid > 0 && (
+              <div style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                padding: '6px 0',
+                borderBottom: '1px solid rgba(255,255,255,0.2)',
+                fontSize: '13px',
+                marginTop: '8px'
+              }}>
+                <span>المبلغ المدفوع:</span>
+                <span style={{ fontWeight: '600', color: '#2ecc71' }}>{formatNumber(paid, 0)} {currency}</span>
+              </div>
+            )}
+            
+            {remaining > 0 && (
+              <div style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                padding: '6px 0',
+                fontSize: '13px',
+                fontWeight: '600',
+                color: '#e74c3c'
+              }}>
+                <span>المبلغ المتبقي:</span>
+                <span>{formatNumber(remaining, 0)} {currency}</span>
+              </div>
+            )}
+            
+            {remaining === 0 && paid > 0 && (
+              <div style={{
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
+                padding: '8px',
+                fontSize: '14px',
+                fontWeight: '700',
+                color: '#2ecc71',
+                background: 'rgba(46, 204, 113, 0.1)',
+                borderRadius: '4px',
+                marginTop: '8px'
+              }}>
+                ✅ تم السداد بالكامل
+              </div>
+            )}
           </div>
         </div>
 
