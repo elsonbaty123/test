@@ -42,17 +42,23 @@ export const BoxLabelPrintButton: React.FC<BoxLabelPrintButtonProps> = ({
       return
     }
 
-    const buildOrderNo = () => {
+    // Get sequential receipt number from API
+    let orderNo = ''
+    try {
+      const response = await fetch('/api/receipt-number')
+      const data = await response.json()
+      orderNo = data.receiptNumber
+    } catch (error) {
+      console.error('Failed to get receipt number:', error)
+      // Fallback to timestamp-based number
       const d = new Date()
       const y = d.getFullYear()
       const m = String(d.getMonth() + 1).padStart(2, '0')
       const day = String(d.getDate()).padStart(2, '0')
       const hh = String(d.getHours()).padStart(2, '0')
       const mm = String(d.getMinutes()).padStart(2, '0')
-      const rand = Math.random().toString(36).slice(2, 5).toUpperCase()
-      return `${branding.orderPrefix}-${y}${m}${day}-${hh}${mm}-${rand}`
+      orderNo = `${y}${m}${day}-${hh}${mm}`
     }
-    const orderNo = buildOrderNo()
 
     // Prepare receipt data
     const receiptData = {

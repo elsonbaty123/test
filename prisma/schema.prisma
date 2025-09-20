@@ -42,3 +42,12 @@ model Customer {
   updatedAt DateTime @updatedAt
 }
 
+model ReceiptCounter {
+  id    String @id @default(cuid())
+  date  String @unique // YYYY-MM-DD format
+  count Int    @default(0)
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+

@@ -52,262 +52,340 @@ export const CustomerReceipt: React.FC<CustomerReceiptProps> = ({
 
   return (
     <div className="customer-receipt" dir="rtl" style={{
-      width: '100%',
-      maxWidth: '400px',
+      width: '210mm',
+      maxWidth: '210mm',
+      minHeight: '297mm',
       margin: '0 auto',
       background: 'white',
       fontFamily: 'Cairo, Segoe UI, Tahoma, Arial, sans-serif',
       color: '#2c3e50',
       lineHeight: '1.6',
       boxShadow: '0 0 20px rgba(0,0,0,0.1)',
-      borderRadius: '15px',
-      overflow: 'hidden'
+      position: 'relative'
     }}>
       <style dangerouslySetInnerHTML={{__html: `
         @page {
-          size: A4;
-          margin: 15mm;
+          size: A4 portrait;
+          margin: 20mm;
         }
         
         @media print {
           .customer-receipt {
             width: 100% !important;
             max-width: none !important;
+            min-height: auto !important;
             box-shadow: none !important;
-            border-radius: 0 !important;
+            margin: 0 !important;
+          }
+          
+          .print-controls {
+            display: none !important;
+          }
+        }
+        
+        @media screen {
+          .customer-receipt {
+            margin: 20px auto !important;
+            max-width: 800px !important;
+            width: 100% !important;
+            min-height: auto !important;
           }
         }
       `}} />
 
       {/* Header */}
       <div style={{
-        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+        background: 'linear-gradient(135deg, #2c3e50 0%, #34495e 100%)',
         color: 'white',
-        padding: '25px',
-        textAlign: 'center'
+        padding: '40px 30px',
+        borderBottom: '4px solid #3498db'
       }}>
         <div style={{
-          width: '60px',
-          height: '60px',
-          margin: '0 auto 15px',
-          background: 'rgba(255,255,255,0.2)',
-          borderRadius: '50%',
           display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          border: '2px solid rgba(255,255,255,0.3)'
+          justifyContent: 'space-between',
+          alignItems: 'center'
         }}>
-          <img src={branding.logoUrl} alt={branding.storeName} style={{
-            width: '40px',
-            height: '40px',
-            objectFit: 'contain',
-            filter: 'brightness(0) invert(1)'
-          }} />
-        </div>
-        <div style={{
-          fontSize: '24px',
-          fontWeight: '800',
-          marginBottom: '5px',
-          textShadow: '1px 1px 2px rgba(0,0,0,0.3)'
-        }}>{branding.storeName}</div>
-        <div style={{
-          fontSize: '14px',
-          opacity: '0.9'
-        }}>إيصال استلام</div>
-        <div style={{
-          marginTop: '15px',
-          fontSize: '12px',
-          opacity: '0.8'
-        }}>
-          رقم الإيصال: {orderNo} • {formatDate()}
+          <div>
+            <div style={{
+              fontSize: '32px',
+              fontWeight: '800',
+              marginBottom: '8px',
+              textShadow: '2px 2px 4px rgba(0,0,0,0.3)'
+            }}>{branding.storeName}</div>
+            <div style={{
+              fontSize: '16px',
+              opacity: '0.9',
+              marginBottom: '5px'
+            }}>نظام تغذية علمي متخصص للقطط</div>
+            <div style={{
+              fontSize: '14px',
+              opacity: '0.8'
+            }}>العنوان: شارع الجامعة، المعادي، القاهرة | تليفون: 01234567890</div>
+          </div>
+          <div style={{
+            width: '80px',
+            height: '80px',
+            background: 'rgba(255,255,255,0.2)',
+            borderRadius: '50%',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            border: '3px solid rgba(255,255,255,0.3)'
+          }}>
+            <img src={branding.logoUrl} alt={branding.storeName} style={{
+              width: '60px',
+              height: '60px',
+              objectFit: 'contain',
+              filter: 'brightness(0) invert(1)'
+            }} />
+          </div>
         </div>
       </div>
 
+      {/* Receipt Info Bar */}
+      <div style={{
+        background: '#3498db',
+        color: 'white',
+        padding: '15px 30px',
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center'
+      }}>
+        <div style={{ fontSize: '18px', fontWeight: '700' }}>إيصال استلام</div>
+        <div style={{ fontSize: '16px', fontWeight: '600' }}>رقم الإيصال: {orderNo}</div>
+        <div style={{ fontSize: '14px' }}>{formatDate()}</div>
+      </div>
+
       {/* Body */}
-      <div style={{ padding: '25px' }}>
+      <div style={{ padding: '40px 30px' }}>
         {/* Client Information */}
         <div style={{
           background: '#f8f9fa',
-          borderRadius: '10px',
-          padding: '20px',
-          marginBottom: '20px',
-          border: '1px solid #e9ecef'
+          border: '2px solid #e9ecef',
+          borderRadius: '12px',
+          padding: '25px',
+          marginBottom: '30px'
         }}>
           <div style={{
-            fontSize: '16px',
+            fontSize: '20px',
             fontWeight: '700',
             color: '#2c3e50',
-            marginBottom: '15px',
+            marginBottom: '20px',
             textAlign: 'center',
-            borderBottom: '2px solid #667eea',
-            paddingBottom: '10px'
+            borderBottom: '3px solid #3498db',
+            paddingBottom: '15px'
           }}>بيانات العميل</div>
           
-          <div style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            padding: '8px 0',
-            borderBottom: '1px solid #dee2e6'
-          }}>
-            <span style={{ fontWeight: '600', color: '#6c757d' }}>الاسم:</span>
-            <span style={{ fontWeight: '500', color: '#2c3e50' }}>{catData.clientName || 'غير محدد'}</span>
-          </div>
-          
-          <div style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            padding: '8px 0',
-            borderBottom: '1px solid #dee2e6'
-          }}>
-            <span style={{ fontWeight: '600', color: '#6c757d' }}>رقم الهاتف:</span>
-            <span style={{ fontWeight: '500', color: '#2c3e50' }}>{catData.clientPhone || 'غير محدد'}</span>
-          </div>
-          
-          <div style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            padding: '8px 0'
-          }}>
-            <span style={{ fontWeight: '600', color: '#6c757d' }}>اسم القطة:</span>
-            <span style={{ fontWeight: '500', color: '#2c3e50' }}>{catData.name || 'غير محدد'}</span>
-          </div>
-        </div>
-
-        {/* Service Summary */}
-        <div style={{
-          background: '#fff3cd',
-          borderRadius: '10px',
-          padding: '20px',
-          marginBottom: '20px',
-          border: '1px solid #ffeaa7'
-        }}>
-          <div style={{
-            fontSize: '16px',
-            fontWeight: '700',
-            color: '#856404',
-            marginBottom: '15px',
-            textAlign: 'center',
-            borderBottom: '2px solid #f0ad4e',
-            paddingBottom: '10px'
-          }}>تفاصيل الخدمة</div>
-          
-          <div style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            padding: '8px 0',
-            borderBottom: '1px solid #f0ad4e'
-          }}>
-            <span style={{ fontWeight: '600', color: '#856404' }}>خطة تغذية القطة:</span>
-            <span style={{ fontWeight: '500', color: '#856404' }}>{boxSummary?.totalDays || 0} يوم</span>
-          </div>
-          
-          <div style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            padding: '8px 0'
-          }}>
-            <span style={{ fontWeight: '600', color: '#856404' }}>عدد المنتجات:</span>
-            <span style={{ fontWeight: '500', color: '#856404' }}>{boxSummary?.items?.length || 0} منتج</span>
-          </div>
-        </div>
-
-        {/* Pricing Summary */}
-        <div style={{
-          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-          color: 'white',
-          borderRadius: '10px',
-          padding: '20px',
-          marginBottom: '20px'
-        }}>
-          <div style={{
-            fontSize: '18px',
-            fontWeight: '700',
-            textAlign: 'center',
-            marginBottom: '15px',
-            textShadow: '1px 1px 2px rgba(0,0,0,0.3)'
-          }}>ملخص التكلفة</div>
-          
-          <div style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            padding: '10px 0',
-            borderBottom: '1px solid rgba(255,255,255,0.2)',
-            fontSize: '14px'
-          }}>
-            <span>الإجمالي الفرعي:</span>
-            <span>{formatNumber(total, 0)} {currency}</span>
-          </div>
-          
-          {discountValue > 0 && (
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
             <div style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              padding: '10px 0',
-              borderBottom: '1px solid rgba(255,255,255,0.2)',
-              fontSize: '14px'
+              background: 'white',
+              padding: '15px',
+              borderRadius: '8px',
+              border: '1px solid #dee2e6'
             }}>
-              <span>الخصم:</span>
-              <span>-{formatNumber(discountValue, 0)} {currency}</span>
+              <div style={{ fontSize: '14px', color: '#6c757d', fontWeight: '600', marginBottom: '5px' }}>الاسم</div>
+              <div style={{ fontSize: '16px', color: '#2c3e50', fontWeight: '500' }}>{catData.clientName || 'غير محدد'}</div>
             </div>
-          )}
-          
-          {delivery > 0 && (
+            
             <div style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              padding: '10px 0',
-              borderBottom: '1px solid rgba(255,255,255,0.2)',
-              fontSize: '14px'
+              background: 'white',
+              padding: '15px',
+              borderRadius: '8px',
+              border: '1px solid #dee2e6'
             }}>
-              <span>رسوم التوصيل:</span>
-              <span>{formatNumber(delivery, 0)} {currency}</span>
+              <div style={{ fontSize: '14px', color: '#6c757d', fontWeight: '600', marginBottom: '5px' }}>رقم الهاتف</div>
+              <div style={{ fontSize: '16px', color: '#2c3e50', fontWeight: '500' }}>{catData.clientPhone || 'غير محدد'}</div>
             </div>
-          )}
+          </div>
           
           <div style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            fontWeight: '700',
-            fontSize: '18px',
-            paddingTop: '15px',
-            marginTop: '10px',
-            borderTop: '2px solid rgba(255,255,255,0.3)'
+            background: 'white',
+            padding: '15px',
+            borderRadius: '8px',
+            border: '1px solid #dee2e6',
+            marginTop: '20px'
           }}>
-            <span>المبلغ الإجمالي:</span>
-            <span>{formatNumber(amountDue, 0)} {currency}</span>
+            <div style={{ fontSize: '14px', color: '#6c757d', fontWeight: '600', marginBottom: '5px' }}>العنوان</div>
+            <div style={{ fontSize: '16px', color: '#2c3e50', fontWeight: '500' }}>{catData.clientAddress || 'غير محدد'}</div>
           </div>
         </div>
 
-        {/* Thank You Message */}
+        {/* Order Type */}
         <div style={{
-          textAlign: 'center',
-          padding: '20px',
-          background: 'linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%)',
-          borderRadius: '10px',
-          border: '1px solid #dee2e6'
+          background: '#e8f4fd',
+          border: '2px solid #3498db',
+          borderRadius: '12px',
+          padding: '25px',
+          marginBottom: '30px'
         }}>
           <div style={{
-            fontSize: '16px',
+            fontSize: '20px',
             fontWeight: '700',
             color: '#2c3e50',
-            marginBottom: '8px'
+            marginBottom: '20px',
+            textAlign: 'center',
+            borderBottom: '3px solid #3498db',
+            paddingBottom: '15px'
+          }}>نوع الطلب</div>
+          
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '20px' }}>
+            <div style={{
+              background: 'white',
+              padding: '15px',
+              borderRadius: '8px',
+              border: '1px solid #3498db',
+              textAlign: 'center'
+            }}>
+              <div style={{ fontSize: '14px', color: '#3498db', fontWeight: '600', marginBottom: '5px' }}>نوع الخدمة</div>
+              <div style={{ fontSize: '16px', color: '#2c3e50', fontWeight: '500' }}>خطة تغذية القطة</div>
+            </div>
+            
+            <div style={{
+              background: 'white',
+              padding: '15px',
+              borderRadius: '8px',
+              border: '1px solid #3498db',
+              textAlign: 'center'
+            }}>
+              <div style={{ fontSize: '14px', color: '#3498db', fontWeight: '600', marginBottom: '5px' }}>مدة الخطة</div>
+              <div style={{ fontSize: '16px', color: '#2c3e50', fontWeight: '500' }}>{boxSummary?.totalDays || 0} يوم</div>
+            </div>
+            
+            <div style={{
+              background: 'white',
+              padding: '15px',
+              borderRadius: '8px',
+              border: '1px solid #3498db',
+              textAlign: 'center'
+            }}>
+              <div style={{ fontSize: '14px', color: '#3498db', fontWeight: '600', marginBottom: '5px' }}>عدد المنتجات</div>
+              <div style={{ fontSize: '16px', color: '#2c3e50', fontWeight: '500' }}>{boxSummary?.items?.length || 0} منتج</div>
+            </div>
+          </div>
+          
+          <div style={{
+            background: 'white',
+            padding: '15px',
+            borderRadius: '8px',
+            border: '1px solid #3498db',
+            marginTop: '20px'
           }}>
-            شكراً لاختياركم <span style={{ color: '#667eea' }}>{branding.storeName}</span>
+            <div style={{ fontSize: '14px', color: '#3498db', fontWeight: '600', marginBottom: '5px' }}>اسم القطة</div>
+            <div style={{ fontSize: '16px', color: '#2c3e50', fontWeight: '500' }}>{catData.name || 'غير محدد'}</div>
+          </div>
+        </div>
+
+        {/* Billing Summary */}
+        <div style={{
+          background: 'linear-gradient(135deg, #27ae60 0%, #2ecc71 100%)',
+          color: 'white',
+          borderRadius: '12px',
+          padding: '30px',
+          marginBottom: '30px',
+          boxShadow: '0 8px 25px rgba(39, 174, 96, 0.3)'
+        }}>
+          <div style={{
+            fontSize: '24px',
+            fontWeight: '700',
+            textAlign: 'center',
+            marginBottom: '25px',
+            textShadow: '1px 1px 2px rgba(0,0,0,0.3)'
+          }}>الحساب</div>
+          
+          <div style={{
+            background: 'rgba(255,255,255,0.1)',
+            borderRadius: '8px',
+            padding: '20px'
+          }}>
+            <div style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              padding: '12px 0',
+              borderBottom: '1px solid rgba(255,255,255,0.2)',
+              fontSize: '16px'
+            }}>
+              <span>الإجمالي الفرعي:</span>
+              <span style={{ fontWeight: '600' }}>{formatNumber(total, 0)} {currency}</span>
+            </div>
+            
+            {discountValue > 0 && (
+              <div style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                padding: '12px 0',
+                borderBottom: '1px solid rgba(255,255,255,0.2)',
+                fontSize: '16px'
+              }}>
+                <span>الخصم:</span>
+                <span style={{ fontWeight: '600' }}>-{formatNumber(discountValue, 0)} {currency}</span>
+              </div>
+            )}
+            
+            {delivery > 0 && (
+              <div style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                padding: '12px 0',
+                borderBottom: '1px solid rgba(255,255,255,0.2)',
+                fontSize: '16px'
+              }}>
+                <span>رسوم التوصيل:</span>
+                <span style={{ fontWeight: '600' }}>{formatNumber(delivery, 0)} {currency}</span>
+              </div>
+            )}
+            
+            <div style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              fontWeight: '700',
+              fontSize: '22px',
+              paddingTop: '20px',
+              marginTop: '15px',
+              borderTop: '2px solid rgba(255,255,255,0.3)',
+              background: 'rgba(255,255,255,0.1)',
+              padding: '20px',
+              borderRadius: '6px'
+            }}>
+              <span>المبلغ الإجمالي:</span>
+              <span>{formatNumber(amountDue, 0)} {currency}</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Footer */}
+        <div style={{
+          textAlign: 'center',
+          padding: '25px',
+          background: 'linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%)',
+          borderRadius: '12px',
+          border: '2px solid #dee2e6'
+        }}>
+          <div style={{
+            fontSize: '20px',
+            fontWeight: '700',
+            color: '#2c3e50',
+            marginBottom: '10px'
+          }}>
+            شكراً لاختياركم <span style={{ color: '#3498db' }}>{branding.storeName}</span>
+          </div>
+          <div style={{
+            fontSize: '14px',
+            color: '#6c757d',
+            marginBottom: '15px'
+          }}>
+            نتمنى لكم ولقطتكم الصحة والسعادة
           </div>
           <div style={{
             fontSize: '12px',
-            color: '#6c757d'
+            color: '#95a5a6',
+            borderTop: '1px solid #dee2e6',
+            paddingTop: '15px'
           }}>
-            نظام تغذية علمي متخصص للقطط
+            تم إنشاء هذا الإيصال تلقائياً • جميع الحقوق محفوظة © {new Date().getFullYear()}
           </div>
         </div>
       </div>

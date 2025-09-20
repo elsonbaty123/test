@@ -22,6 +22,11 @@ const nextConfig: NextConfig = {
   },
   // Ensure we're not using static export
   trailingSlash: false,
+  
+  // Experimental features for better performance
+  experimental: {
+    optimizePackageImports: ['lucide-react'],
+  },
 };
 
 export default nextConfig;
