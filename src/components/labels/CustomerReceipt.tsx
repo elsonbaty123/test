@@ -54,12 +54,12 @@ export const CustomerReceipt: React.FC<CustomerReceiptProps> = ({
     <div className="customer-receipt" dir="rtl" style={{
       width: '210mm',
       maxWidth: '210mm',
-      height: '297mm',
+      height: '270mm',
       margin: '0 auto',
       background: 'white',
       fontFamily: 'Cairo, Segoe UI, Tahoma, Arial, sans-serif',
       color: '#2c3e50',
-      lineHeight: '1.4',
+      lineHeight: '1.3',
       boxShadow: '0 0 20px rgba(0,0,0,0.1)',
       position: 'relative',
       overflow: 'hidden',
@@ -69,11 +69,13 @@ export const CustomerReceipt: React.FC<CustomerReceiptProps> = ({
       <style dangerouslySetInnerHTML={{__html: `
         @page {
           size: A4 portrait;
-          margin: 15mm;
+          margin: 10mm;
         }
         
         .customer-receipt {
-          page-break-after: always;
+          page-break-inside: avoid !important;
+          page-break-after: avoid !important;
+          break-inside: avoid !important;
         }
         
         @media print {
@@ -83,17 +85,30 @@ export const CustomerReceipt: React.FC<CustomerReceiptProps> = ({
             print-color-adjust: exact !important;
           }
           
+          html, body {
+            height: 100% !important;
+            overflow: hidden !important;
+          }
+          
           .customer-receipt {
             width: 100% !important;
             max-width: none !important;
-            height: 100vh !important;
+            height: 100% !important;
+            max-height: 100vh !important;
             box-shadow: none !important;
             margin: 0 !important;
-            overflow: visible !important;
+            overflow: hidden !important;
+            page-break-inside: avoid !important;
+            page-break-after: avoid !important;
+            break-inside: avoid !important;
           }
           
           .print-controls {
             display: none !important;
+          }
+          
+          * {
+            page-break-inside: avoid !important;
           }
         }
         
@@ -112,8 +127,8 @@ export const CustomerReceipt: React.FC<CustomerReceiptProps> = ({
       <div style={{
         background: 'linear-gradient(135deg, #2c3e50 0%, #34495e 100%)',
         color: 'white',
-        padding: '25px 30px',
-        borderBottom: '4px solid #3498db',
+        padding: '20px 25px',
+        borderBottom: '3px solid #3498db',
         flexShrink: 0
       }}>
         <div style={{
@@ -141,18 +156,18 @@ export const CustomerReceipt: React.FC<CustomerReceiptProps> = ({
           <div style={{
             width: '70px',
             height: '70px',
-            background: 'rgba(255,255,255,0.2)',
+            background: 'white',
             borderRadius: '50%',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            border: '3px solid rgba(255,255,255,0.3)'
+            border: '3px solid #3498db',
+            boxShadow: '0 4px 8px rgba(0,0,0,0.2)'
           }}>
             <img src={branding.logoUrl} alt={branding.storeName} style={{
               width: '50px',
               height: '50px',
-              objectFit: 'contain',
-              filter: 'brightness(0) invert(1)'
+              objectFit: 'contain'
             }} />
           </div>
         </div>
@@ -175,60 +190,60 @@ export const CustomerReceipt: React.FC<CustomerReceiptProps> = ({
 
       {/* Body */}
       <div style={{ 
-        padding: '15px 25px', 
+        padding: '10px 20px', 
         flex: 1, 
         display: 'flex', 
         flexDirection: 'column',
-        gap: '12px'
+        gap: '8px'
       }}>
         {/* Client Information */}
         <div style={{
           background: '#f8f9fa',
           border: '2px solid #e9ecef',
           borderRadius: '8px',
-          padding: '15px'
+          padding: '12px'
         }}>
           <div style={{
-            fontSize: '16px',
+            fontSize: '15px',
             fontWeight: '700',
             color: '#2c3e50',
-            marginBottom: '10px',
+            marginBottom: '8px',
             textAlign: 'center',
             borderBottom: '2px solid #3498db',
-            paddingBottom: '8px'
+            paddingBottom: '6px'
           }}>بيانات العميل</div>
           
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
             <div style={{
               background: 'white',
-              padding: '12px',
+              padding: '8px',
               borderRadius: '6px',
               border: '1px solid #dee2e6'
             }}>
-              <div style={{ fontSize: '12px', color: '#6c757d', fontWeight: '600', marginBottom: '4px' }}>الاسم</div>
-              <div style={{ fontSize: '14px', color: '#2c3e50', fontWeight: '500' }}>{catData.clientName || 'غير محدد'}</div>
+              <div style={{ fontSize: '11px', color: '#6c757d', fontWeight: '600', marginBottom: '3px' }}>الاسم</div>
+              <div style={{ fontSize: '13px', color: '#2c3e50', fontWeight: '500' }}>{catData.clientName || 'غير محدد'}</div>
             </div>
             
             <div style={{
               background: 'white',
-              padding: '12px',
+              padding: '8px',
               borderRadius: '6px',
               border: '1px solid #dee2e6'
             }}>
-              <div style={{ fontSize: '12px', color: '#6c757d', fontWeight: '600', marginBottom: '4px' }}>رقم الهاتف</div>
-              <div style={{ fontSize: '14px', color: '#2c3e50', fontWeight: '500' }}>{catData.clientPhone || 'غير محدد'}</div>
+              <div style={{ fontSize: '11px', color: '#6c757d', fontWeight: '600', marginBottom: '3px' }}>رقم الهاتف</div>
+              <div style={{ fontSize: '13px', color: '#2c3e50', fontWeight: '500' }}>{catData.clientPhone || 'غير محدد'}</div>
             </div>
           </div>
           
           <div style={{
             background: 'white',
-            padding: '10px',
+            padding: '8px',
             borderRadius: '6px',
             border: '1px solid #dee2e6',
-            marginTop: '12px'
+            marginTop: '8px'
           }}>
-            <div style={{ fontSize: '12px', color: '#6c757d', fontWeight: '600', marginBottom: '4px' }}>العنوان</div>
-            <div style={{ fontSize: '14px', color: '#2c3e50', fontWeight: '500' }}>{catData.clientAddress || 'غير محدد'}</div>
+            <div style={{ fontSize: '11px', color: '#6c757d', fontWeight: '600', marginBottom: '3px' }}>العنوان</div>
+            <div style={{ fontSize: '13px', color: '#2c3e50', fontWeight: '500' }}>{catData.clientAddress || 'غير محدد'}</div>
           </div>
         </div>
 
@@ -237,63 +252,63 @@ export const CustomerReceipt: React.FC<CustomerReceiptProps> = ({
           background: '#e8f4fd',
           border: '2px solid #3498db',
           borderRadius: '8px',
-          padding: '15px'
+          padding: '12px'
         }}>
           <div style={{
-            fontSize: '16px',
+            fontSize: '15px',
             fontWeight: '700',
             color: '#2c3e50',
-            marginBottom: '10px',
+            marginBottom: '8px',
             textAlign: 'center',
             borderBottom: '2px solid #3498db',
-            paddingBottom: '8px'
+            paddingBottom: '6px'
           }}>نوع الطلب</div>
           
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '15px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '8px' }}>
             <div style={{
               background: 'white',
-              padding: '12px',
+              padding: '8px',
               borderRadius: '6px',
               border: '1px solid #3498db',
               textAlign: 'center'
             }}>
-              <div style={{ fontSize: '12px', color: '#3498db', fontWeight: '600', marginBottom: '4px' }}>نوع الخدمة</div>
-              <div style={{ fontSize: '14px', color: '#2c3e50', fontWeight: '500' }}>خطة تغذية القطة</div>
+              <div style={{ fontSize: '11px', color: '#3498db', fontWeight: '600', marginBottom: '3px' }}>نوع الخدمة</div>
+              <div style={{ fontSize: '12px', color: '#2c3e50', fontWeight: '500' }}>خطة تغذية القطة</div>
             </div>
             
             <div style={{
               background: 'white',
-              padding: '12px',
+              padding: '8px',
               borderRadius: '6px',
               border: '1px solid #3498db',
               textAlign: 'center'
             }}>
-              <div style={{ fontSize: '12px', color: '#3498db', fontWeight: '600', marginBottom: '4px' }}>مدة الخطة</div>
-              <div style={{ fontSize: '14px', color: '#2c3e50', fontWeight: '500' }}>{boxSummary?.totalDays || 0} يوم</div>
+              <div style={{ fontSize: '11px', color: '#3498db', fontWeight: '600', marginBottom: '3px' }}>مدة الخطة</div>
+              <div style={{ fontSize: '12px', color: '#2c3e50', fontWeight: '500' }}>{boxSummary?.totalDays || 0} يوم</div>
             </div>
             
             <div style={{
               background: 'white',
-              padding: '12px',
+              padding: '8px',
               borderRadius: '6px',
               border: '1px solid #3498db',
               textAlign: 'center'
             }}>
-              <div style={{ fontSize: '12px', color: '#3498db', fontWeight: '600', marginBottom: '4px' }}>عدد المنتجات</div>
-              <div style={{ fontSize: '14px', color: '#2c3e50', fontWeight: '500' }}>{boxSummary?.items?.length || 0} منتج</div>
+              <div style={{ fontSize: '11px', color: '#3498db', fontWeight: '600', marginBottom: '3px' }}>عدد المنتجات</div>
+              <div style={{ fontSize: '12px', color: '#2c3e50', fontWeight: '500' }}>{boxSummary?.items?.length || 0} منتج</div>
             </div>
           </div>
           
           <div style={{
             background: 'white',
-            padding: '10px',
+            padding: '8px',
             borderRadius: '6px',
             border: '1px solid #3498db',
-            marginTop: '12px',
+            marginTop: '8px',
             textAlign: 'center'
           }}>
-            <div style={{ fontSize: '12px', color: '#3498db', fontWeight: '600', marginBottom: '4px' }}>اسم القطة</div>
-            <div style={{ fontSize: '14px', color: '#2c3e50', fontWeight: '500' }}>{catData.name || 'غير محدد'}</div>
+            <div style={{ fontSize: '11px', color: '#3498db', fontWeight: '600', marginBottom: '3px' }}>اسم القطة</div>
+            <div style={{ fontSize: '12px', color: '#2c3e50', fontWeight: '500' }}>{catData.name || 'غير محدد'}</div>
           </div>
         </div>
 
@@ -302,29 +317,29 @@ export const CustomerReceipt: React.FC<CustomerReceiptProps> = ({
           background: 'linear-gradient(135deg, #27ae60 0%, #2ecc71 100%)',
           color: 'white',
           borderRadius: '8px',
-          padding: '15px',
+          padding: '12px',
           boxShadow: '0 4px 15px rgba(39, 174, 96, 0.3)'
         }}>
           <div style={{
-            fontSize: '18px',
+            fontSize: '16px',
             fontWeight: '700',
             textAlign: 'center',
-            marginBottom: '12px',
+            marginBottom: '10px',
             textShadow: '1px 1px 2px rgba(0,0,0,0.3)'
           }}>الحساب</div>
           
           <div style={{
             background: 'rgba(255,255,255,0.1)',
             borderRadius: '6px',
-            padding: '12px'
+            padding: '10px'
           }}>
             <div style={{
               display: 'flex',
               justifyContent: 'space-between',
               alignItems: 'center',
-              padding: '8px 0',
+              padding: '6px 0',
               borderBottom: '1px solid rgba(255,255,255,0.2)',
-              fontSize: '14px'
+              fontSize: '13px'
             }}>
               <span>الإجمالي الفرعي:</span>
               <span style={{ fontWeight: '600' }}>{formatNumber(total, 0)} {currency}</span>
@@ -335,9 +350,9 @@ export const CustomerReceipt: React.FC<CustomerReceiptProps> = ({
                 display: 'flex',
                 justifyContent: 'space-between',
                 alignItems: 'center',
-                padding: '8px 0',
+                padding: '6px 0',
                 borderBottom: '1px solid rgba(255,255,255,0.2)',
-                fontSize: '14px'
+                fontSize: '13px'
               }}>
                 <span>الخصم:</span>
                 <span style={{ fontWeight: '600' }}>-{formatNumber(discountValue, 0)} {currency}</span>
@@ -349,9 +364,9 @@ export const CustomerReceipt: React.FC<CustomerReceiptProps> = ({
                 display: 'flex',
                 justifyContent: 'space-between',
                 alignItems: 'center',
-                padding: '8px 0',
+                padding: '6px 0',
                 borderBottom: '1px solid rgba(255,255,255,0.2)',
-                fontSize: '14px'
+                fontSize: '13px'
               }}>
                 <span>رسوم التوصيل:</span>
                 <span style={{ fontWeight: '600' }}>{formatNumber(delivery, 0)} {currency}</span>
@@ -363,12 +378,12 @@ export const CustomerReceipt: React.FC<CustomerReceiptProps> = ({
               justifyContent: 'space-between',
               alignItems: 'center',
               fontWeight: '700',
-              fontSize: '16px',
-              paddingTop: '12px',
-              marginTop: '8px',
+              fontSize: '15px',
+              paddingTop: '10px',
+              marginTop: '6px',
               borderTop: '2px solid rgba(255,255,255,0.3)',
               background: 'rgba(255,255,255,0.1)',
-              padding: '12px',
+              padding: '10px',
               borderRadius: '4px'
             }}>
               <span>المبلغ الإجمالي:</span>
@@ -380,32 +395,32 @@ export const CustomerReceipt: React.FC<CustomerReceiptProps> = ({
         {/* Footer */}
         <div style={{
           textAlign: 'center',
-          padding: '12px',
+          padding: '8px',
           background: 'linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%)',
           borderRadius: '8px',
           border: '2px solid #dee2e6',
           marginTop: 'auto'
         }}>
           <div style={{
-            fontSize: '14px',
+            fontSize: '13px',
             fontWeight: '700',
             color: '#2c3e50',
-            marginBottom: '4px'
+            marginBottom: '3px'
           }}>
             شكراً لاختياركم <span style={{ color: '#3498db' }}>{branding.storeName}</span>
           </div>
           <div style={{
-            fontSize: '11px',
+            fontSize: '10px',
             color: '#6c757d',
-            marginBottom: '6px'
+            marginBottom: '4px'
           }}>
             نتمنى لكم ولقطتكم الصحة والسعادة
           </div>
           <div style={{
-            fontSize: '9px',
+            fontSize: '8px',
             color: '#95a5a6',
             borderTop: '1px solid #dee2e6',
-            paddingTop: '6px'
+            paddingTop: '4px'
           }}>
             تم إنشاء هذا الإيصال تلقائياً • جميع الحقوق محفوظة © {new Date().getFullYear()}
           </div>
