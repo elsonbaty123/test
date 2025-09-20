@@ -12,6 +12,8 @@ export async function POST(req: Request) {
     const totals = body?.totals || {}
     const currency = body?.currency || ''
     const catName = body?.catName || ''
+    const planDuration = body?.planDuration || ''
+    const paidAmount = Number(body?.paidAmount || 0)
     const payload = body?.payload || {}
 
     if (!name) return NextResponse.json({ error: 'اسم العميل مطلوب' }, { status: 400 })
@@ -44,6 +46,8 @@ export async function POST(req: Request) {
       totals,
       currency,
       catName,
+      planDuration,
+      paidAmount,
       ...payload,
     }
 

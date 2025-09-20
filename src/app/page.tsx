@@ -510,7 +510,9 @@ export default function CatNutritionCalculator() {
                       <TableHead>رقم الطلب</TableHead>
                       <TableHead>التاريخ</TableHead>
                       <TableHead>القطة</TableHead>
+                      <TableHead>مدة الخطة</TableHead>
                       <TableHead>الإجمالي النهائي</TableHead>
+                      <TableHead>المبلغ المسدد</TableHead>
                       <TableHead className="text-left">إجراءات</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -520,7 +522,9 @@ export default function CatNutritionCalculator() {
                         <TableCell className="font-mono text-sm">{o.orderNo}</TableCell>
                         <TableCell>{o.createdAt ? new Date(o.createdAt).toLocaleString('ar-EG') : '-'}</TableCell>
                         <TableCell>{o.catName || '-'}</TableCell>
+                        <TableCell>{o.planDuration || '-'}</TableCell>
                         <TableCell>{(o.totals?.totalCostWithDelivery ?? 0).toLocaleString('ar-EG')} {o.currency || pricing.currency}</TableCell>
+                        <TableCell>{(o.paidAmount ?? 0).toLocaleString('ar-EG')} {o.currency || pricing.currency}</TableCell>
                         <TableCell className="flex gap-2">
                           <ReprintReceiptButton
                             client={{ name: ordersClientName, phone: catData.clientPhone, address: catData.clientAddress }}

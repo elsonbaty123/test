@@ -62,6 +62,7 @@ interface Pricing {
   additionalCosts: string;
   profitPercentage: string;
   discountPercentage: string;
+  paidAmount: string;
 }
 
 interface SpecialCondition {
@@ -106,6 +107,7 @@ interface BoxSummary {
   unitsUsed: number;
   servingSize: number;
   unitsForCost?: number;
+  planDuration?: string;
 }
 
 interface ActivityInfo {
@@ -333,6 +335,7 @@ export function useCatNutrition() {
     additionalCosts: '0',
     profitPercentage: '20',
     discountPercentage: '0',
+    paidAmount: '0',
   })
 
   const [results, setResults] = useState<Results | null>(null)
@@ -823,6 +826,16 @@ export function useCatNutrition() {
         : 0
       const wetDaysCountBox = (weekWetDays * fullWeeks) + remainderWetDays
 
+      // Determine plan duration description
+      let planDuration = ''
+      if (boxBuilder.boxType === 'weekly') {
+        planDuration = 'أسبوعي (7 أيام)'
+      } else if (boxBuilder.boxType === 'monthly30') {
+        planDuration = 'شهري (30 يوم)'
+      } else if (boxBuilder.boxType === 'custom') {
+        planDuration = `مخصص (${totalDays} يوم)`
+      }
+
       const summary: BoxSummary = {
         totalDays,
         wetDaysCount: wetDaysCountBox,
@@ -832,6 +845,7 @@ export function useCatNutrition() {
         unitsUsed,
         servingSize: wetUnitGrams,
         unitsForCost: unitsUsed,
+        planDuration,
       }
 
       // Build BCS suggestion reason (final after calculation)

@@ -87,6 +87,8 @@ export const BoxLabelPrintButton: React.FC<BoxLabelPrintButtonProps> = ({
           orderNo,
           currency: pricing?.currency,
           catName: catData?.name,
+          planDuration: boxSummary?.planDuration,
+          paidAmount: parseFloat(pricing?.paidAmount || '0'),
           totals: {
             totalCostWithProfit: costs?.totalCostWithProfit,
             totalCostAfterDiscount: costs?.totalCostAfterDiscount,
