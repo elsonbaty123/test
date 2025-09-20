@@ -792,21 +792,40 @@ export function useCatNutrition() {
       if (boxBuilder.boxType === 'weekly') totalDays = 7
       else if (boxBuilder.boxType === 'custom') totalDays = boxBuilder.customDays > 0 ? boxBuilder.customDays : 30
 
-      // Calculate wet units, falling back to grams-based estimation when per100 mode is used
-      const weekWetUnits = dailyData.reduce((s, d) => s + (d.units > 0 ? d.units : (wetUnitGrams > 0 ? d.wetGrams / wetUnitGrams : 0)), 0)
-      const weeksInBox = Math.ceil(totalDays / 7)
-      let unitsUsed = Math.ceil(weekWetUnits * weeksInBox)
+      // Compute totals using full weeks + remainder days (avoid overestimation for partial weeks)
+      const fullWeeks = Math.floor(totalDays / 7)
+      const remainderDaysCount = totalDays % 7
+
+      // Per-week sums
+      const weekUnitsSum = dailyData.reduce((s, d) => s + d.units, 0)
+      const weekDryGramsSum = dailyData.reduce((s, d) => s + d.dryGrams, 0)
+      const weekWetGramsSum = dailyData.reduce((s, d) => s + d.wetGrams, 0)
+
+      // Remainder (first N days of the week)
+      const remUnitsSum = remainderDaysCount > 0 ? dailyData.slice(0, remainderDaysCount).reduce((s, d) => s + d.units, 0) : 0
+      const remDryGramsSum = remainderDaysCount > 0 ? dailyData.slice(0, remainderDaysCount).reduce((s, d) => s + d.dryGrams, 0) : 0
+      const remWetGramsSum = remainderDaysCount > 0 ? dailyData.slice(0, remainderDaysCount).reduce((s, d) => s + d.wetGrams, 0) : 0
+
+      // Units used (ceil to whole units by business rule)
+      let unitsUsed = Math.ceil(weekUnitsSum * fullWeeks + remUnitsSum)
       if (boxBuilder.boxWetMode === 'fixed_total') {
         unitsUsed = Math.max(0, Math.floor(boxBuilder.boxTotalUnits))
       }
 
-      const totalDryGrams = dailyData.reduce((s, d) => s + d.dryGrams, 0) * weeksInBox
-      const totalWetGrams = dailyData.reduce((s, d) => s + d.wetGrams, 0) * weeksInBox
+      const totalDryGrams = weekDryGramsSum * fullWeeks + remDryGramsSum
+      const totalWetGrams = weekWetGramsSum * fullWeeks + remWetGramsSum
       const totalDER = Math.round(der * totalDays)
+
+      // Compute wet days count over the entire box
+      const weekWetDays = weeklyPlan.wetDays.filter(Boolean).length
+      const remainderWetDays = remainderDaysCount > 0
+        ? weeklyPlan.wetDays.slice(0, remainderDaysCount).filter(Boolean).length
+        : 0
+      const wetDaysCountBox = (weekWetDays * fullWeeks) + remainderWetDays
 
       const summary: BoxSummary = {
         totalDays,
-        wetDaysCount: weeklyPlan.wetDaysCount,
+        wetDaysCount: wetDaysCountBox,
         totalDER,
         totalDryGrams,
         totalWetGrams,

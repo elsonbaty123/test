@@ -31,6 +31,17 @@ export const BoxLabel: React.FC<BoxLabelProps> = ({
     })
   }
 
+  // Due date: +2 days from invoice date
+  const formatDueDate = () => {
+    const d = new Date()
+    d.setDate(d.getDate() + 2)
+    return d.toLocaleDateString('ar-EG', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    })
+  }
+
   // QR Codes removed as requested
 
   const breedLabel = (code: string) => {
@@ -80,6 +91,15 @@ export const BoxLabel: React.FC<BoxLabelProps> = ({
   }
   const orderNo = (orderNoProp && String(orderNoProp).trim()) ? String(orderNoProp).trim() : buildOrderNo()
 
+  // Pricing helpers
+  const currency = pricing?.currency || ''
+  const total = Number(costs?.totalCostWithProfit || 0)
+  const afterDiscount = Number(costs?.totalCostAfterDiscount || 0)
+  const delivery = Number(costs?.deliveryCost || 0)
+  const amountDue = Number(costs?.totalCostWithDelivery || (afterDiscount + delivery))
+  const discountValue = Math.max(0, total - afterDiscount)
+  const discountPercent = total > 0 ? (discountValue / total) * 100 : 0
+
   return (
     <div className="invoice-receipt" dir="rtl">
       <style jsx>{`
@@ -100,18 +120,19 @@ export const BoxLabel: React.FC<BoxLabelProps> = ({
           }
           
           .invoice-header {
-            background: linear-gradient(135deg, #4a90e2 0%, #357abd 100%);
-            color: white;
-            padding: 8mm;
+            background: #e9edf5;
+            color: #2b5b8e;
+            padding: 8mm 8mm 6mm 8mm;
             text-align: center;
             position: relative;
           }
           
           .invoice-title {
-            font-size: 18px;
-            font-weight: bold;
-            margin-bottom: 2mm;
-            letter-spacing: 1px;
+            font-size: 20px;
+            font-weight: 800;
+            margin-bottom: 1mm;
+            letter-spacing: 1.2px;
+            text-transform: uppercase;
           }
           
           .invoice-subtitle {
@@ -125,7 +146,7 @@ export const BoxLabel: React.FC<BoxLabelProps> = ({
             right: 4mm;
             width: 25px;
             height: 25px;
-            background: rgba(255,255,255,0.2);
+            background: rgba(255,255,255,0.8);
             border-radius: 50%;
             display: flex;
             align-items: center;
@@ -143,13 +164,10 @@ export const BoxLabel: React.FC<BoxLabelProps> = ({
           }
           
           .invoice-meta {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 4mm;
             margin-bottom: 6mm;
             font-size: 8px;
           }
-          
+
           .meta-item {
             display: flex;
             flex-direction: column;
@@ -180,6 +198,7 @@ export const BoxLabel: React.FC<BoxLabelProps> = ({
             font-weight: bold;
             color: #4a90e2;
             border-bottom: 1px solid #ddd;
+            border-top: 2px solid #4a90e2;
           }
           
           .invoice-table td {
@@ -188,26 +207,43 @@ export const BoxLabel: React.FC<BoxLabelProps> = ({
             border-bottom: 1px solid #eee;
           }
           
-          .invoice-totals {
-            border-top: 2px solid #4a90e2;
-            padding-top: 4mm;
+          .invoice-summary {
+            margin-top: 2mm;
+            background: #f1f5fb;
+            border: 1px solid #dbe3f2;
+            border-radius: 6px;
+            padding: 3mm;
           }
-          
-          .total-row {
+          .invoice-summary .summary-row {
             display: flex;
             justify-content: space-between;
+            align-items: center;
             margin-bottom: 2mm;
             font-size: 9px;
           }
-          
-          .total-row.final {
-            font-size: 12px;
+          .invoice-summary .summary-row.due {
             font-weight: bold;
-            color: #4a90e2;
-            border-top: 1px solid #ddd;
-            padding-top: 2mm;
+            color: #2b5b8e;
+            font-size: 11px;
           }
-          
+
+          /* New meta layout (v2) */
+          .invoice-meta.v2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 4mm;
+          }
+          .meta-block {
+            background: #fafbff;
+            border: 1px solid #e6ecf7;
+            border-radius: 6px;
+            padding: 3mm;
+          }
+          .meta-block.to { background: #f7fafc; }
+          .meta-row { display: flex; justify-content: space-between; gap: 4mm; margin-bottom: 1.5mm; }
+          .meta-title { font-weight: 700; color: #2b5b8e; margin-bottom: 1.5mm; }
+          .meta-muted { color: #6b7280; }
+
           .invoice-footer {
             text-align: center;
             margin-top: 6mm;
@@ -252,18 +288,19 @@ export const BoxLabel: React.FC<BoxLabelProps> = ({
           }
           
           .invoice-header {
-            background: linear-gradient(135deg, #4a90e2 0%, #357abd 100%);
-            color: white;
-            padding: 20px;
+            background: #e9edf5;
+            color: #2b5b8e;
+            padding: 20px 20px 16px 20px;
             text-align: center;
             position: relative;
           }
           
           .invoice-title {
-            font-size: 22px;
-            font-weight: bold;
-            margin-bottom: 8px;
-            letter-spacing: 1px;
+            font-size: 24px;
+            font-weight: 800;
+            margin-bottom: 6px;
+            letter-spacing: 1.2px;
+            text-transform: uppercase;
           }
           
           .invoice-subtitle {
@@ -277,7 +314,7 @@ export const BoxLabel: React.FC<BoxLabelProps> = ({
             right: 12px;
             width: 35px;
             height: 35px;
-            background: rgba(255,255,255,0.2);
+            background: rgba(255,255,255,0.9);
             border-radius: 50%;
             display: flex;
             align-items: center;
@@ -294,13 +331,7 @@ export const BoxLabel: React.FC<BoxLabelProps> = ({
             padding: 20px;
           }
           
-          .invoice-meta {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 16px;
-            margin-bottom: 20px;
-            font-size: 11px;
-          }
+          .invoice-meta { margin-bottom: 20px; font-size: 11px; }
           
           .meta-item {
             display: flex;
@@ -332,6 +363,7 @@ export const BoxLabel: React.FC<BoxLabelProps> = ({
             font-weight: bold;
             color: #4a90e2;
             border-bottom: 1px solid #ddd;
+            border-top: 3px solid #4a90e2;
           }
           
           .invoice-table td {
@@ -340,25 +372,42 @@ export const BoxLabel: React.FC<BoxLabelProps> = ({
             border-bottom: 1px solid #eee;
           }
           
-          .invoice-totals {
-            border-top: 2px solid #4a90e2;
-            padding-top: 16px;
+          .invoice-summary {
+            margin-top: 8px;
+            background: #f1f5fb;
+            border: 1px solid #dbe3f2;
+            border-radius: 8px;
+            padding: 12px;
           }
-          
-          .total-row {
+          .invoice-summary .summary-row {
             display: flex;
             justify-content: space-between;
-            margin-bottom: 8px;
-            font-size: 12px;
+            align-items: center;
+            margin-bottom: 6px;
+            font-size: 13px;
           }
-          
-          .total-row.final {
-            font-size: 16px;
-            font-weight: bold;
-            color: #4a90e2;
-            border-top: 1px solid #ddd;
-            padding-top: 8px;
+          .invoice-summary .summary-row.due {
+            font-weight: 800;
+            color: #2b5b8e;
+            font-size: 15px;
           }
+
+          /* New meta layout (v2) */
+          .invoice-meta.v2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+          }
+          .meta-block {
+            background: #fafbff;
+            border: 1px solid #e6ecf7;
+            border-radius: 8px;
+            padding: 12px;
+          }
+          .meta-block.to { background: #f7fafc; }
+          .meta-row { display: flex; justify-content: space-between; gap: 12px; margin-bottom: 6px; }
+          .meta-title { font-weight: 800; color: #2b5b8e; margin-bottom: 6px; }
+          .meta-muted { color: #6b7280; }
           
           .invoice-footer {
             text-align: center;
@@ -393,29 +442,50 @@ export const BoxLabel: React.FC<BoxLabelProps> = ({
         <div className="invoice-logo">
           <img src={branding.logoUrl} alt="Logo" />
         </div>
-        <div className="invoice-title">إيصال دفع</div>
+        <div className="invoice-title">INVOICE</div>
         <div className="invoice-subtitle">{branding.storeName}</div>
       </div>
 
       {/* Body */}
       <div className="invoice-body">
-        {/* Meta Information */}
-        <div className="invoice-meta">
-          <div className="meta-item">
-            <div className="meta-label">رقم الإيصال:</div>
-            <div className="meta-value">{orderNo}</div>
+        {/* Meta Information - redesigned */}
+        <div className="invoice-meta v2">
+          {/* Dates block */}
+          <div className="meta-block">
+            <div className="meta-title">بيانات الفاتورة</div>
+            <div className="meta-row">
+              <span className="meta-label">تاريخ الفاتورة:</span>
+              <span className="meta-value">{formatDate()}</span>
+            </div>
+            <div className="meta-row">
+              <span className="meta-label">تاريخ الاستحقاق:</span>
+              <span className="meta-value">{formatDueDate()}</span>
+            </div>
+            <div className="meta-row">
+              <span className="meta-label">رقم الفاتورة:</span>
+              <span className="meta-value">{orderNo}</span>
+            </div>
           </div>
-          <div className="meta-item">
-            <div className="meta-label">التاريخ:</div>
-            <div className="meta-value">{formatDate()}</div>
-          </div>
-          <div className="meta-item">
-            <div className="meta-label">العميل:</div>
-            <div className="meta-value">{catData.clientName || 'غير محدد'}</div>
-          </div>
-          <div className="meta-item">
-            <div className="meta-label">الهاتف:</div>
-            <div className="meta-value">{catData.clientPhone || '-'}</div>
+
+          {/* Invoice to block */}
+          <div className="meta-block to">
+            <div className="meta-title">إلى:</div>
+            <div className="meta-row">
+              <span className="meta-label meta-muted">العميل</span>
+              <span className="meta-value">{catData.clientName || 'غير محدد'}</span>
+            </div>
+            {catData.clientPhone && (
+              <div className="meta-row">
+                <span className="meta-label meta-muted">الهاتف</span>
+                <span className="meta-value">{catData.clientPhone}</span>
+              </div>
+            )}
+            {catData.clientAddress && (
+              <div className="meta-row">
+                <span className="meta-label meta-muted">العنوان</span>
+                <span className="meta-value">{catData.clientAddress}</span>
+              </div>
+            )}
           </div>
         </div>
 
@@ -432,9 +502,9 @@ export const BoxLabel: React.FC<BoxLabelProps> = ({
           <tbody>
             <tr>
               <td>1</td>
-              <td>{formatNumber(costs.totalCostAfterDiscount, 0)}</td>
+              <td>{formatNumber(total, 0)}</td>
               <td>خطة تغذية القطة</td>
-              <td>{formatNumber(costs.totalCostAfterDiscount, 0)}</td>
+              <td>{formatNumber(total, 0)}</td>
             </tr>
             <tr>
               <td>1</td>
@@ -445,19 +515,25 @@ export const BoxLabel: React.FC<BoxLabelProps> = ({
           </tbody>
         </table>
 
-        {/* Totals */}
-        <div className="invoice-totals">
-          <div className="total-row">
-            <span>المجموع الفرعي:</span>
-            <span>{formatNumber(costs.totalCostAfterDiscount, 0)} {pricing.currency}</span>
+        {/* Summary */}
+        <div className="invoice-summary">
+          <div className="summary-row">
+            <span>الإجمالي:</span>
+            <span>{formatNumber(total, 0)} {currency}</span>
           </div>
-          <div className="total-row">
-            <span>التوصيل:</span>
-            <span>{formatNumber(costs.deliveryCost, 0)} {pricing.currency}</span>
+          <div className="summary-row">
+            <span>الخصم:</span>
+            <span>{formatNumber(discountPercent, 0)}%</span>
           </div>
-          <div className="total-row final">
-            <span>المبلغ الإجمالي:</span>
-            <span>{formatNumber(costs.totalCostWithDelivery, 0)} {pricing.currency}</span>
+          {delivery > 0 && (
+            <div className="summary-row">
+              <span>التوصيل:</span>
+              <span>{formatNumber(delivery, 0)} {currency}</span>
+            </div>
+          )}
+          <div className="summary-row due">
+            <span>المبلغ المستحق:</span>
+            <span>{formatNumber(amountDue, 0)} {currency}</span>
           </div>
         </div>
 

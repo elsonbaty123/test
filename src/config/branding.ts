@@ -7,7 +7,7 @@ export interface BrandingConfig {
 }
 
 const branding: BrandingConfig = {
-  storeName: 'Bastet Pets',
+  storeName: 'bastet pets',
   storeAddress: 'اكتب عنوان المحل هنا',
   storePhone: 'اكتب رقم المحل هنا',
   logoUrl: '/logo.ico',

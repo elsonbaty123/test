@@ -378,6 +378,36 @@ describe('useCatNutrition', () => {
     })
   })
 
+  describe('Partial Week Calculations', () => {
+    it('calculates totals correctly for custom 8 days (partial week)', async () => {
+      const { result } = renderHook(() => useCatNutrition())
+      
+      await act(async () => {
+        result.current.handleCatDataChange('weight', '4')
+        // Exercise both wet/dry paths
+        result.current.handleWeeklyPlanChange('wetDaysCount', 2)
+        result.current.handleBoxBuilderChange('boxType', 'custom')
+        result.current.handleBoxBuilderChange('customDays', 8)
+        result.current.calculateNutrition()
+      })
+
+      const res = result.current.results!
+      const wd = res.weeklyData
+      const weekDry = wd.reduce((s: number, d: any) => s + d.dryGrams, 0)
+      const weekWet = wd.reduce((s: number, d: any) => s + d.wetGrams, 0)
+      const weekUnits = wd.reduce((s: number, d: any) => s + d.units, 0)
+      const remDays = 8 % 7
+      const remDry = wd.slice(0, remDays).reduce((s: number, d: any) => s + d.dryGrams, 0)
+      const remWet = wd.slice(0, remDays).reduce((s: number, d: any) => s + d.wetGrams, 0)
+      const remUnits = wd.slice(0, remDays).reduce((s: number, d: any) => s + d.units, 0)
+
+      expect(res.boxSummary.totalDays).toBe(8)
+      expect(res.boxSummary.totalDryGrams).toBeCloseTo(weekDry + remDry, 0)
+      expect(res.boxSummary.totalWetGrams).toBeCloseTo(weekWet + remWet, 0)
+      expect(res.boxSummary.unitsUsed).toBe(Math.ceil(weekUnits + remUnits))
+    })
+  })
+
   describe('Error Recovery', () => {
     it('clears errors when valid input provided', async () => {
       const { result } = renderHook(() => useCatNutrition())
