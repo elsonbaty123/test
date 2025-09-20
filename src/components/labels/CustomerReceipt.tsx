@@ -175,27 +175,27 @@ export const CustomerReceipt: React.FC<CustomerReceiptProps> = ({
 
       {/* Body */}
       <div style={{ 
-        padding: '25px 30px', 
+        padding: '15px 25px', 
         flex: 1, 
         display: 'flex', 
         flexDirection: 'column',
-        gap: '20px'
+        gap: '12px'
       }}>
         {/* Client Information */}
         <div style={{
           background: '#f8f9fa',
           border: '2px solid #e9ecef',
-          borderRadius: '10px',
-          padding: '20px'
+          borderRadius: '8px',
+          padding: '15px'
         }}>
           <div style={{
-            fontSize: '18px',
+            fontSize: '16px',
             fontWeight: '700',
             color: '#2c3e50',
-            marginBottom: '15px',
+            marginBottom: '10px',
             textAlign: 'center',
             borderBottom: '2px solid #3498db',
-            paddingBottom: '10px'
+            paddingBottom: '8px'
           }}>بيانات العميل</div>
           
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
@@ -222,10 +222,10 @@ export const CustomerReceipt: React.FC<CustomerReceiptProps> = ({
           
           <div style={{
             background: 'white',
-            padding: '12px',
+            padding: '10px',
             borderRadius: '6px',
             border: '1px solid #dee2e6',
-            marginTop: '15px'
+            marginTop: '12px'
           }}>
             <div style={{ fontSize: '12px', color: '#6c757d', fontWeight: '600', marginBottom: '4px' }}>العنوان</div>
             <div style={{ fontSize: '14px', color: '#2c3e50', fontWeight: '500' }}>{catData.clientAddress || 'غير محدد'}</div>
@@ -236,17 +236,17 @@ export const CustomerReceipt: React.FC<CustomerReceiptProps> = ({
         <div style={{
           background: '#e8f4fd',
           border: '2px solid #3498db',
-          borderRadius: '10px',
-          padding: '20px'
+          borderRadius: '8px',
+          padding: '15px'
         }}>
           <div style={{
-            fontSize: '18px',
+            fontSize: '16px',
             fontWeight: '700',
             color: '#2c3e50',
-            marginBottom: '15px',
+            marginBottom: '10px',
             textAlign: 'center',
             borderBottom: '2px solid #3498db',
-            paddingBottom: '10px'
+            paddingBottom: '8px'
           }}>نوع الطلب</div>
           
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '15px' }}>
@@ -286,10 +286,10 @@ export const CustomerReceipt: React.FC<CustomerReceiptProps> = ({
           
           <div style={{
             background: 'white',
-            padding: '12px',
+            padding: '10px',
             borderRadius: '6px',
             border: '1px solid #3498db',
-            marginTop: '15px',
+            marginTop: '12px',
             textAlign: 'center'
           }}>
             <div style={{ fontSize: '12px', color: '#3498db', fontWeight: '600', marginBottom: '4px' }}>اسم القطة</div>
@@ -301,22 +301,22 @@ export const CustomerReceipt: React.FC<CustomerReceiptProps> = ({
         <div style={{
           background: 'linear-gradient(135deg, #27ae60 0%, #2ecc71 100%)',
           color: 'white',
-          borderRadius: '10px',
-          padding: '20px',
+          borderRadius: '8px',
+          padding: '15px',
           boxShadow: '0 4px 15px rgba(39, 174, 96, 0.3)'
         }}>
           <div style={{
-            fontSize: '20px',
+            fontSize: '18px',
             fontWeight: '700',
             textAlign: 'center',
-            marginBottom: '15px',
+            marginBottom: '12px',
             textShadow: '1px 1px 2px rgba(0,0,0,0.3)'
           }}>الحساب</div>
           
           <div style={{
             background: 'rgba(255,255,255,0.1)',
             borderRadius: '6px',
-            padding: '15px'
+            padding: '12px'
           }}>
             <div style={{
               display: 'flex',
@@ -363,12 +363,12 @@ export const CustomerReceipt: React.FC<CustomerReceiptProps> = ({
               justifyContent: 'space-between',
               alignItems: 'center',
               fontWeight: '700',
-              fontSize: '18px',
-              paddingTop: '15px',
-              marginTop: '10px',
+              fontSize: '16px',
+              paddingTop: '12px',
+              marginTop: '8px',
               borderTop: '2px solid rgba(255,255,255,0.3)',
               background: 'rgba(255,255,255,0.1)',
-              padding: '15px',
+              padding: '12px',
               borderRadius: '4px'
             }}>
               <span>المبلغ الإجمالي:</span>
@@ -380,32 +380,32 @@ export const CustomerReceipt: React.FC<CustomerReceiptProps> = ({
         {/* Footer */}
         <div style={{
           textAlign: 'center',
-          padding: '15px',
+          padding: '12px',
           background: 'linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%)',
-          borderRadius: '10px',
+          borderRadius: '8px',
           border: '2px solid #dee2e6',
           marginTop: 'auto'
         }}>
           <div style={{
-            fontSize: '16px',
+            fontSize: '14px',
             fontWeight: '700',
             color: '#2c3e50',
-            marginBottom: '6px'
+            marginBottom: '4px'
           }}>
             شكراً لاختياركم <span style={{ color: '#3498db' }}>{branding.storeName}</span>
           </div>
           <div style={{
-            fontSize: '12px',
+            fontSize: '11px',
             color: '#6c757d',
-            marginBottom: '8px'
+            marginBottom: '6px'
           }}>
             نتمنى لكم ولقطتكم الصحة والسعادة
           </div>
           <div style={{
-            fontSize: '10px',
+            fontSize: '9px',
             color: '#95a5a6',
             borderTop: '1px solid #dee2e6',
-            paddingTop: '8px'
+            paddingTop: '6px'
           }}>
             تم إنشاء هذا الإيصال تلقائياً • جميع الحقوق محفوظة © {new Date().getFullYear()}
           </div>
