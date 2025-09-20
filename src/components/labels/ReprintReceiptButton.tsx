@@ -46,13 +46,20 @@ export const ReprintReceiptButton: React.FC<ReprintReceiptButtonProps> = ({
       deliveryCost: order.totals.deliveryCost || 0,
       totalCostWithDelivery: order.totals.totalCostWithDelivery || 0,
     }
-    const boxSummary = order.payload?.boxSummary || { totalDays: 0, items: [] }
+    const boxSummary = order.payload?.boxSummary || { 
+      totalDays: 30, 
+      items: [],
+      boxCount: 1
+    }
 
     // Prepare receipt data
     const receiptData = {
       orderNo: order.orderNo,
       catData,
-      boxSummary,
+      boxSummary: {
+        ...boxSummary,
+        boxCount: boxSummary?.boxCount || 1
+      },
       pricing,
       costs,
       paidAmount: 0, // Default to 0, can be updated in receipt page

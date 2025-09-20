@@ -60,14 +60,17 @@ export const BoxLabelPrintButton: React.FC<BoxLabelPrintButtonProps> = ({
       orderNo = `${y}${m}${day}-${hh}${mm}`
     }
 
-    // Prepare receipt data
+    // Prepare receipt data with box count
     const receiptData = {
       orderNo,
       catData,
-      boxSummary,
+      boxSummary: {
+        ...boxSummary,
+        boxCount: boxSummary?.boxCount || 1
+      },
       pricing,
       costs,
-      paidAmount: 0, // Default to 0, can be updated in receipt page
+      paidAmount: parseFloat(pricing.paidAmount || '0'), // Use the paid amount from pricing
       timestamp: new Date().toISOString()
     }
 

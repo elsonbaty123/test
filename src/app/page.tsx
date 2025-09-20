@@ -1237,6 +1237,228 @@ export default function CatNutritionCalculator() {
           </CardContent>
         </Card>
 
+        {/* Box Builder */}
+        <Card>
+          <CardHeader>
+            <CardTitle>صانع البوكسات</CardTitle>
+            <CardDescription>احسب ما تحتاجه لفترة معينة</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <div className="space-y-2">
+                <Label>نوع البوكس</Label>
+                <Select value={boxBuilder.boxType} onValueChange={(value) => handleBoxBuilderChange('boxType', value)}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="weekly">أسبوعي (7 أيام)</SelectItem>
+                    <SelectItem value="monthly30">شهري (30 يوم)</SelectItem>
+                    <SelectItem value="custom">مخصص</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {boxBuilder.boxType === 'custom' && (
+                <div className="space-y-2">
+                  <Label>عدد الأيام</Label>
+                  <Input
+                    type="number"
+                    min="1"
+                    max="365"
+                    value={boxBuilder.customDays}
+                    onChange={(e) => handleBoxBuilderChange('customDays', parseInt(e.target.value))}
+                  />
+                </div>
+              )}
+
+              <div className="space-y-2">
+                <Label>عدد البوكسات</Label>
+                <Input
+                  type="number"
+                  min="1"
+                  max="100"
+                  value={boxBuilder.boxCount || 1}
+                  onChange={(e) => handleBoxBuilderChange('boxCount', parseInt(e.target.value))}
+                />
+                <p className="text-xs text-gray-500">عدد البوكسات المطلوبة</p>
+              </div>
+
+              <div className="space-y-2">
+                <Label>هامش أمان (%)</Label>
+                <Input
+                  type="number"
+                  min="0"
+                  max="50"
+                  step="0.1"
+                  value={boxBuilder.safety}
+                  onChange={(e) => handleBoxBuilderChange('safety', parseFloat(e.target.value))}
+                />
+                <p className="text-xs text-gray-500">نسبة زيادة لتجنب نفود الطعام</p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>طريقة حساب الويت</Label>
+                <Select value={boxBuilder.boxWetMode} onValueChange={(value) => handleBoxBuilderChange('boxWetMode', value)}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="auto_total">تلقائي من الجدول</SelectItem>
+                    <SelectItem value="fixed_total">عدد ثابت</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {boxBuilder.boxWetMode === 'fixed_total' && (
+                <div className="space-y-2">
+                  <Label>عدد وحدات الويت الإجمالي</Label>
+                  <Input
+                    type="number"
+                    min="0"
+                    value={boxBuilder.boxTotalUnits}
+                    onChange={(e) => handleBoxBuilderChange('boxTotalUnits', parseInt(e.target.value))}
+                  />
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Pricing Section */}
+        <Card>
+          <CardHeader>
+            <CardTitle>حاسبة الأسعار</CardTitle>
+            <CardDescription>احسب تكلفة الطعام</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="space-y-2">
+                <Label>العملة</Label>
+                <Select value={pricing.currency} onValueChange={(value) => handlePricingChange('currency', value)}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="EGP">جنيه مصري (EGP)</SelectItem>
+                    <SelectItem value="USD">دولار أمريكي (USD)</SelectItem>
+                    <SelectItem value="EUR">يورو (EUR)</SelectItem>
+                    <SelectItem value="SAR">ريال سعودي (SAR)</SelectItem>
+                    <SelectItem value="AED">درهم إماراتي (AED)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label>سعر الدراي (لكل كيلو)</Label>
+                <Input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  placeholder="0.00"
+                  value={pricing.priceDryPerKg}
+                  onChange={(e) => handlePricingChange('priceDryPerKg', e.target.value)}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label>سعر وحدة الويت</Label>
+                <Input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  placeholder="0.00"
+                  value={pricing.priceWetUnit}
+                  onChange={(e) => handlePricingChange('priceWetUnit', e.target.value)}
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="space-y-2">
+                <Label>تكاليف التغليف</Label>
+                <Input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  placeholder="0.00"
+                  value={pricing.packagingCost}
+                  onChange={(e) => handlePricingChange('packagingCost', e.target.value)}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label>سعر الدلفري</Label>
+                <Input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  placeholder="0.00"
+                  value={pricing.deliveryCost}
+                  onChange={(e) => handlePricingChange('deliveryCost', e.target.value)}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label>تكاليف إضافية</Label>
+                <Input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  placeholder="0.00"
+                  value={pricing.additionalCosts}
+                  onChange={(e) => handlePricingChange('additionalCosts', e.target.value)}
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="space-y-2">
+                <Label>نسبة الأرباح (%)</Label>
+                <Input
+                  type="number"
+                  min="0"
+                  max="100"
+                  step="0.1"
+                  placeholder="20"
+                  value={pricing.profitPercentage}
+                  onChange={(e) => handlePricingChange('profitPercentage', e.target.value)}
+                />
+                <p className="text-xs text-gray-500">محسوبة من (دراي + ويت + تغليف + إضافي)</p>
+              </div>
+
+              <div className="space-y-2">
+                <Label>نسبة الخصم (%)</Label>
+                <Input
+                  type="number"
+                  min="0"
+                  max="100"
+                  step="0.1"
+                  placeholder="0"
+                  value={pricing.discountPercentage}
+                  onChange={(e) => handlePricingChange('discountPercentage', e.target.value)}
+                />
+                <p className="text-xs text-gray-500">خصم من المبلغ بعد الأرباح</p>
+              </div>
+
+              <div className="space-y-2">
+                <Label>المبلغ المسدد</Label>
+                <Input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  placeholder="0.00"
+                  value={pricing.paidAmount || ''}
+                  onChange={(e) => handlePricingChange('paidAmount', e.target.value)}
+                />
+                <p className="text-xs text-gray-500">المبلغ الذي دفعه العميل</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
         {/* Calculate Button */}
         <div className="flex flex-col sm:flex-row justify-center gap-4">
           <Button 
@@ -1655,7 +1877,7 @@ export default function CatNutritionCalculator() {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div className="space-y-2">
                     <Label>تكاليف التغليف</Label>
                     <Input
@@ -1691,7 +1913,9 @@ export default function CatNutritionCalculator() {
                       onChange={(e) => handlePricingChange('additionalCosts', e.target.value)}
                     />
                   </div>
+                </div>
 
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div className="space-y-2">
                     <Label>نسبة الأرباح (%)</Label>
                     <Input
@@ -1718,6 +1942,19 @@ export default function CatNutritionCalculator() {
                       onChange={(e) => handlePricingChange('discountPercentage', e.target.value)}
                     />
                     <p className="text-xs text-gray-500">خصم من المبلغ بعد الأرباح</p>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>المبلغ المسدد</Label>
+                    <Input
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      placeholder="0.00"
+                      value={pricing.paidAmount || ''}
+                      onChange={(e) => handlePricingChange('paidAmount', e.target.value)}
+                    />
+                    <p className="text-xs text-gray-500">المبلغ الذي دفعه العميل</p>
                   </div>
                 </div>
 
@@ -1780,6 +2017,20 @@ export default function CatNutritionCalculator() {
                           <span className="font-bold">المبلغ النهائي شامل الدلفري:</span>
                           <span className="font-bold text-lg text-green-700">{formatNumber(costs.totalCostWithDelivery, 2)} {pricing.currency}</span>
                         </div>
+                        {pricing.paidAmount && parseFloat(pricing.paidAmount) > 0 && (
+                          <>
+                            <div className="flex justify-between mt-2">
+                              <span className="text-gray-600">المبلغ المسدد:</span>
+                              <span className="font-medium text-blue-600">{formatNumber(parseFloat(pricing.paidAmount), 2)} {pricing.currency}</span>
+                            </div>
+                            <div className="flex justify-between border-t pt-2 mt-2">
+                              <span className="font-bold">المبلغ المتبقي:</span>
+                              <span className={`font-bold ${(costs.totalCostWithDelivery - parseFloat(pricing.paidAmount)) > 0 ? 'text-red-600' : 'text-green-600'}`}>
+                                {formatNumber(Math.max(0, costs.totalCostWithDelivery - parseFloat(pricing.paidAmount)), 2)} {pricing.currency}
+                              </span>
+                            </div>
+                          </>
+                        )}
                       </div>
                     </div>
                   </div>

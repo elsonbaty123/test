@@ -298,11 +298,9 @@ export const CustomerReceipt: React.FC<CustomerReceiptProps> = ({
               border: '1px solid #3498db',
               textAlign: 'center'
             }}>
-              <div style={{ fontSize: '11px', color: '#3498db', fontWeight: '600', marginBottom: '3px' }}>عدد المنتجات</div>
+              <div style={{ fontSize: '11px', color: '#3498db', fontWeight: '600', marginBottom: '3px' }}>عدد البوكسات</div>
               <div style={{ fontSize: '12px', color: '#2c3e50', fontWeight: '500' }}>
-                {boxSummary?.items ? 
-                  boxSummary.items.reduce((total: number, item: any) => total + (item.quantity || item.daysCount || 1), 0) : 0
-                } منتج
+                {boxSummary?.boxCount || 1} بوكس
               </div>
             </div>
           </div>
