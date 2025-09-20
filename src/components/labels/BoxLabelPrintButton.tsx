@@ -3,7 +3,7 @@
 import React from 'react'
 import { Button } from '@/components/ui/button'
 import { Tag, Printer } from 'lucide-react'
-import { BoxLabel } from './BoxLabel'
+import { Receipt } from './Receipt'
 import ReactDOM from 'react-dom/client'
 import branding from '@/config/branding'
 
@@ -93,7 +93,7 @@ export const BoxLabelPrintButton: React.FC<BoxLabelPrintButtonProps> = ({
     const root = ReactDOM.createRoot(printContent)
     
     root.render(
-      <BoxLabel
+      <Receipt
         catData={catData}
         foodData={foodData}
         results={results}
@@ -112,7 +112,7 @@ export const BoxLabelPrintButton: React.FC<BoxLabelPrintButtonProps> = ({
         <head>
           <meta charset="UTF-8">
           <meta name="viewport" content="width=device-width, initial-scale=1.0">
-          <title>ملصق بوكس التغذية</title>
+          <title>إيصال خدمة تغذية القطط</title>
           <style>
             * {
               margin: 0;
@@ -219,7 +219,7 @@ export const BoxLabelPrintButton: React.FC<BoxLabelPrintButtonProps> = ({
         </head>
         <body>
           <div class="print-controls no-print">
-            <button class="print-btn" onclick="window.print()">🏷️ طباعة الملصق</button>
+            <button class="print-btn" onclick="window.print()">🧾 طباعة الإيصال</button>
             <button class="print-btn secondary" onclick="window.close()">❌ إغلاق</button>
             <label class="print-toggle">
               <input type="checkbox" id="thermalToggle" /> إيصال حراري 80مم
@@ -287,8 +287,13 @@ export const BoxLabelPrintButton: React.FC<BoxLabelPrintButtonProps> = ({
       printWindow.document.write(htmlContent)
       printWindow.document.close()
       
-      // Focus the print window (no auto-print; prefer saving as image)
+      // Focus the print window and trigger print dialog automatically
       printWindow.focus()
+      
+      // Auto-trigger print dialog after a short delay
+      setTimeout(() => {
+        printWindow.print()
+      }, 500)
     }, 100)
   }
 
@@ -301,7 +306,7 @@ export const BoxLabelPrintButton: React.FC<BoxLabelPrintButtonProps> = ({
         disabled
       >
         <Tag className="w-4 h-4 ml-2" />
-        طباعة ملصق البوكس
+        طباعة الإيصال
       </Button>
     )
   }
@@ -314,7 +319,7 @@ export const BoxLabelPrintButton: React.FC<BoxLabelPrintButtonProps> = ({
       onClick={handlePrintLabel}
     >
       <Tag className="w-4 h-4 ml-2" />
-      طباعة ملصق البوكس
+      طباعة الإيصال
     </Button>
   )
 }
