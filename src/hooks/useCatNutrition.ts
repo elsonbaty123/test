@@ -51,12 +51,14 @@ interface BoxBuilder {
   boxWetMode: 'auto_total' | 'fixed_total';
   boxSplitDays: number;
   boxTotalUnits: number;
+  boxCount?: number;
 }
 
 interface Pricing {
   currency: string;
   priceDryPerKg: string;
   priceWetUnit: string;
+  treatPrice: string;
   packagingCost: string;
   deliveryCost: string;
   additionalCosts: string;
@@ -145,6 +147,7 @@ interface Results {
 interface Costs {
   dryCost: number;
   wetCost: number;
+  treatCost: number;
   packagingCost: number;
   additionalCosts: number;
   subtotalCost: number;
@@ -156,6 +159,46 @@ interface Costs {
   totalCostWithDelivery: number;
   deliveryCost: number;
   perDay: number;
+}
+
+// Box types configuration
+interface BoxTypeConfig {
+  id: string;
+  name: string;
+  description: string;
+  includeDryFood: boolean;
+  includeWetFood: boolean;
+  wetFoodBagsPerWeek: number;
+  includeTreat: boolean;
+  isPremium?: boolean;
+  premiumWetBagsPerWeek?: number;
+}
+
+interface BoxVariant {
+  duration: 'week' | 'twoWeeks';
+  durationLabel: string;
+  multiplier: number;
+  packagingMultiplier: number; // For packaging cost calculation
+}
+
+interface BoxPricing {
+  boxType: BoxTypeConfig;
+  variant: BoxVariant;
+  costs: {
+    dryCost: number;
+    wetCost: number;
+    treatCost: number;
+    packagingCost: number;
+    additionalCosts: number;
+    totalCostBeforeProfit: number;
+    profitAmount: number;
+    totalCostWithProfit: number;
+    discountAmount: number;
+    totalCostAfterDiscount: number;
+    totalCostWithDelivery: number;
+    deliveryCost: number;
+    perDay: number;
+  };
 }
 
 // Activity levels aligned with WSAVA/NRC typical ranges
@@ -201,6 +244,63 @@ export const BREED_WEIGHT_RANGES: Record<string, BreedRange> = {
 }
 
 const DAY_NAMES_AR = ['السبت','الأحد','الاثنين','الثلاثاء','الأربعاء','الخميس','الجمعة']
+
+// Box types configuration
+export const BOX_TYPES: BoxTypeConfig[] = [
+  {
+    id: 'mimi',
+    name: 'ميمي',
+    description: 'البوكس الاقتصادي - دراي فود فقط مع تريت هدية',
+    includeDryFood: true,
+    includeWetFood: false,
+    wetFoodBagsPerWeek: 0,
+    includeTreat: true,
+  },
+  {
+    id: 'toty',
+    name: 'توتي',
+    description: 'دراي فود + ويت فود (كيس واحد لكل أسبوع) + تريت',
+    includeDryFood: true,
+    includeWetFood: true,
+    wetFoodBagsPerWeek: 1,
+    includeTreat: true,
+  },
+  {
+    id: 'qatqoot_azam',
+    name: 'القطقوط الأعظم',
+    description: 'دراي فود + ويت فود (كيسين لكل أسبوع) + تريت',
+    includeDryFood: true,
+    includeWetFood: true,
+    wetFoodBagsPerWeek: 2,
+    includeTreat: true,
+  },
+  {
+    id: 'qatqoot_azam_premium',
+    name: 'القطقوط الأعظم - بريميم',
+    description: 'دراي فود + ويت فود (3 أكياس لكل أسبوع) + تريت',
+    includeDryFood: true,
+    includeWetFood: true,
+    wetFoodBagsPerWeek: 2,
+    includeTreat: true,
+    isPremium: true,
+    premiumWetBagsPerWeek: 3,
+  },
+]
+
+export const BOX_VARIANTS: BoxVariant[] = [
+  {
+    duration: 'week',
+    durationLabel: 'أسبوع واحد',
+    multiplier: 1,
+    packagingMultiplier: 1,
+  },
+  {
+    duration: 'twoWeeks',
+    durationLabel: 'أسبوعين',
+    multiplier: 2,
+    packagingMultiplier: 1, // Packaging cost doesn't repeat for two weeks
+  },
+]
 
 function toNumber(v: any, fallback = 0): number {
   const n = typeof v === 'number' ? v : parseFloat(String(v))
@@ -330,6 +430,7 @@ export function useCatNutrition() {
     currency: 'EGP',
     priceDryPerKg: '0',
     priceWetUnit: '0',
+    treatPrice: '0',
     packagingCost: '0',
     deliveryCost: '0',
     additionalCosts: '0',
@@ -343,6 +444,7 @@ export function useCatNutrition() {
   const [costs, setCosts] = useState<Costs>({
     dryCost: 0,
     wetCost: 0,
+    treatCost: 0,
     packagingCost: 0,
     additionalCosts: 0,
     subtotalCost: 0,
@@ -455,6 +557,86 @@ export function useCatNutrition() {
   const handlePricingChange = useCallback((key: keyof Pricing, value: any) => {
     setPricing(prev => ({ ...prev, [key]: String(value) }))
   }, [])
+
+  // Calculate box pricing for all types and variants
+  const calculateBoxPricing = useCallback((results: Results): BoxPricing[] => {
+    if (!results) return []
+
+    const boxPricings: BoxPricing[] = []
+    const priceDryPerKg = toNumber(pricing.priceDryPerKg, 0)
+    const priceWetUnit = toNumber(pricing.priceWetUnit, 0)
+    const treatPrice = toNumber(pricing.treatPrice, 0)
+    const packagingCost = toNumber(pricing.packagingCost, 0)
+    const additionalCosts = toNumber(pricing.additionalCosts, 0)
+    const deliveryCost = toNumber(pricing.deliveryCost, 0)
+    const profitPercentage = toNumber(pricing.profitPercentage, 0)
+    const discountPercentage = toNumber(pricing.discountPercentage, 0)
+
+    for (const boxType of BOX_TYPES) {
+      for (const variant of BOX_VARIANTS) {
+        // Skip premium variant for non-premium boxes
+        if (boxType.id === 'qatqoot_azam_premium' && variant.duration === 'twoWeeks') {
+          continue // Premium only available for one week
+        }
+
+        const totalDays = variant.duration === 'week' ? 7 : 14
+        const weeks = totalDays / 7
+
+        // Calculate dry food cost based on actual nutritional needs
+        const totalDryGrams = results.boxSummary.totalDryGrams * (totalDays / results.boxSummary.totalDays)
+        const dryCost = boxType.includeDryFood ? (totalDryGrams / 1000) * priceDryPerKg : 0
+
+        // Calculate wet food cost based on box type configuration
+        let wetCost = 0
+        if (boxType.includeWetFood) {
+          const wetBagsPerWeek = boxType.isPremium ? (boxType.premiumWetBagsPerWeek || boxType.wetFoodBagsPerWeek) : boxType.wetFoodBagsPerWeek
+          const totalWetBags = wetBagsPerWeek * weeks
+          wetCost = totalWetBags * priceWetUnit
+        }
+
+        // Calculate treat cost
+        const treatCostTotal = boxType.includeTreat ? treatPrice * variant.multiplier : 0
+
+        // Calculate packaging cost (doesn't repeat for two weeks)
+        const packagingCostTotal = packagingCost * variant.packagingMultiplier
+
+        // Calculate additional costs
+        const additionalCostsTotal = additionalCosts * variant.multiplier
+
+        // Calculate totals
+        const subtotalCost = dryCost + wetCost + treatCostTotal
+        const totalCostBeforeProfit = subtotalCost + packagingCostTotal + additionalCostsTotal
+        const profitAmount = (totalCostBeforeProfit * profitPercentage) / 100
+        const totalCostWithProfit = totalCostBeforeProfit + profitAmount
+        const discountAmount = (totalCostWithProfit * discountPercentage) / 100
+        const totalCostAfterDiscount = totalCostWithProfit - discountAmount
+        const totalCostWithDelivery = totalCostAfterDiscount + deliveryCost
+        const perDay = totalDays > 0 ? (totalCostWithDelivery / totalDays) : 0
+
+        boxPricings.push({
+          boxType,
+          variant,
+          costs: {
+            dryCost,
+            wetCost,
+            treatCost: treatCostTotal,
+            packagingCost: packagingCostTotal,
+            additionalCosts: additionalCostsTotal,
+            totalCostBeforeProfit,
+            profitAmount,
+            totalCostWithProfit,
+            discountAmount,
+            totalCostAfterDiscount,
+            totalCostWithDelivery,
+            deliveryCost,
+            perDay,
+          },
+        })
+      }
+    }
+
+    return boxPricings
+  }, [pricing])
 
   const calcRER = useCallback((weightKg: number) => {
     // NRC 2006 - Chapter 2: Energy Requirements
@@ -903,6 +1085,7 @@ export function useCatNutrition() {
       setCosts({
         dryCost,
         wetCost,
+        treatCost: 0, // Will be calculated based on box type
         packagingCost,
         additionalCosts,
         subtotalCost,
@@ -944,8 +1127,11 @@ export function useCatNutrition() {
     DEFAULT_RANGE,
     autoDistributeWetDays,
     calculateNutrition,
+    calculateBoxPricing,
     formatNumber,
     bcsSuggestedLive,
     bcsSuggestionReasonLive,
+    BOX_TYPES,
+    BOX_VARIANTS,
   }
 }

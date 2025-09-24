@@ -20,6 +20,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { PrintButton } from '@/components/print/PrintButton'
 import { BoxLabelPrintButton } from '@/components/labels/BoxLabelPrintButton'
 import { ReprintReceiptButton } from '@/components/labels/ReprintReceiptButton'
+import BoxPricingDisplay from '@/components/BoxPricingDisplay'
 
 export default function CatNutritionCalculator() {
   const {
@@ -44,9 +45,12 @@ export default function CatNutritionCalculator() {
     DEFAULT_RANGE,
     autoDistributeWetDays,
     calculateNutrition,
+    calculateBoxPricing,
     formatNumber,
     bcsSuggestedLive,
     bcsSuggestionReasonLive,
+    BOX_TYPES,
+    BOX_VARIANTS,
   } = useCatNutrition()
 
   const [isSaving, setIsSaving] = useState(false)
@@ -75,6 +79,8 @@ export default function CatNutritionCalculator() {
     }
     catName?: string
     payload?: any
+    planDuration?: string
+    paidAmount?: number
   }
   const [ordersClientName, setOrdersClientName] = useState('')
   const [orders, setOrders] = useState<OrderRecord[]>([])
@@ -1241,6 +1247,19 @@ export default function CatNutritionCalculator() {
           </CardContent>
         </Card>
 
+        {/* Box Pricing Display - Show when basic cat data is available */}
+        {catData.name && catData.weight && foodData.dry100 && pricing.priceDryPerKg && pricing.treatPrice && results && (
+          <BoxPricingDisplay
+            boxPricings={calculateBoxPricing(results)}
+            currency={pricing.currency}
+            formatNumber={formatNumber}
+            onSelectBox={(boxPricing) => {
+              // Optional: Handle box selection
+              console.log('Selected box:', boxPricing)
+            }}
+          />
+        )}
+
         {/* Box Builder */}
         <Card>
           <CardHeader>
@@ -1382,6 +1401,19 @@ export default function CatNutritionCalculator() {
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="space-y-2">
+                <Label>سعر التريت</Label>
+                <Input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  placeholder="0.00"
+                  value={pricing.treatPrice}
+                  onChange={(e) => handlePricingChange('treatPrice', e.target.value)}
+                />
+                <p className="text-xs text-gray-500">سعر التريت المضاف للبوكس</p>
+              </div>
+
+              <div className="space-y-2">
                 <Label>تكاليف التغليف</Label>
                 <Input
                   type="number"
@@ -1462,6 +1494,101 @@ export default function CatNutritionCalculator() {
             </div>
           </CardContent>
         </Card>
+
+        {results && (
+          <Card>
+            <CardHeader>
+              <CardTitle>ملخص التكاليف</CardTitle>
+              <CardDescription>التكاليف المحسوبة بناءً على النتائج</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="mt-6 p-4 bg-green-50 border border-green-200 rounded-lg">
+                <h4 className="font-semibold mb-3">ملخص التكاليف</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-3">
+                    <div className="text-sm">
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">تكلفة الدراي:</span>
+                        <span className="font-medium">{formatNumber(costs.dryCost, 2)} {pricing.currency}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">تكلفة الويت:</span>
+                        <span className="font-medium">{formatNumber(costs.wetCost, 2)} {pricing.currency}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">تكلفة التريت:</span>
+                        <span className="font-medium">{formatNumber(costs.treatCost, 2)} {pricing.currency}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">تكاليف التغليف:</span>
+                        <span className="font-medium">{formatNumber(costs.packagingCost, 2)} {pricing.currency}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">تكاليف إضافية:</span>
+                        <span className="font-medium">{formatNumber(costs.additionalCosts, 2)} {pricing.currency}</span>
+                      </div>
+                      <div className="flex justify-between border-t pt-2 mt-2">
+                        <span className="font-medium">المجموع قبل الأرباح:</span>
+                        <span className="font-bold text-blue-600">{formatNumber(costs.totalCostBeforeProfit, 2)} {pricing.currency}</span>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="space-y-3">
+                    <div className="text-sm">
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">مبلغ الأرباح ({pricing.profitPercentage}%):</span>
+                        <span className="font-medium text-green-600">+{formatNumber(costs.profitAmount, 2)} {pricing.currency}</span>
+                      </div>
+                      <div className="flex justify-between border-t pt-2 mt-2">
+                        <span className="font-medium">بعد الأرباح:</span>
+                        <span className="font-bold text-green-600">{formatNumber(costs.totalCostWithProfit, 2)} {pricing.currency}</span>
+                      </div>
+                      {costs.discountAmount > 0 && (
+                        <>
+                          <div className="flex justify-between">
+                            <span className="text-gray-600">خصم ({pricing.discountPercentage}%):</span>
+                            <span className="font-medium text-red-600">-{formatNumber(costs.discountAmount, 2)} {pricing.currency}</span>
+                          </div>
+                          <div className="flex justify-between border-t pt-2 mt-2">
+                            <span className="font-medium">بعد الخصم:</span>
+                            <span className="font-bold text-green-600">{formatNumber(costs.totalCostAfterDiscount, 2)} {pricing.currency}</span>
+                          </div>
+                        </>
+                      )}
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">سعر الدلفري:</span>
+                        <span className="font-medium">+{formatNumber(costs.deliveryCost, 2)} {pricing.currency}</span>
+                      </div>
+                      <div className="flex justify-between border-t pt-2 mt-2 bg-green-100 -mx-3 px-3 py-2 rounded">
+                        <span className="font-bold">المبلغ النهائي شامل الدلفري:</span>
+                        <span className="font-bold text-lg text-green-700">{formatNumber(costs.totalCostWithDelivery, 2)} {pricing.currency}</span>
+                      </div>
+                      {pricing.paidAmount && parseFloat(pricing.paidAmount) > 0 && (
+                        <>
+                          <div className="flex justify-between mt-2">
+                            <span className="text-gray-600">المبلغ المسدد:</span>
+                            <span className="font-medium text-blue-600">{formatNumber(parseFloat(pricing.paidAmount), 2)} {pricing.currency}</span>
+                          </div>
+                          <div className="flex justify-between border-t pt-2 mt-2">
+                            <span className="font-bold">المبلغ المتبقي:</span>
+                            <span className={`font-bold ${(costs.totalCostWithDelivery - parseFloat(pricing.paidAmount)) > 0 ? 'text-red-600' : 'text-green-600'}`}>
+                              {formatNumber(Math.max(0, costs.totalCostWithDelivery - parseFloat(pricing.paidAmount)), 2)} {pricing.currency}
+                            </span>
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="mt-4 text-center text-sm text-gray-600">
+                  التكلفة اليومية: {formatNumber(costs.perDay, 2)} {pricing.currency}
+                </div>
+               </div>
+              </CardContent>
+            </Card>
+        )}
 
         {/* Calculate Button */}
         <div className="flex flex-col sm:flex-row justify-center gap-4">
@@ -1827,220 +1954,6 @@ export default function CatNutritionCalculator() {
                       <div className="font-medium">وحدات الويت</div>
                       <div className="text-blue-600">{formatNumber(results.boxSummary.unitsUsed, 0)} وحدة</div>
                     </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Pricing Section */}
-            <Card>
-              <CardHeader>
-                <CardTitle>حاسبة الأسعار</CardTitle>
-                <CardDescription>احسب تكلفة الطعام</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="space-y-2">
-                    <Label>العملة</Label>
-                    <Select value={pricing.currency} onValueChange={(value) => handlePricingChange('currency', value)}>
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="EGP">جنيه مصري (EGP)</SelectItem>
-                        <SelectItem value="USD">دولار أمريكي (USD)</SelectItem>
-                        <SelectItem value="EUR">يورو (EUR)</SelectItem>
-                        <SelectItem value="SAR">ريال سعودي (SAR)</SelectItem>
-                        <SelectItem value="AED">درهم إماراتي (AED)</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label>سعر الدراي (لكل كيلو)</Label>
-                    <Input
-                      type="number"
-                      min="0"
-                      step="0.01"
-                      placeholder="0.00"
-                      value={pricing.priceDryPerKg}
-                      onChange={(e) => handlePricingChange('priceDryPerKg', e.target.value)}
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label>سعر وحدة الويت</Label>
-                    <Input
-                      type="number"
-                      min="0"
-                      step="0.01"
-                      placeholder="0.00"
-                      value={pricing.priceWetUnit}
-                      onChange={(e) => handlePricingChange('priceWetUnit', e.target.value)}
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="space-y-2">
-                    <Label>تكاليف التغليف</Label>
-                    <Input
-                      type="number"
-                      min="0"
-                      step="0.01"
-                      placeholder="0.00"
-                      value={pricing.packagingCost}
-                      onChange={(e) => handlePricingChange('packagingCost', e.target.value)}
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label>سعر الدلفري</Label>
-                    <Input
-                      type="number"
-                      min="0"
-                      step="0.01"
-                      placeholder="0.00"
-                      value={pricing.deliveryCost}
-                      onChange={(e) => handlePricingChange('deliveryCost', e.target.value)}
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label>تكاليف إضافية</Label>
-                    <Input
-                      type="number"
-                      min="0"
-                      step="0.01"
-                      placeholder="0.00"
-                      value={pricing.additionalCosts}
-                      onChange={(e) => handlePricingChange('additionalCosts', e.target.value)}
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="space-y-2">
-                    <Label>نسبة الأرباح (%)</Label>
-                    <Input
-                      type="number"
-                      min="0"
-                      max="100"
-                      step="0.1"
-                      placeholder="20"
-                      value={pricing.profitPercentage}
-                      onChange={(e) => handlePricingChange('profitPercentage', e.target.value)}
-                    />
-                    <p className="text-xs text-gray-500">محسوبة من (دراي + ويت + تغليف + إضافي)</p>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label>نسبة الخصم (%)</Label>
-                    <Input
-                      type="number"
-                      min="0"
-                      max="100"
-                      step="0.1"
-                      placeholder="0"
-                      value={pricing.discountPercentage}
-                      onChange={(e) => handlePricingChange('discountPercentage', e.target.value)}
-                    />
-                    <p className="text-xs text-gray-500">خصم من المبلغ بعد الأرباح</p>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label>المبلغ المسدد</Label>
-                    <Input
-                      type="number"
-                      min="0"
-                      step="0.01"
-                      placeholder="0.00"
-                      value={pricing.paidAmount || ''}
-                      onChange={(e) => handlePricingChange('paidAmount', e.target.value)}
-                    />
-                    <p className="text-xs text-gray-500">المبلغ الذي دفعه العميل</p>
-                  </div>
-                </div>
-
-                {/* Cost Summary */}
-                <div className="mt-6 p-4 bg-green-50 border border-green-200 rounded-lg">
-                  <h4 className="font-semibold mb-3">ملخص التكاليف</h4>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-3">
-                      <div className="text-sm">
-                        <div className="flex justify-between">
-                          <span className="text-gray-600">تكلفة الدراي:</span>
-                          <span className="font-medium">{formatNumber(costs.dryCost, 2)} {pricing.currency}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-gray-600">تكلفة الويت:</span>
-                          <span className="font-medium">{formatNumber(costs.wetCost, 2)} {pricing.currency}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-gray-600">تكاليف التغليف:</span>
-                          <span className="font-medium">{formatNumber(costs.packagingCost, 2)} {pricing.currency}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-gray-600">تكاليف إضافية:</span>
-                          <span className="font-medium">{formatNumber(costs.additionalCosts, 2)} {pricing.currency}</span>
-                        </div>
-                        <div className="flex justify-between border-t pt-2 mt-2">
-                          <span className="font-medium">المجموع قبل الأرباح:</span>
-                          <span className="font-bold text-blue-600">{formatNumber(costs.totalCostBeforeProfit, 2)} {pricing.currency}</span>
-                        </div>
-                      </div>
-                    </div>
-                    
-                    <div className="space-y-3">
-                      <div className="text-sm">
-                        <div className="flex justify-between">
-                          <span className="text-gray-600">مبلغ الأرباح ({pricing.profitPercentage}%):</span>
-                          <span className="font-medium text-green-600">+{formatNumber(costs.profitAmount, 2)} {pricing.currency}</span>
-                        </div>
-                        <div className="flex justify-between border-t pt-2 mt-2">
-                          <span className="font-medium">بعد الأرباح:</span>
-                          <span className="font-bold text-green-600">{formatNumber(costs.totalCostWithProfit, 2)} {pricing.currency}</span>
-                        </div>
-                        {costs.discountAmount > 0 && (
-                          <>
-                            <div className="flex justify-between">
-                              <span className="text-gray-600">خصم ({pricing.discountPercentage}%):</span>
-                              <span className="font-medium text-red-600">-{formatNumber(costs.discountAmount, 2)} {pricing.currency}</span>
-                            </div>
-                            <div className="flex justify-between border-t pt-2 mt-2">
-                              <span className="font-medium">بعد الخصم:</span>
-                              <span className="font-bold text-green-600">{formatNumber(costs.totalCostAfterDiscount, 2)} {pricing.currency}</span>
-                            </div>
-                          </>
-                        )}
-                        <div className="flex justify-between">
-                          <span className="text-gray-600">سعر الدلفري:</span>
-                          <span className="font-medium">+{formatNumber(costs.deliveryCost, 2)} {pricing.currency}</span>
-                        </div>
-                        <div className="flex justify-between border-t pt-2 mt-2 bg-green-100 -mx-3 px-3 py-2 rounded">
-                          <span className="font-bold">المبلغ النهائي شامل الدلفري:</span>
-                          <span className="font-bold text-lg text-green-700">{formatNumber(costs.totalCostWithDelivery, 2)} {pricing.currency}</span>
-                        </div>
-                        {pricing.paidAmount && parseFloat(pricing.paidAmount) > 0 && (
-                          <>
-                            <div className="flex justify-between mt-2">
-                              <span className="text-gray-600">المبلغ المسدد:</span>
-                              <span className="font-medium text-blue-600">{formatNumber(parseFloat(pricing.paidAmount), 2)} {pricing.currency}</span>
-                            </div>
-                            <div className="flex justify-between border-t pt-2 mt-2">
-                              <span className="font-bold">المبلغ المتبقي:</span>
-                              <span className={`font-bold ${(costs.totalCostWithDelivery - parseFloat(pricing.paidAmount)) > 0 ? 'text-red-600' : 'text-green-600'}`}>
-                                {formatNumber(Math.max(0, costs.totalCostWithDelivery - parseFloat(pricing.paidAmount)), 2)} {pricing.currency}
-                              </span>
-                            </div>
-                          </>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div className="mt-4 text-center text-sm text-gray-600">
-                    التكلفة اليومية: {formatNumber(costs.perDay, 2)} {pricing.currency}
                   </div>
                 </div>
               </CardContent>
