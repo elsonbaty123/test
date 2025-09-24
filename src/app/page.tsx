@@ -20,6 +20,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { PrintButton } from '@/components/print/PrintButton'
 import { BoxLabelPrintButton } from '@/components/labels/BoxLabelPrintButton'
 import { ReprintReceiptButton } from '@/components/labels/ReprintReceiptButton'
+import BoxPricingDisplay from '@/components/BoxPricingDisplay'
 
 export default function CatNutritionCalculator() {
   const {
@@ -44,9 +45,12 @@ export default function CatNutritionCalculator() {
     DEFAULT_RANGE,
     autoDistributeWetDays,
     calculateNutrition,
+    calculateBoxPricing,
     formatNumber,
     bcsSuggestedLive,
     bcsSuggestionReasonLive,
+    BOX_TYPES,
+    BOX_VARIANTS,
   } = useCatNutrition()
 
   const [isSaving, setIsSaving] = useState(false)
@@ -1241,6 +1245,19 @@ export default function CatNutritionCalculator() {
           </CardContent>
         </Card>
 
+        {/* Box Pricing Display - Show when basic cat data is available */}
+        {catData.name && catData.weight && foodData.dry100 && pricing.priceDryPerKg && pricing.treatPrice && results && (
+          <BoxPricingDisplay
+            boxPricings={calculateBoxPricing(results)}
+            currency={pricing.currency}
+            formatNumber={formatNumber}
+            onSelectBox={(boxPricing) => {
+              // Optional: Handle box selection
+              console.log('Selected box:', boxPricing)
+            }}
+          />
+        )}
+
         {/* Box Builder */}
         <Card>
           <CardHeader>
@@ -1381,6 +1398,19 @@ export default function CatNutritionCalculator() {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="space-y-2">
+                <Label>سعر التريت</Label>
+                <Input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  placeholder="0.00"
+                  value={pricing.treatPrice}
+                  onChange={(e) => handlePricingChange('treatPrice', e.target.value)}
+                />
+                <p className="text-xs text-gray-500">سعر التريت المضاف للبوكس</p>
+              </div>
+
               <div className="space-y-2">
                 <Label>تكاليف التغليف</Label>
                 <Input
@@ -1975,6 +2005,10 @@ export default function CatNutritionCalculator() {
                         <div className="flex justify-between">
                           <span className="text-gray-600">تكلفة الويت:</span>
                           <span className="font-medium">{formatNumber(costs.wetCost, 2)} {pricing.currency}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">تكلفة التريت:</span>
+                          <span className="font-medium">{formatNumber(costs.treatCost, 2)} {pricing.currency}</span>
                         </div>
                         <div className="flex justify-between">
                           <span className="text-gray-600">تكاليف التغليف:</span>
