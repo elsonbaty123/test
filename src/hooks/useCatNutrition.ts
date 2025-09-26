@@ -65,6 +65,8 @@ interface Pricing {
   profitPercentage: string;
   discountPercentage: string;
   paidAmount: string;
+  boxPackagingCosts: Record<string, string>;
+  boxContents: Record<string, string>;
 }
 
 interface SpecialCondition {
@@ -437,6 +439,18 @@ export function useCatNutrition() {
     profitPercentage: '20',
     discountPercentage: '0',
     paidAmount: '0',
+    boxPackagingCosts: {
+      mimi: '0',
+      toty: '0',
+      qatqoot_azam: '0',
+      qatqoot_azam_premium: '0',
+    },
+    boxContents: {
+      mimi: 'دراي فود أساسي + تريت هدية',
+      toty: 'دراي فود + ويت فود (كيس واحد/أسبوع) + تريت',
+      qatqoot_azam: 'دراي فود + ويت فود (كيسين/أسبوع) + تريت',
+      qatqoot_azam_premium: 'دراي فود + ويت فود (3 أكياس/أسبوع) + تريت بريميم',
+    },
   })
 
   const [results, setResults] = useState<Results | null>(null)
@@ -558,6 +572,26 @@ export function useCatNutrition() {
     setPricing(prev => ({ ...prev, [key]: String(value) }))
   }, [])
 
+  const updateBoxPackagingCost = useCallback((boxId: string, value: any) => {
+    setPricing(prev => ({
+      ...prev,
+      boxPackagingCosts: {
+        ...prev.boxPackagingCosts,
+        [boxId]: String(value),
+      },
+    }))
+  }, [])
+
+  const updateBoxContent = useCallback((boxId: string, value: any) => {
+    setPricing(prev => ({
+      ...prev,
+      boxContents: {
+        ...prev.boxContents,
+        [boxId]: String(value),
+      },
+    }))
+  }, [])
+
   // Calculate box pricing for all types and variants
   const calculateBoxPricing = useCallback((results: Results): BoxPricing[] => {
     if (!results) return []
@@ -566,13 +600,17 @@ export function useCatNutrition() {
     const priceDryPerKg = toNumber(pricing.priceDryPerKg, 0)
     const priceWetUnit = toNumber(pricing.priceWetUnit, 0)
     const treatPrice = toNumber(pricing.treatPrice, 0)
-    const packagingCost = toNumber(pricing.packagingCost, 0)
+    const packagingCostFallback = toNumber(pricing.packagingCost, 0)
     const additionalCosts = toNumber(pricing.additionalCosts, 0)
     const deliveryCost = toNumber(pricing.deliveryCost, 0)
     const profitPercentage = toNumber(pricing.profitPercentage, 0)
     const discountPercentage = toNumber(pricing.discountPercentage, 0)
 
     for (const boxType of BOX_TYPES) {
+      const packagingCostPerBox = toNumber(
+        pricing.boxPackagingCosts?.[boxType.id],
+        packagingCostFallback
+      )
       for (const variant of BOX_VARIANTS) {
         // Skip premium variant for non-premium boxes
         if (boxType.id === 'qatqoot_azam_premium' && variant.duration === 'twoWeeks') {
@@ -598,7 +636,7 @@ export function useCatNutrition() {
         const treatCostTotal = boxType.includeTreat ? treatPrice * variant.multiplier : 0
 
         // Calculate packaging cost (doesn't repeat for two weeks)
-        const packagingCostTotal = packagingCost * variant.packagingMultiplier
+        const packagingCostTotal = packagingCostPerBox * variant.packagingMultiplier
 
         // Calculate additional costs
         const additionalCostsTotal = additionalCosts * variant.multiplier
@@ -1117,6 +1155,8 @@ export function useCatNutrition() {
     handleBoxBuilderChange,
     pricing,
     handlePricingChange,
+    updateBoxPackagingCost,
+    updateBoxContent,
     results,
     errors,
     costs,

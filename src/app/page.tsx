@@ -35,6 +35,8 @@ export default function CatNutritionCalculator() {
     handleBoxBuilderChange,
     pricing,
     handlePricingChange,
+    updateBoxPackagingCost,
+    updateBoxContent,
     results,
     errors,
     costs,
@@ -507,6 +509,18 @@ export default function CatNutritionCalculator() {
                 <AlertDescription>{ordersError}</AlertDescription>
               </Alert>
             )}
+
+        {/* Box Pricing Display - repositioned under cost summary */}
+        {catData.name && catData.weight && foodData.dry100 && pricing.priceDryPerKg && pricing.treatPrice && results && (
+          <BoxPricingDisplay
+            boxPricings={calculateBoxPricing(results)}
+            currency={pricing.currency}
+            formatNumber={formatNumber}
+            onSelectBox={(boxPricing) => {
+              console.log('Selected box:', boxPricing)
+            }}
+          />
+        )}
 
             {orders.length > 0 ? (
               <div className="overflow-x-auto">
@@ -1247,19 +1261,6 @@ export default function CatNutritionCalculator() {
           </CardContent>
         </Card>
 
-        {/* Box Pricing Display - Show when basic cat data is available */}
-        {catData.name && catData.weight && foodData.dry100 && pricing.priceDryPerKg && pricing.treatPrice && results && (
-          <BoxPricingDisplay
-            boxPricings={calculateBoxPricing(results)}
-            currency={pricing.currency}
-            formatNumber={formatNumber}
-            onSelectBox={(boxPricing) => {
-              // Optional: Handle box selection
-              console.log('Selected box:', boxPricing)
-            }}
-          />
-        )}
-
         {/* Box Builder */}
         <Card>
           <CardHeader>
@@ -1490,6 +1491,42 @@ export default function CatNutritionCalculator() {
                   onChange={(e) => handlePricingChange('paidAmount', e.target.value)}
                 />
                 <p className="text-xs text-gray-500">المبلغ الذي دفعه العميل</p>
+              </div>
+            </div>
+
+            <div className="space-y-6">
+              <div>
+                <h4 className="font-semibold">تكلفة التغليف حسب نوع البوكس</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
+                  {BOX_TYPES.map((box) => (
+                    <div key={box.id} className="space-y-2">
+                      <Label>تكلفة تغليف `{box.name}`</Label>
+                      <Input
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        value={pricing.boxPackagingCosts?.[box.id] ?? ''}
+                        onChange={(e) => updateBoxPackagingCost(box.id, e.target.value)}
+                      />
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <h4 className="font-semibold">مكونات كل بوكس</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
+                  {BOX_TYPES.map((box) => (
+                    <div key={box.id} className="space-y-2">
+                      <Label>مكونات `{box.name}`</Label>
+                      <Textarea
+                        value={pricing.boxContents?.[box.id] ?? ''}
+                        onChange={(e) => updateBoxContent(box.id, e.target.value)}
+                        rows={3}
+                      />
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
           </CardContent>
