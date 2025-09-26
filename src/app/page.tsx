@@ -37,6 +37,7 @@ export default function CatNutritionCalculator() {
     handlePricingChange,
     updateBoxPackagingCost,
     updateBoxContent,
+    updatePackagingCostByDuration,
     results,
     errors,
     costs,
@@ -1360,6 +1361,45 @@ export default function CatNutritionCalculator() {
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="space-y-2">
+                <Label>تغليف البوكس الأسبوعي</Label>
+                <Input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  placeholder="0.00"
+                  value={pricing.packagingCosts?.week ?? ''}
+                  onChange={(e) => updatePackagingCostByDuration('week', e.target.value)}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label>تغليف بوكس الأسبوعين</Label>
+                <Input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  placeholder="0.00"
+                  value={pricing.packagingCosts?.twoWeeks ?? ''}
+                  onChange={(e) => updatePackagingCostByDuration('twoWeeks', e.target.value)}
+                />
+                <p className="text-xs text-gray-500">لا يُضاف مرتين تلقائياً</p>
+              </div>
+
+              <div className="space-y-2">
+                <Label>تغليف الخطة الشهرية / أطول</Label>
+                <Input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  placeholder="0.00"
+                  value={pricing.packagingCosts?.month ?? ''}
+                  onChange={(e) => updatePackagingCostByDuration('month', e.target.value)}
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="space-y-2">
                 <Label>العملة</Label>
                 <Select value={pricing.currency} onValueChange={(value) => handlePricingChange('currency', value)}>
                   <SelectTrigger>
@@ -1424,6 +1464,7 @@ export default function CatNutritionCalculator() {
                   value={pricing.packagingCost}
                   onChange={(e) => handlePricingChange('packagingCost', e.target.value)}
                 />
+                <p className="text-xs text-gray-500">قيمة افتراضية تُستخدم عند عدم تحديد تكلفة حسب المدة</p>
               </div>
 
               <div className="space-y-2">

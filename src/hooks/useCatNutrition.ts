@@ -60,6 +60,11 @@ interface Pricing {
   priceWetUnit: string;
   treatPrice: string;
   packagingCost: string;
+  packagingCosts: {
+    week: string;
+    twoWeeks: string;
+    month: string;
+  };
   deliveryCost: string;
   additionalCosts: string;
   profitPercentage: string;
@@ -434,6 +439,11 @@ export function useCatNutrition() {
     priceWetUnit: '0',
     treatPrice: '0',
     packagingCost: '0',
+    packagingCosts: {
+      week: '0',
+      twoWeeks: '0',
+      month: '0',
+    },
     deliveryCost: '0',
     additionalCosts: '0',
     profitPercentage: '20',
@@ -569,7 +579,36 @@ export function useCatNutrition() {
   }, [])
 
   const handlePricingChange = useCallback((key: keyof Pricing, value: any) => {
-    setPricing(prev => ({ ...prev, [key]: String(value) }))
+    setPricing(prev => {
+      if (key === 'boxPackagingCosts' || key === 'boxContents') {
+        return {
+          ...prev,
+          [key]: { ...(value || {}) },
+        }
+      }
+      if (key === 'packagingCosts') {
+        const next = value || {}
+        return {
+          ...prev,
+          packagingCosts: {
+            week: String(next.week ?? prev.packagingCosts?.week ?? '0'),
+            twoWeeks: String(next.twoWeeks ?? prev.packagingCosts?.twoWeeks ?? '0'),
+            month: String(next.month ?? prev.packagingCosts?.month ?? '0'),
+          },
+        }
+      }
+      return { ...prev, [key]: String(value) }
+    })
+  }, [])
+
+  const updatePackagingCostByDuration = useCallback((duration: 'week' | 'twoWeeks' | 'month', value: any) => {
+    setPricing(prev => ({
+      ...prev,
+      packagingCosts: {
+        ...(prev.packagingCosts || { week: '0', twoWeeks: '0', month: '0' }),
+        [duration]: String(value),
+      },
+    }))
   }, [])
 
   const updateBoxPackagingCost = useCallback((boxId: string, value: any) => {
@@ -607,10 +646,6 @@ export function useCatNutrition() {
     const discountPercentage = toNumber(pricing.discountPercentage, 0)
 
     for (const boxType of BOX_TYPES) {
-      const packagingCostPerBox = toNumber(
-        pricing.boxPackagingCosts?.[boxType.id],
-        packagingCostFallback
-      )
       for (const variant of BOX_VARIANTS) {
         // Skip premium variant for non-premium boxes
         if (boxType.id === 'qatqoot_azam_premium' && variant.duration === 'twoWeeks') {
@@ -619,6 +654,21 @@ export function useCatNutrition() {
 
         const totalDays = variant.duration === 'week' ? 7 : 14
         const weeks = totalDays / 7
+
+        const packagingCostByVariant = (() => {
+          if (variant.duration === 'twoWeeks') {
+            return toNumber(pricing.packagingCosts?.twoWeeks, packagingCostFallback)
+          }
+          if (variant.duration === 'week') {
+            return toNumber(pricing.packagingCosts?.week, packagingCostFallback)
+          }
+          return toNumber(pricing.packagingCosts?.month, packagingCostFallback)
+        })()
+
+        const packagingCostPerBox = toNumber(
+          pricing.boxPackagingCosts?.[boxType.id],
+          packagingCostByVariant
+        )
 
         // Calculate dry food cost based on actual nutritional needs
         const totalDryGrams = results.boxSummary.totalDryGrams * (totalDays / results.boxSummary.totalDays)
@@ -1103,7 +1153,13 @@ export function useCatNutrition() {
       // Costs calculation
       const priceDryPerKg = toNumber(pricing.priceDryPerKg, 0)
       const priceWetUnit = toNumber(pricing.priceWetUnit, 0)
-      const packagingCost = toNumber(pricing.packagingCost, 0)
+      const packagingCost = (() => {
+        const fallback = toNumber(pricing.packagingCost, 0)
+        const costsByDuration = pricing.packagingCosts || { week: '0', twoWeeks: '0', month: '0' }
+        if (totalDays <= 7) return toNumber(costsByDuration.week, fallback)
+        if (totalDays <= 14) return toNumber(costsByDuration.twoWeeks, fallback)
+        return toNumber(costsByDuration.month, fallback)
+      })()
       const additionalCosts = toNumber(pricing.additionalCosts, 0)
       const deliveryCost = toNumber(pricing.deliveryCost, 0)
       const profitPercentage = toNumber(pricing.profitPercentage, 0)
@@ -1157,6 +1213,7 @@ export function useCatNutrition() {
     handlePricingChange,
     updateBoxPackagingCost,
     updateBoxContent,
+    updatePackagingCostByDuration,
     results,
     errors,
     costs,
