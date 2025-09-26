@@ -70,7 +70,6 @@ interface Pricing {
   profitPercentage: string;
   discountPercentage: string;
   paidAmount: string;
-  boxPackagingCosts: Record<string, string>;
   boxContents: Record<string, string>;
 }
 
@@ -449,12 +448,6 @@ export function useCatNutrition() {
     profitPercentage: '20',
     discountPercentage: '0',
     paidAmount: '0',
-    boxPackagingCosts: {
-      mimi: '0',
-      toty: '0',
-      qatqoot_azam: '0',
-      qatqoot_azam_premium: '0',
-    },
     boxContents: {
       mimi: 'دراي فود أساسي + تريت هدية',
       toty: 'دراي فود + ويت فود (كيس واحد/أسبوع) + تريت',
@@ -580,7 +573,7 @@ export function useCatNutrition() {
 
   const handlePricingChange = useCallback((key: keyof Pricing, value: any) => {
     setPricing(prev => {
-      if (key === 'boxPackagingCosts' || key === 'boxContents') {
+      if (key === 'boxContents') {
         return {
           ...prev,
           [key]: { ...(value || {}) },
@@ -607,16 +600,6 @@ export function useCatNutrition() {
       packagingCosts: {
         ...(prev.packagingCosts || { week: '0', twoWeeks: '0', month: '0' }),
         [duration]: String(value),
-      },
-    }))
-  }, [])
-
-  const updateBoxPackagingCost = useCallback((boxId: string, value: any) => {
-    setPricing(prev => ({
-      ...prev,
-      boxPackagingCosts: {
-        ...prev.boxPackagingCosts,
-        [boxId]: String(value),
       },
     }))
   }, [])
@@ -665,10 +648,7 @@ export function useCatNutrition() {
           return toNumber(pricing.packagingCosts?.month, packagingCostFallback)
         })()
 
-        const packagingCostPerBox = toNumber(
-          pricing.boxPackagingCosts?.[boxType.id],
-          packagingCostByVariant
-        )
+        const packagingCostPerBox = packagingCostByVariant
 
         // Calculate dry food cost based on actual nutritional needs
         const totalDryGrams = results.boxSummary.totalDryGrams * (totalDays / results.boxSummary.totalDays)
@@ -1211,7 +1191,6 @@ export function useCatNutrition() {
     handleBoxBuilderChange,
     pricing,
     handlePricingChange,
-    updateBoxPackagingCost,
     updateBoxContent,
     updatePackagingCostByDuration,
     results,

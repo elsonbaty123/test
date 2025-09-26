@@ -35,7 +35,6 @@ export default function CatNutritionCalculator() {
     handleBoxBuilderChange,
     pricing,
     handlePricingChange,
-    updateBoxPackagingCost,
     updateBoxContent,
     updatePackagingCostByDuration,
     results,
@@ -1536,24 +1535,6 @@ export default function CatNutritionCalculator() {
             </div>
 
             <div className="space-y-6">
-              <div>
-                <h4 className="font-semibold">تكلفة التغليف حسب نوع البوكس</h4>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
-                  {BOX_TYPES.map((box) => (
-                    <div key={box.id} className="space-y-2">
-                      <Label>تكلفة تغليف `{box.name}`</Label>
-                      <Input
-                        type="number"
-                        min="0"
-                        step="0.01"
-                        value={pricing.boxPackagingCosts?.[box.id] ?? ''}
-                        onChange={(e) => updateBoxPackagingCost(box.id, e.target.value)}
-                      />
-                    </div>
-                  ))}
-                </div>
-              </div>
-
               <div>
                 <h4 className="font-semibold">مكونات كل بوكس</h4>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
