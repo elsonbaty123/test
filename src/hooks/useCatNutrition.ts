@@ -178,6 +178,16 @@ interface BoxTypeConfig {
   includeTreat: boolean;
   isPremium?: boolean;
   premiumWetBagsPerWeek?: number;
+  enabledDurations: Array<'week' | 'twoWeeks'>;
+}
+
+interface BoxTypeEditableConfig {
+  id: string;
+  label: string;
+  includeWetFood: boolean;
+  wetFoodBagsPerWeek: string;
+  includeTreat: boolean;
+  enabledDurations: Array<'week' | 'twoWeeks'>;
 }
 
 interface BoxVariant {
@@ -261,6 +271,7 @@ export const BOX_TYPES: BoxTypeConfig[] = [
     includeWetFood: false,
     wetFoodBagsPerWeek: 0,
     includeTreat: true,
+    enabledDurations: ['week', 'twoWeeks'],
   },
   {
     id: 'toty',
@@ -270,6 +281,7 @@ export const BOX_TYPES: BoxTypeConfig[] = [
     includeWetFood: true,
     wetFoodBagsPerWeek: 1,
     includeTreat: true,
+    enabledDurations: ['week', 'twoWeeks'],
   },
   {
     id: 'qatqoot_azam',
@@ -279,6 +291,7 @@ export const BOX_TYPES: BoxTypeConfig[] = [
     includeWetFood: true,
     wetFoodBagsPerWeek: 2,
     includeTreat: true,
+    enabledDurations: ['week', 'twoWeeks'],
   },
   {
     id: 'qatqoot_azam_premium',
@@ -290,6 +303,7 @@ export const BOX_TYPES: BoxTypeConfig[] = [
     includeTreat: true,
     isPremium: true,
     premiumWetBagsPerWeek: 3,
+    enabledDurations: ['week'],
   },
 ]
 
@@ -431,6 +445,16 @@ export function useCatNutrition() {
     boxSplitDays: 7,
     boxTotalUnits: 0,
   })
+
+  const [boxTypeConfigs, setBoxTypeConfigs] = useState<BoxTypeConfig[]>(() => BOX_TYPES.map(box => ({ ...box })))
+  const [boxTypeEditableConfigs, setBoxTypeEditableConfigs] = useState<BoxTypeEditableConfig[]>(() => BOX_TYPES.map(box => ({
+    id: box.id,
+    label: box.name,
+    includeWetFood: box.includeWetFood,
+    wetFoodBagsPerWeek: String(box.isPremium ? (box.premiumWetBagsPerWeek ?? box.wetFoodBagsPerWeek) : box.wetFoodBagsPerWeek),
+    includeTreat: box.includeTreat,
+    enabledDurations: [...box.enabledDurations],
+  })))
 
   const [pricing, setPricing] = useState<Pricing>({
     currency: 'EGP',
@@ -594,6 +618,58 @@ export function useCatNutrition() {
     })
   }, [])
 
+  const updateBoxTypeConfig = useCallback((boxId: string, updates: Partial<BoxTypeConfig>) => {
+    setBoxTypeConfigs(prev => prev.map(box => {
+      if (box.id !== boxId) return box
+      const next: BoxTypeConfig = {
+        ...box,
+        ...updates,
+      }
+      if (updates.enabledDurations) {
+        const unique = Array.from(new Set(updates.enabledDurations)) as Array<'week' | 'twoWeeks'>
+        next.enabledDurations = unique.length ? unique : box.enabledDurations
+      }
+      return next
+    }))
+  }, [])
+
+  const updateBoxTypeEditableConfig = useCallback((boxId: string, updates: Partial<BoxTypeEditableConfig>) => {
+    setBoxTypeEditableConfigs(prev => prev.map(box => {
+      if (box.id !== boxId) return box
+      const next: BoxTypeEditableConfig = {
+        ...box,
+        ...updates,
+      }
+      if (updates.enabledDurations) {
+        const unique = Array.from(new Set(updates.enabledDurations)) as Array<'week' | 'twoWeeks'>
+        next.enabledDurations = unique
+      }
+      const wetBags = toNumber(next.wetFoodBagsPerWeek, boxTypeConfigs.find(b => b.id === boxId)?.wetFoodBagsPerWeek ?? 0)
+      const includeWet = Boolean(next.includeWetFood)
+      const includeTreat = Boolean(next.includeTreat)
+      const enabledDurations = next.enabledDurations.length ? next.enabledDurations : (boxTypeConfigs.find(b => b.id === boxId)?.enabledDurations ?? ['week'])
+      setBoxTypeConfigs(prevConfigs => prevConfigs.map(cfg => {
+        if (cfg.id !== boxId) return cfg
+        const isPremium = cfg.isPremium
+        const baseUpdates: Partial<BoxTypeConfig> = {
+          includeWetFood: includeWet,
+          includeTreat,
+          enabledDurations,
+        }
+        if (isPremium) {
+          baseUpdates.premiumWetBagsPerWeek = wetBags
+        } else {
+          baseUpdates.wetFoodBagsPerWeek = wetBags
+        }
+        return {
+          ...cfg,
+          ...baseUpdates,
+        }
+      }))
+      return next
+    }))
+  }, [])
+
   const updatePackagingCostByDuration = useCallback((duration: 'week' | 'twoWeeks' | 'month', value: any) => {
     setPricing(prev => ({
       ...prev,
@@ -628,8 +704,11 @@ export function useCatNutrition() {
     const profitPercentage = toNumber(pricing.profitPercentage, 0)
     const discountPercentage = toNumber(pricing.discountPercentage, 0)
 
-    for (const boxType of BOX_TYPES) {
+    for (const boxType of boxTypeConfigs) {
       for (const variant of BOX_VARIANTS) {
+        if (boxType.enabledDurations && boxType.enabledDurations.length > 0 && !boxType.enabledDurations.includes(variant.duration)) {
+          continue
+        }
         // Skip premium variant for non-premium boxes
         if (boxType.id === 'qatqoot_azam_premium' && variant.duration === 'twoWeeks') {
           continue // Premium only available for one week
@@ -704,7 +783,7 @@ export function useCatNutrition() {
     }
 
     return boxPricings
-  }, [pricing])
+  }, [pricing, boxTypeConfigs])
 
   const calcRER = useCallback((weightKg: number) => {
     // NRC 2006 - Chapter 2: Energy Requirements
@@ -1192,6 +1271,9 @@ export function useCatNutrition() {
     pricing,
     handlePricingChange,
     updateBoxContent,
+    boxTypeConfigs,
+    boxTypeEditableConfigs,
+    updateBoxTypeEditableConfig,
     updatePackagingCostByDuration,
     results,
     errors,

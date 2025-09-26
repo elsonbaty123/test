@@ -37,6 +37,8 @@ export default function CatNutritionCalculator() {
     handlePricingChange,
     updateBoxContent,
     updatePackagingCostByDuration,
+    boxTypeEditableConfigs,
+    updateBoxTypeEditableConfig,
     results,
     errors,
     costs,
@@ -1347,6 +1349,114 @@ export default function CatNutritionCalculator() {
                   />
                 </div>
               )}
+            </div>
+
+            <div className="space-y-4">
+              <h4 className="text-base font-semibold text-gray-700">إعداد مكونات كل بوكس</h4>
+              <p className="text-sm text-gray-500">حدد إن كان البوكس يحتوي على ويت فود أو تريت، وكمية الويت الأسبوعية، والمدد المتاحة للطلب.</p>
+              <div className="space-y-4">
+                {boxTypeEditableConfigs.map((box) => (
+                  <div key={box.id} className="border rounded-lg p-4 space-y-4">
+                    <div className="flex flex-col gap-1">
+                      <h5 className="text-lg font-semibold text-gray-800">{box.label}</h5>
+                      <p className="text-xs text-gray-500">اضبط خيارات هذا البوكس حسب المحتوى المتاح.</p>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div className="space-y-2">
+                        <Label>يتضمن ويت فود؟</Label>
+                        <Select
+                          value={box.includeWetFood ? 'yes' : 'no'}
+                          onValueChange={(value) => {
+                            const includeWet = value === 'yes'
+                            updateBoxTypeEditableConfig(box.id, {
+                              includeWetFood: includeWet,
+                              wetFoodBagsPerWeek: includeWet ? (box.wetFoodBagsPerWeek === '0' ? '1' : box.wetFoodBagsPerWeek) : '0',
+                            })
+                          }}
+                        >
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="yes">نعم</SelectItem>
+                            <SelectItem value="no">لا</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label>عدد أكياس الويت في الأسبوع</Label>
+                        <Select
+                          value={box.wetFoodBagsPerWeek}
+                          onValueChange={(value) => updateBoxTypeEditableConfig(box.id, { wetFoodBagsPerWeek: value })}
+                          disabled={!box.includeWetFood}
+                        >
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {Array.from({ length: 7 }, (_, idx) => String(idx + 1)).map((num) => (
+                              <SelectItem key={num} value={num}>{num} كيس/أسبوع</SelectItem>
+                            ))}
+                            <SelectItem value="0">0</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        {!box.includeWetFood && (
+                          <p className="text-xs text-gray-500">فعِّل الويت فود لتحديد الكمية.</p>
+                        )}
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label>يتضمن تريت؟</Label>
+                        <Select
+                          value={box.includeTreat ? 'yes' : 'no'}
+                          onValueChange={(value) => updateBoxTypeEditableConfig(box.id, { includeTreat: value === 'yes' })}
+                        >
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="yes">نعم</SelectItem>
+                            <SelectItem value="no">لا</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label>المدد المتاحة للبوكس</Label>
+                      <div className="flex flex-wrap gap-4">
+                        {[{ value: 'week', label: 'أسبوع واحد' }, { value: 'twoWeeks', label: 'أسبوعان' }].map((duration) => {
+                          const isChecked = box.enabledDurations.includes(duration.value as 'week' | 'twoWeeks')
+                          return (
+                            <label key={duration.value} className="flex items-center gap-2 text-sm text-gray-700">
+                              <Checkbox
+                                checked={isChecked}
+                                onCheckedChange={(checked) => {
+                                  const enable = Boolean(checked)
+                                  let nextDurations = box.enabledDurations
+                                  if (enable && !isChecked) {
+                                    nextDurations = [...box.enabledDurations, duration.value as 'week' | 'twoWeeks']
+                                  }
+                                  if (!enable && isChecked) {
+                                    if (box.enabledDurations.length === 1) {
+                                      return
+                                    }
+                                    nextDurations = box.enabledDurations.filter((d) => d !== duration.value)
+                                  }
+                                  updateBoxTypeEditableConfig(box.id, { enabledDurations: nextDurations })
+                                }}
+                              />
+                              <span>{duration.label}</span>
+                            </label>
+                          )
+                        })}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           </CardContent>
         </Card>
