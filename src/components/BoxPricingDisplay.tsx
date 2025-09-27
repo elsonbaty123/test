@@ -4,51 +4,17 @@ import React from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { BoxPricing as NutritionBoxPricing, BoxTypeConfig as NutritionBoxTypeConfig, BoxVariant as NutritionBoxVariant } from '@/hooks/useCatNutrition'
 
-interface BoxTypeConfig {
-  id: string;
-  name: string;
-  description: string;
-  includeDryFood: boolean;
-  includeWetFood: boolean;
-  wetFoodBagsPerWeek: number;
-  includeTreat: boolean;
-  isPremium?: boolean;
-  premiumWetBagsPerWeek?: number;
-}
-
-interface BoxVariant {
-  duration: 'week' | 'twoWeeks';
-  durationLabel: string;
-  multiplier: number;
-  packagingMultiplier: number;
-}
-
-interface BoxPricing {
-  boxType: BoxTypeConfig;
-  variant: BoxVariant;
-  costs: {
-    dryCost: number;
-    wetCost: number;
-    treatCost: number;
-    packagingCost: number;
-    additionalCosts: number;
-    totalCostBeforeProfit: number;
-    profitAmount: number;
-    totalCostWithProfit: number;
-    discountAmount: number;
-    totalCostAfterDiscount: number;
-    totalCostWithDelivery: number;
-    deliveryCost: number;
-    perDay: number;
-  };
-}
+type DisplayBoxTypeConfig = NutritionBoxTypeConfig
+type DisplayBoxVariant = NutritionBoxVariant
+type DisplayBoxPricing = NutritionBoxPricing
 
 interface BoxPricingDisplayProps {
-  boxPricings: BoxPricing[]
+  boxPricings: DisplayBoxPricing[]
   currency: string
   formatNumber: (n: number, digits?: number) => string
-  onSelectBox?: (boxPricing: BoxPricing) => void
+  onSelectBox?: (boxPricing: DisplayBoxPricing) => void
 }
 
 const BoxPricingDisplay: React.FC<BoxPricingDisplayProps> = ({
@@ -62,14 +28,14 @@ const BoxPricingDisplay: React.FC<BoxPricingDisplayProps> = ({
   }
 
   // Group by box type
-  const groupedByType = boxPricings.reduce((acc, pricing) => {
+  const groupedByType = boxPricings.reduce((acc: Record<string, DisplayBoxPricing[]>, pricing) => {
     const typeId = pricing.boxType.id
     if (!acc[typeId]) {
       acc[typeId] = []
     }
     acc[typeId].push(pricing)
     return acc
-  }, {} as Record<string, BoxPricing[]>)
+  }, {} as Record<string, DisplayBoxPricing[]>)
 
   const getBoxTypeColor = (typeId: string) => {
     switch (typeId) {
@@ -79,8 +45,6 @@ const BoxPricingDisplay: React.FC<BoxPricingDisplayProps> = ({
         return 'border-blue-200 bg-blue-50'
       case 'qatqoot_azam':
         return 'border-purple-200 bg-purple-50'
-      case 'qatqoot_azam_premium':
-        return 'border-gold-200 bg-gradient-to-br from-yellow-50 to-orange-50'
       default:
         return 'border-gray-200 bg-gray-50'
     }
@@ -94,8 +58,6 @@ const BoxPricingDisplay: React.FC<BoxPricingDisplayProps> = ({
         return '🐱'
       case 'qatqoot_azam':
         return '👑'
-      case 'qatqoot_azam_premium':
-        return '💎'
       default:
         return '📦'
     }
@@ -124,11 +86,6 @@ const BoxPricingDisplay: React.FC<BoxPricingDisplayProps> = ({
                     <div>
                       <h3 className="text-lg font-bold text-gray-800">
                         {boxType.name}
-                        {boxType.isPremium && (
-                          <Badge variant="secondary" className="ml-2 bg-yellow-100 text-yellow-800">
-                            بريميم
-                          </Badge>
-                        )}
                       </h3>
                       <p className="text-sm text-gray-600">{boxType.description}</p>
                     </div>
@@ -146,7 +103,7 @@ const BoxPricingDisplay: React.FC<BoxPricingDisplayProps> = ({
                     )}
                     {boxType.includeWetFood && (
                       <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
-                        🥫 ويت فود ({boxType.isPremium ? boxType.premiumWetBagsPerWeek : boxType.wetFoodBagsPerWeek} كيس/أسبوع)
+                        🥫 ويت فود ({boxType.wetFoodBagsPerWeek} كيس/أسبوع)
                       </Badge>
                     )}
                     {boxType.includeTreat && (
@@ -190,6 +147,16 @@ const BoxPricingDisplay: React.FC<BoxPricingDisplayProps> = ({
                           <div className="flex justify-between">
                             <span className="text-gray-600">تريت:</span>
                             <span>{formatNumber(pricing.costs.treatCost, 2)} {currency}</span>
+                          </div>
+                        )}
+                        {pricing.boxType.includeTreat && (
+                          <div className="flex justify-between text-xs text-gray-500">
+                            <span>عدد التريت:</span>
+                            <span>
+                              {pricing.variant.duration === 'week' && `${formatNumber(pricing.boxType.treatUnitsPerDuration.week, 0)} / الأسبوع`}
+                              {pricing.variant.duration === 'twoWeeks' && `${formatNumber(pricing.boxType.treatUnitsPerDuration.twoWeeks, 0)} / أسبوعين`}
+                              {pricing.variant.duration === 'month' && `${formatNumber(pricing.boxType.treatUnitsPerDuration.month, 0)} / الشهر`}
+                            </span>
                           </div>
                         )}
                         <div className="flex justify-between">

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 
-import { useCatNutrition } from '@/hooks/useCatNutrition'
+import { useCatNutrition, BoxVariant as NutritionBoxVariant, BoxPricing as NutritionBoxPricing } from '@/hooks/useCatNutrition'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
@@ -1396,10 +1396,9 @@ export default function CatNutritionCalculator() {
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
-                            {Array.from({ length: 7 }, (_, idx) => String(idx + 1)).map((num) => (
-                              <SelectItem key={num} value={num}>{num} كيس/أسبوع</SelectItem>
+                            {['0','1','2','3','4','5','6','7'].map((num) => (
+                              <SelectItem key={num} value={num}>{num === '0' ? '0 (لا يوجد)' : `${num} كيس/أسبوع`}</SelectItem>
                             ))}
-                            <SelectItem value="0">0</SelectItem>
                           </SelectContent>
                         </Select>
                         {!box.includeWetFood && (
@@ -1427,8 +1426,8 @@ export default function CatNutritionCalculator() {
                     <div className="space-y-2">
                       <Label>المدد المتاحة للبوكس</Label>
                       <div className="flex flex-wrap gap-4">
-                        {[{ value: 'week', label: 'أسبوع واحد' }, { value: 'twoWeeks', label: 'أسبوعان' }].map((duration) => {
-                          const isChecked = box.enabledDurations.includes(duration.value as 'week' | 'twoWeeks')
+                        {[{ value: 'week', label: 'أسبوع واحد' }, { value: 'twoWeeks', label: 'أسبوعان' }, { value: 'month', label: 'شهر كامل' }].map((duration) => {
+                          const isChecked = box.enabledDurations.includes(duration.value as 'week' | 'twoWeeks' | 'month')
                           return (
                             <label key={duration.value} className="flex items-center gap-2 text-sm text-gray-700">
                               <Checkbox
@@ -1437,7 +1436,7 @@ export default function CatNutritionCalculator() {
                                   const enable = Boolean(checked)
                                   let nextDurations = box.enabledDurations
                                   if (enable && !isChecked) {
-                                    nextDurations = [...box.enabledDurations, duration.value as 'week' | 'twoWeeks']
+                                    nextDurations = [...box.enabledDurations, duration.value as 'week' | 'twoWeeks' | 'month']
                                   }
                                   if (!enable && isChecked) {
                                     if (box.enabledDurations.length === 1) {
@@ -1454,6 +1453,79 @@ export default function CatNutritionCalculator() {
                         })}
                       </div>
                     </div>
+
+                    {box.includeTreat && (
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div className="space-y-2">
+                          <Label>كمية التريت - الأسبوع</Label>
+                          <Select
+                            value={box.treatUnitsPerDuration.week}
+                            onValueChange={(value) => updateBoxTypeEditableConfig(box.id, {
+                              treatUnitsPerDuration: {
+                                week: value,
+                                twoWeeks: box.treatUnitsPerDuration.twoWeeks,
+                                month: box.treatUnitsPerDuration.month,
+                              }
+                            })}
+                          >
+                            <SelectTrigger>
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {['0','1','2','3','4','5'].map((num) => (
+                                <SelectItem key={num} value={num}>{num} تريت/أسبوع</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+
+                        <div className="space-y-2">
+                          <Label>كمية التريت - أسبوعين</Label>
+                          <Select
+                            value={box.treatUnitsPerDuration.twoWeeks}
+                            onValueChange={(value) => updateBoxTypeEditableConfig(box.id, {
+                              treatUnitsPerDuration: {
+                                week: box.treatUnitsPerDuration.week,
+                                twoWeeks: value,
+                                month: box.treatUnitsPerDuration.month,
+                              }
+                            })}
+                          >
+                            <SelectTrigger>
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {['0','1','2','3','4','5','6','7','8','9','10'].map((num) => (
+                                <SelectItem key={num} value={num}>{num} تريت/أسبوعين</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+
+                        <div className="space-y-2">
+                          <Label>كمية التريت - الشهر</Label>
+                          <Select
+                            value={box.treatUnitsPerDuration.month}
+                            onValueChange={(value) => updateBoxTypeEditableConfig(box.id, {
+                              treatUnitsPerDuration: {
+                                week: box.treatUnitsPerDuration.week,
+                                twoWeeks: box.treatUnitsPerDuration.twoWeeks,
+                                month: value,
+                              }
+                            })}
+                          >
+                            <SelectTrigger>
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {['0','2','4','6','8','10','12'].map((num) => (
+                                <SelectItem key={num} value={num}>{num} تريت/شهر</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>

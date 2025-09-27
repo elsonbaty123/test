@@ -168,7 +168,7 @@ interface Costs {
 }
 
 // Box types configuration
-interface BoxTypeConfig {
+export interface BoxTypeConfig {
   id: string;
   name: string;
   description: string;
@@ -176,9 +176,12 @@ interface BoxTypeConfig {
   includeWetFood: boolean;
   wetFoodBagsPerWeek: number;
   includeTreat: boolean;
-  isPremium?: boolean;
-  premiumWetBagsPerWeek?: number;
-  enabledDurations: Array<'week' | 'twoWeeks'>;
+  treatUnitsPerDuration: {
+    week: number;
+    twoWeeks: number;
+    month: number;
+  };
+  enabledDurations: Array<'week' | 'twoWeeks' | 'month'>;
 }
 
 interface BoxTypeEditableConfig {
@@ -187,17 +190,22 @@ interface BoxTypeEditableConfig {
   includeWetFood: boolean;
   wetFoodBagsPerWeek: string;
   includeTreat: boolean;
-  enabledDurations: Array<'week' | 'twoWeeks'>;
+  treatUnitsPerDuration: {
+    week: string;
+    twoWeeks: string;
+    month: string;
+  };
+  enabledDurations: Array<'week' | 'twoWeeks' | 'month'>;
 }
 
-interface BoxVariant {
-  duration: 'week' | 'twoWeeks';
+export interface BoxVariant {
+  duration: 'week' | 'twoWeeks' | 'month';
   durationLabel: string;
   multiplier: number;
   packagingMultiplier: number; // For packaging cost calculation
 }
 
-interface BoxPricing {
+export interface BoxPricing {
   boxType: BoxTypeConfig;
   variant: BoxVariant;
   costs: {
@@ -271,7 +279,12 @@ export const BOX_TYPES: BoxTypeConfig[] = [
     includeWetFood: false,
     wetFoodBagsPerWeek: 0,
     includeTreat: true,
-    enabledDurations: ['week', 'twoWeeks'],
+    treatUnitsPerDuration: {
+      week: 1,
+      twoWeeks: 2,
+      month: 4,
+    },
+    enabledDurations: ['week', 'twoWeeks', 'month'],
   },
   {
     id: 'toty',
@@ -281,7 +294,12 @@ export const BOX_TYPES: BoxTypeConfig[] = [
     includeWetFood: true,
     wetFoodBagsPerWeek: 1,
     includeTreat: true,
-    enabledDurations: ['week', 'twoWeeks'],
+    treatUnitsPerDuration: {
+      week: 1,
+      twoWeeks: 2,
+      month: 4,
+    },
+    enabledDurations: ['week', 'twoWeeks', 'month'],
   },
   {
     id: 'qatqoot_azam',
@@ -291,19 +309,12 @@ export const BOX_TYPES: BoxTypeConfig[] = [
     includeWetFood: true,
     wetFoodBagsPerWeek: 2,
     includeTreat: true,
-    enabledDurations: ['week', 'twoWeeks'],
-  },
-  {
-    id: 'qatqoot_azam_premium',
-    name: 'القطقوط الأعظم - بريميم',
-    description: 'دراي فود + ويت فود (3 أكياس لكل أسبوع) + تريت',
-    includeDryFood: true,
-    includeWetFood: true,
-    wetFoodBagsPerWeek: 2,
-    includeTreat: true,
-    isPremium: true,
-    premiumWetBagsPerWeek: 3,
-    enabledDurations: ['week'],
+    treatUnitsPerDuration: {
+      week: 1,
+      twoWeeks: 2,
+      month: 4,
+    },
+    enabledDurations: ['week', 'twoWeeks', 'month'],
   },
 ]
 
@@ -319,6 +330,12 @@ export const BOX_VARIANTS: BoxVariant[] = [
     durationLabel: 'أسبوعين',
     multiplier: 2,
     packagingMultiplier: 1, // Packaging cost doesn't repeat for two weeks
+  },
+  {
+    duration: 'month',
+    durationLabel: 'شهر كامل',
+    multiplier: 4,
+    packagingMultiplier: 1, // تغليف واحد لكل شهر
   },
 ]
 
@@ -451,8 +468,13 @@ export function useCatNutrition() {
     id: box.id,
     label: box.name,
     includeWetFood: box.includeWetFood,
-    wetFoodBagsPerWeek: String(box.isPremium ? (box.premiumWetBagsPerWeek ?? box.wetFoodBagsPerWeek) : box.wetFoodBagsPerWeek),
+    wetFoodBagsPerWeek: String(box.wetFoodBagsPerWeek),
     includeTreat: box.includeTreat,
+    treatUnitsPerDuration: {
+      week: String(box.treatUnitsPerDuration.week),
+      twoWeeks: String(box.treatUnitsPerDuration.twoWeeks),
+      month: String(box.treatUnitsPerDuration.month),
+    },
     enabledDurations: [...box.enabledDurations],
   })))
 
@@ -476,7 +498,6 @@ export function useCatNutrition() {
       mimi: 'دراي فود أساسي + تريت هدية',
       toty: 'دراي فود + ويت فود (كيس واحد/أسبوع) + تريت',
       qatqoot_azam: 'دراي فود + ويت فود (كيسين/أسبوع) + تريت',
-      qatqoot_azam_premium: 'دراي فود + ويت فود (3 أكياس/أسبوع) + تريت بريميم',
     },
   })
 
@@ -626,7 +647,7 @@ export function useCatNutrition() {
         ...updates,
       }
       if (updates.enabledDurations) {
-        const unique = Array.from(new Set(updates.enabledDurations)) as Array<'week' | 'twoWeeks'>
+        const unique = Array.from(new Set(updates.enabledDurations)) as Array<'week' | 'twoWeeks' | 'month'>
         next.enabledDurations = unique.length ? unique : box.enabledDurations
       }
       return next
@@ -636,39 +657,63 @@ export function useCatNutrition() {
   const updateBoxTypeEditableConfig = useCallback((boxId: string, updates: Partial<BoxTypeEditableConfig>) => {
     setBoxTypeEditableConfigs(prev => prev.map(box => {
       if (box.id !== boxId) return box
-      const next: BoxTypeEditableConfig = {
+      const treatUnitsUpdate = updates.treatUnitsPerDuration
+      let next: BoxTypeEditableConfig = {
         ...box,
         ...updates,
+        treatUnitsPerDuration: treatUnitsUpdate
+          ? {
+              week: treatUnitsUpdate.week ?? box.treatUnitsPerDuration.week,
+              twoWeeks: treatUnitsUpdate.twoWeeks ?? box.treatUnitsPerDuration.twoWeeks,
+              month: treatUnitsUpdate.month ?? box.treatUnitsPerDuration.month,
+            }
+          : box.treatUnitsPerDuration,
       }
       if (updates.enabledDurations) {
-        const unique = Array.from(new Set(updates.enabledDurations)) as Array<'week' | 'twoWeeks'>
+        const unique = Array.from(new Set(updates.enabledDurations)) as Array<'week' | 'twoWeeks' | 'month'>
         next.enabledDurations = unique
       }
-      const wetBags = toNumber(next.wetFoodBagsPerWeek, boxTypeConfigs.find(b => b.id === boxId)?.wetFoodBagsPerWeek ?? 0)
+      if (!next.includeWetFood) {
+        next = {
+          ...next,
+          wetFoodBagsPerWeek: '0',
+        }
+      }
+      if (!next.includeTreat) {
+        next = {
+          ...next,
+          treatUnitsPerDuration: {
+            week: '0',
+            twoWeeks: '0',
+            month: '0',
+          },
+        }
+      }
+      const baseConfig = boxTypeConfigs.find(b => b.id === boxId)
+      const wetBags = toNumber(next.wetFoodBagsPerWeek, baseConfig?.wetFoodBagsPerWeek ?? 0)
       const includeWet = Boolean(next.includeWetFood)
       const includeTreat = Boolean(next.includeTreat)
-      const enabledDurations = next.enabledDurations.length ? next.enabledDurations : (boxTypeConfigs.find(b => b.id === boxId)?.enabledDurations ?? ['week'])
+      const enabledDurations = next.enabledDurations.length ? next.enabledDurations : (baseConfig?.enabledDurations ?? ['week'])
+      const treatUnits = next.treatUnitsPerDuration
+      const treatUnitsParsed = {
+        week: toNumber(treatUnits.week, baseConfig?.treatUnitsPerDuration.week ?? 0),
+        twoWeeks: toNumber(treatUnits.twoWeeks, baseConfig?.treatUnitsPerDuration.twoWeeks ?? 0),
+        month: toNumber(treatUnits.month, baseConfig?.treatUnitsPerDuration.month ?? 0),
+      }
       setBoxTypeConfigs(prevConfigs => prevConfigs.map(cfg => {
         if (cfg.id !== boxId) return cfg
-        const isPremium = cfg.isPremium
-        const baseUpdates: Partial<BoxTypeConfig> = {
+        return {
+          ...cfg,
           includeWetFood: includeWet,
           includeTreat,
           enabledDurations,
-        }
-        if (isPremium) {
-          baseUpdates.premiumWetBagsPerWeek = wetBags
-        } else {
-          baseUpdates.wetFoodBagsPerWeek = wetBags
-        }
-        return {
-          ...cfg,
-          ...baseUpdates,
+          wetFoodBagsPerWeek: wetBags,
+          treatUnitsPerDuration: includeTreat ? treatUnitsParsed : { week: 0, twoWeeks: 0, month: 0 },
         }
       }))
       return next
     }))
-  }, [])
+  }, [boxTypeConfigs])
 
   const updatePackagingCostByDuration = useCallback((duration: 'week' | 'twoWeeks' | 'month', value: any) => {
     setPricing(prev => ({
@@ -709,12 +754,8 @@ export function useCatNutrition() {
         if (boxType.enabledDurations && boxType.enabledDurations.length > 0 && !boxType.enabledDurations.includes(variant.duration)) {
           continue
         }
-        // Skip premium variant for non-premium boxes
-        if (boxType.id === 'qatqoot_azam_premium' && variant.duration === 'twoWeeks') {
-          continue // Premium only available for one week
-        }
 
-        const totalDays = variant.duration === 'week' ? 7 : 14
+        const totalDays = variant.duration === 'week' ? 7 : variant.duration === 'twoWeeks' ? 14 : 30
         const weeks = totalDays / 7
 
         const packagingCostByVariant = (() => {
@@ -736,13 +777,19 @@ export function useCatNutrition() {
         // Calculate wet food cost based on box type configuration
         let wetCost = 0
         if (boxType.includeWetFood) {
-          const wetBagsPerWeek = boxType.isPremium ? (boxType.premiumWetBagsPerWeek || boxType.wetFoodBagsPerWeek) : boxType.wetFoodBagsPerWeek
+          const wetBagsPerWeek = boxType.wetFoodBagsPerWeek
           const totalWetBags = wetBagsPerWeek * weeks
           wetCost = totalWetBags * priceWetUnit
         }
 
         // Calculate treat cost
-        const treatCostTotal = boxType.includeTreat ? treatPrice * variant.multiplier : 0
+        const treatUnitsPerDuration = boxType.treatUnitsPerDuration || { week: 0, twoWeeks: 0, month: 0 }
+        const treatUnitsForVariant = variant.duration === 'week'
+          ? treatUnitsPerDuration.week
+          : variant.duration === 'twoWeeks'
+            ? treatUnitsPerDuration.twoWeeks
+            : treatUnitsPerDuration.month
+        const treatCostTotal = boxType.includeTreat ? treatPrice * treatUnitsForVariant : 0
 
         // Calculate packaging cost (doesn't repeat for two weeks)
         const packagingCostTotal = packagingCostPerBox * variant.packagingMultiplier
