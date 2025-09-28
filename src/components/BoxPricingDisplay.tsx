@@ -390,7 +390,7 @@ const BoxPricingDisplay: React.FC<BoxPricingDisplayProps> = ({
           <ul className="text-sm text-yellow-700 space-y-1">
             <li>• الأسعار محسوبة حسب الاحتياجات الغذائية الفعلية لقطتك</li>
             <li>• تكاليف التغليف لا تتكرر في خطة الأسبوعين</li>
-            <li>• جميع البوكسات تشمل تريت هدية</li>
+            <li>• التريت متاح في بعض البوكسات حسب النوع والمدة</li>
             <li>• الأسعار الموضحة تشمل التوصيل بعد الخصم</li>
           </ul>
         </div>
