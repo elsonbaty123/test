@@ -1,6 +1,6 @@
 'use client'
 
-import React from 'react'
+import React, { useMemo, useRef } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -43,6 +43,8 @@ const BoxPricingDisplay: React.FC<BoxPricingDisplayProps> = ({
         return 'border-green-200 bg-green-50'
       case 'toty':
         return 'border-blue-200 bg-blue-50'
+      case 'qatty':
+        return 'border-orange-200 bg-orange-50'
       case 'qatqoot_azam':
         return 'border-purple-200 bg-purple-50'
       default:
@@ -56,12 +58,61 @@ const BoxPricingDisplay: React.FC<BoxPricingDisplayProps> = ({
         return '💰'
       case 'toty':
         return '🐱'
+      case 'qatty':
+        return '🧡'
       case 'qatqoot_azam':
         return '👑'
       default:
         return '📦'
     }
   }
+
+  const tableRef = useRef<HTMLDivElement>(null)
+
+  const handlePrintTable = () => {
+    if (!tableRef.current) return
+    const printWindow = window.open('', '_blank', 'width=1024,height=768')
+    if (!printWindow) return
+
+    const styles = `
+      <style>
+        body { font-family: 'Arial', sans-serif; padding: 24px; direction: rtl; background: #fff; color: #1f2937; }
+        h2 { font-size: 20px; margin-bottom: 16px; color: #0f172a; }
+        table { width: 100%; border-collapse: collapse; margin-top: 16px; }
+        th, td { border: 1px solid #e5e7eb; padding: 8px 12px; text-align: center; font-size: 14px; }
+        th { background: #f1f5f9; font-weight: 600; }
+        td.features { text-align: right; }
+        .highlight { color: #047857; font-weight: 600; }
+      </style>
+    `
+
+    printWindow.document.write(`<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8" /><title>جدول أسعار البوكسات</title>${styles}</head><body>${tableRef.current.innerHTML}</body></html>`)
+    printWindow.document.close()
+    printWindow.focus()
+    setTimeout(() => {
+      printWindow.print()
+    }, 300)
+  }
+
+  const tableRows = useMemo(() => {
+    return boxPricings.map((pricing) => {
+      const beforeDiscountWithDelivery = pricing.costs.totalCostBeforeDiscount + pricing.costs.deliveryCost
+      const afterDiscountWithDelivery = pricing.costs.totalCostAfterDiscount + pricing.costs.deliveryCost
+      const features: string[] = []
+      if (pricing.boxType.includeDryFood) features.push('🥘 دراي فود')
+      if (pricing.boxType.includeWetFood) features.push(`🥫 ويت فود (${pricing.boxType.wetFoodBagsPerWeek} كيس/أسبوع)`)
+      if (pricing.boxType.includeTreat) features.push('🍪 تريت')
+      return {
+        id: `${pricing.boxType.id}-${pricing.variant.duration}`,
+        name: pricing.boxType.name,
+        duration: pricing.variant.durationLabel,
+        features,
+        before: beforeDiscountWithDelivery,
+        after: afterDiscountWithDelivery,
+        savings: pricing.costs.savings,
+      }
+    })
+  }, [boxPricings])
 
   return (
     <Card>
@@ -169,15 +220,25 @@ const BoxPricingDisplay: React.FC<BoxPricingDisplayProps> = ({
                             <span>{formatNumber(pricing.costs.additionalCosts, 2)} {currency}</span>
                           </div>
                         )}
-                        <div className="border-t pt-2 mt-2">
-                          <div className="flex justify-between font-semibold">
-                            <span>السعر النهائي:</span>
-                            <span className="text-lg text-green-600">
-                              {formatNumber(pricing.costs.totalCostWithDelivery, 2)} {currency}
+                        <div className="border-t pt-3 mt-3 space-y-2">
+                          <div className="flex justify-between text-sm text-gray-700">
+                            <span>السعر قبل الخصم:</span>
+                            <span className="line-through text-gray-400">
+                              {formatNumber(pricing.costs.totalCostBeforeDiscount + pricing.costs.deliveryCost, 2)} {currency}
                             </span>
                           </div>
-                          <div className="flex justify-between text-xs text-gray-500 mt-1">
-                            <span>يومياً:</span>
+                          <div className="flex justify-between font-semibold">
+                            <span>السعر بعد الخصم:</span>
+                            <span className="text-lg text-green-600">
+                              {formatNumber(pricing.costs.totalCostAfterDiscount + pricing.costs.deliveryCost, 2)} {currency}
+                            </span>
+                          </div>
+                          <div className="flex justify-between text-xs text-green-700">
+                            <span>وفّرت:</span>
+                            <span>{formatNumber(pricing.costs.savings, 2)} {currency}</span>
+                          </div>
+                          <div className="flex justify-between text-xs text-gray-500">
+                            <span>السعر اليومي:</span>
                             <span>{formatNumber(pricing.costs.perDay, 2)} {currency}</span>
                           </div>
                         </div>
@@ -206,8 +267,58 @@ const BoxPricingDisplay: React.FC<BoxPricingDisplayProps> = ({
             <li>• الأسعار محسوبة حسب الاحتياجات الغذائية الفعلية لقطتك</li>
             <li>• تكاليف التغليف لا تتكرر في خطة الأسبوعين</li>
             <li>• جميع البوكسات تشمل تريت هدية</li>
-            <li>• البوكس البريميم متاح لأسبوع واحد فقط</li>
+            <li>• الأسعار الموضحة تشمل التوصيل بعد الخصم</li>
           </ul>
+        </div>
+
+        <div className="mt-6 bg-white border border-slate-200 rounded-lg p-4 space-y-4" ref={tableRef}>
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <div>
+              <h3 className="text-lg font-semibold text-slate-800">جدول مقارنة البوكسات</h3>
+              <p className="text-sm text-slate-500">عرض سريع لكل بوكس، المواصفات، والسعر قبل وبعد الخصم</p>
+            </div>
+            <Button variant="outline" onClick={handlePrintTable} className="whitespace-nowrap">طباعة الجدول</Button>
+          </div>
+
+          <div className="overflow-x-auto">
+            <table className="min-w-full text-sm border border-slate-200 rounded-lg overflow-hidden">
+              <thead className="bg-slate-100 text-slate-700">
+                <tr>
+                  <th className="px-3 py-2 border border-slate-200">البوكس</th>
+                  <th className="px-3 py-2 border border-slate-200">المدة</th>
+                  <th className="px-3 py-2 border border-slate-200 text-right">المواصفات</th>
+                  <th className="px-3 py-2 border border-slate-200">السعر قبل الخصم</th>
+                  <th className="px-3 py-2 border border-slate-200">السعر بعد الخصم</th>
+                  <th className="px-3 py-2 border border-slate-200">وفّرت</th>
+                </tr>
+              </thead>
+              <tbody>
+                {tableRows.map((row) => (
+                  <tr key={row.id} className="even:bg-slate-50">
+                    <td className="px-3 py-2 border border-slate-200 font-semibold text-slate-800">{row.name}</td>
+                    <td className="px-3 py-2 border border-slate-200 text-slate-600">{row.duration}</td>
+                    <td className="px-3 py-2 border border-slate-200 text-slate-600 text-right">
+                      {row.features.map((feature, idx) => (
+                        <span key={feature}>
+                          {feature}
+                          {idx < row.features.length - 1 ? ' • ' : ''}
+                        </span>
+                      ))}
+                    </td>
+                    <td className="px-3 py-2 border border-slate-200 text-slate-600">
+                      {formatNumber(row.before, 2)} {currency}
+                    </td>
+                    <td className="px-3 py-2 border border-slate-200 text-green-600 font-semibold">
+                      {formatNumber(row.after, 2)} {currency}
+                    </td>
+                    <td className="px-3 py-2 border border-slate-200 text-emerald-600">
+                      {formatNumber(row.savings, 2)} {currency}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       </CardContent>
     </Card>

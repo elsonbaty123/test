@@ -218,10 +218,14 @@ export interface BoxPricing {
     profitAmount: number;
     totalCostWithProfit: number;
     discountAmount: number;
+    totalCostBeforeDiscount: number;
     totalCostAfterDiscount: number;
     totalCostWithDelivery: number;
     deliveryCost: number;
     perDay: number;
+    savings: number;
+    totalWithDeliveryBeforeDiscount: number;
+    totalWithDeliveryAfterDiscount: number;
   };
 }
 
@@ -302,12 +306,27 @@ export const BOX_TYPES: BoxTypeConfig[] = [
     enabledDurations: ['week', 'twoWeeks', 'month'],
   },
   {
-    id: 'qatqoot_azam',
-    name: 'القطقوط الأعظم',
+    id: 'qatty',
+    name: 'قطتي',
     description: 'دراي فود + ويت فود (كيسين لكل أسبوع) + تريت',
     includeDryFood: true,
     includeWetFood: true,
     wetFoodBagsPerWeek: 2,
+    includeTreat: true,
+    treatUnitsPerDuration: {
+      week: 1,
+      twoWeeks: 2,
+      month: 4,
+    },
+    enabledDurations: ['week', 'twoWeeks', 'month'],
+  },
+  {
+    id: 'qatqoot_azam',
+    name: 'القطقوط الأعظم',
+    description: 'دراي فود + ويت فود (3 أكياس لكل أسبوع) + تريت',
+    includeDryFood: true,
+    includeWetFood: true,
+    wetFoodBagsPerWeek: 3,
     includeTreat: true,
     treatUnitsPerDuration: {
       week: 1,
@@ -497,7 +516,8 @@ export function useCatNutrition() {
     boxContents: {
       mimi: 'دراي فود أساسي + تريت هدية',
       toty: 'دراي فود + ويت فود (كيس واحد/أسبوع) + تريت',
-      qatqoot_azam: 'دراي فود + ويت فود (كيسين/أسبوع) + تريت',
+      qatty: 'دراي فود + ويت فود (كيسين/أسبوع) + تريت',
+      qatqoot_azam: 'دراي فود + ويت فود (3 أكياس/أسبوع) + تريت',
     },
   })
 
@@ -803,9 +823,13 @@ export function useCatNutrition() {
         const profitAmount = (totalCostBeforeProfit * profitPercentage) / 100
         const totalCostWithProfit = totalCostBeforeProfit + profitAmount
         const discountAmount = (totalCostWithProfit * discountPercentage) / 100
-        const totalCostAfterDiscount = totalCostWithProfit - discountAmount
+        const totalCostBeforeDiscount = totalCostWithProfit
+        const totalCostAfterDiscount = totalCostBeforeDiscount - discountAmount
+        const totalWithDeliveryBeforeDiscount = totalCostBeforeDiscount + deliveryCost
         const totalCostWithDelivery = totalCostAfterDiscount + deliveryCost
+        const totalWithDeliveryAfterDiscount = totalCostWithDelivery
         const perDay = totalDays > 0 ? (totalCostWithDelivery / totalDays) : 0
+        const savings = discountAmount
 
         boxPricings.push({
           boxType,
@@ -820,10 +844,14 @@ export function useCatNutrition() {
             profitAmount,
             totalCostWithProfit,
             discountAmount,
+            totalCostBeforeDiscount,
             totalCostAfterDiscount,
             totalCostWithDelivery,
             deliveryCost,
             perDay,
+            savings,
+            totalWithDeliveryBeforeDiscount,
+            totalWithDeliveryAfterDiscount,
           },
         })
       }
