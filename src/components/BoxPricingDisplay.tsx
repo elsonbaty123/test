@@ -69,6 +69,96 @@ const BoxPricingDisplay: React.FC<BoxPricingDisplayProps> = ({
 
   const tableRef = useRef<HTMLDivElement>(null)
 
+  const handlePrintBoxSchedule = (pricing: DisplayBoxPricing) => {
+    const printWindow = window.open('', '_blank', 'width=900,height=1024')
+    if (!printWindow) return
+
+    const styles = `
+      <style>
+        body { font-family: 'Arial', sans-serif; direction: rtl; padding: 24px; background: #fff; color: #1f2937; }
+        h1 { font-size: 22px; margin-bottom: 12px; color: #0f172a; }
+        h2 { font-size: 18px; margin-top: 24px; margin-bottom: 12px; color: #1f2937; }
+        table { width: 100%; border-collapse: collapse; margin-top: 12px; }
+        th, td { border: 1px solid #e5e7eb; padding: 8px 10px; font-size: 13px; text-align: center; }
+        th { background: #f8fafc; }
+        .meta { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-top: 12px; }
+        .meta-item { background: #f8fafc; padding: 12px; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 14px; }
+        .meta-item span { display: block; }
+        .meta-item .label { color: #64748b; font-size: 12px; }
+        .meta-item .value { font-weight: 600; }
+        .totals { margin-top: 16px; display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 10px; }
+        .totals div { border: 1px solid #cbd5f5; background: #eff6ff; padding: 10px; border-radius: 8px; font-size: 13px; }
+      </style>
+    `
+
+    const headerHtml = `
+      <h1>جدول تغذية بوكس ${pricing.boxType.name} - ${pricing.variant.durationLabel}</h1>
+      <div class="meta">
+        <div class="meta-item">
+          <span class="label">المدة</span>
+          <span class="value">${pricing.variant.durationLabel} (${pricing.durationDays} يوم)</span>
+        </div>
+        <div class="meta-item">
+          <span class="label">إجمالي الدراي</span>
+          <span class="value">${formatNumber(pricing.consumption.dryGrams, 0)} جم</span>
+        </div>
+        <div class="meta-item">
+          <span class="label">إجمالي الويت</span>
+          <span class="value">${pricing.boxType.includeWetFood ? formatNumber(pricing.consumption.wetGrams, 0) + ' جم' : 'لا يوجد'}</span>
+        </div>
+        <div class="meta-item">
+          <span class="label">أكياس الويت المقترحة</span>
+          <span class="value">${pricing.boxType.includeWetFood ? formatNumber(pricing.consumption.wetUnitsSuggested, 0) : '0'}</span>
+        </div>
+        <div class="meta-item">
+          <span class="label">أكياس الويت المستخدمة</span>
+          <span class="value">${pricing.boxType.includeWetFood ? formatNumber(pricing.consumption.wetUnitsUsed, 0) : '0'}</span>
+        </div>
+      </div>
+
+      <div class="totals">
+        <div>السعر قبل الخصم: ${formatNumber(pricing.costs.totalCostBeforeDiscount + pricing.costs.deliveryCost, 2)} ${currency}</div>
+        <div>السعر بعد الخصم: ${formatNumber(pricing.costs.totalCostAfterDiscount + pricing.costs.deliveryCost, 2)} ${currency}</div>
+        <div>المبلغ اليومي: ${formatNumber(pricing.costs.perDay, 2)} ${currency}</div>
+      </div>
+    `
+
+    const tableHtml = `
+      <h2>تفاصيل الأيام</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>اليوم</th>
+            <th>النوع</th>
+            <th>السعرات</th>
+            <th>دراي (جم)</th>
+            <th>ويت (جم)</th>
+            <th>وحدات ويت</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${pricing.breakdown.map((day, index) => `
+            <tr>
+              <td>${index + 1}</td>
+              <td>${day.type === 'wet' ? 'ويت' : 'دراي'}</td>
+              <td>${formatNumber(day.der, 1)}</td>
+              <td>${formatNumber(day.dryGrams, 0)}</td>
+              <td>${formatNumber(day.wetGrams, 0)}</td>
+              <td>${formatNumber(day.units, 2)}</td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+    `
+
+    printWindow.document.write(`<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8" />${styles}</head><body>${headerHtml}${tableHtml}</body></html>`)
+    printWindow.document.close()
+    printWindow.focus()
+    setTimeout(() => {
+      printWindow.print()
+    }, 400)
+  }
+
   const handlePrintTable = () => {
     if (!tableRef.current) return
     const printWindow = window.open('', '_blank', 'width=1024,height=768')
@@ -180,8 +270,32 @@ const BoxPricingDisplay: React.FC<BoxPricingDisplayProps> = ({
                         )}
                       </div>
 
-                      {/* Cost breakdown */}
+                      {/* Consumption breakdown */}
                       <div className="space-y-2 text-sm mb-4">
+                        <div className="flex justify-between text-xs text-slate-500">
+                          <span>إجمالي الدراي:</span>
+                          <span>{formatNumber(pricing.consumption.dryGrams, 0)} جم</span>
+                        </div>
+                        {pricing.boxType.includeWetFood && (
+                          <>
+                            <div className="flex justify-between text-xs text-slate-500">
+                              <span>إجمالي الويت:</span>
+                              <span>{formatNumber(pricing.consumption.wetGrams, 0)} جم</span>
+                            </div>
+                            <div className="flex justify-between text-xs text-slate-500">
+                              <span>عدد أكياس الويت المقترحة:</span>
+                              <span>{formatNumber(pricing.consumption.wetUnitsSuggested, 0)}</span>
+                            </div>
+                            <div className="flex justify-between text-xs text-slate-500">
+                              <span>عدد أكياس الويت المستخدمة:</span>
+                              <span>{formatNumber(pricing.consumption.wetUnitsUsed, 0)}</span>
+                            </div>
+                          </>
+                        )}
+
+                        <div className="h-px bg-slate-200" />
+
+                        {/* Cost breakdown */}
                         {pricing.costs.dryCost > 0 && (
                           <div className="flex justify-between">
                             <span className="text-gray-600">دراي فود:</span>
@@ -220,6 +334,7 @@ const BoxPricingDisplay: React.FC<BoxPricingDisplayProps> = ({
                             <span>{formatNumber(pricing.costs.additionalCosts, 2)} {currency}</span>
                           </div>
                         )}
+
                         <div className="border-t pt-3 mt-3 space-y-2">
                           <div className="flex justify-between text-sm text-gray-700">
                             <span>السعر قبل الخصم:</span>
@@ -244,15 +359,24 @@ const BoxPricingDisplay: React.FC<BoxPricingDisplayProps> = ({
                         </div>
                       </div>
 
-                      {onSelectBox && (
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-3 border-t mt-3">
+                        {onSelectBox && (
+                          <Button
+                            onClick={() => onSelectBox(pricing)}
+                            className="w-full"
+                            variant="outline"
+                          >
+                            اختيار هذا البوكس
+                          </Button>
+                        )}
                         <Button
-                          onClick={() => onSelectBox(pricing)}
+                          variant="secondary"
+                          onClick={() => handlePrintBoxSchedule(pricing)}
                           className="w-full"
-                          variant="outline"
                         >
-                          اختيار هذا البوكس
+                          طباعة جدول هذا البوكس
                         </Button>
-                      )}
+                      </div>
                     </div>
                   ))}
                 </div>

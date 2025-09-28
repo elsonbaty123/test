@@ -229,6 +229,14 @@ export interface BoxPricing {
     totalWithDeliveryBeforeDiscount: number;
     totalWithDeliveryAfterDiscount: number;
   };
+  consumption: {
+    dryGrams: number;
+    wetGrams: number;
+    wetUnitsSuggested: number;
+    wetUnitsUsed: number;
+  };
+  durationDays: number;
+  breakdown: WeeklyDay[];
 }
 
 // Activity levels aligned with WSAVA/NRC typical ranges
@@ -373,6 +381,22 @@ function formatNumber(n: number, digits = 0) {
 function roundToNearestFive(n: number) {
   if (!Number.isFinite(n)) return 0
   return Math.round(n / 5) * 5
+}
+
+function buildVariantSchedule(weeklyData: WeeklyDay[], totalDays: number): WeeklyDay[] {
+  if (!weeklyData.length || totalDays <= 0) return []
+  const schedule: WeeklyDay[] = []
+  const fullWeeks = Math.floor(totalDays / weeklyData.length)
+  const remainder = totalDays % weeklyData.length
+
+  for (let i = 0; i < fullWeeks; i++) {
+    schedule.push(...weeklyData.map((day) => ({ ...day })))
+  }
+  if (remainder > 0) {
+    schedule.push(...weeklyData.slice(0, remainder).map((day) => ({ ...day })))
+  }
+
+  return schedule
 }
 
 function round1(n: number) {
@@ -800,16 +824,26 @@ export function useCatNutrition() {
         const packagingCostPerBox = packagingCostByVariant
 
         // Calculate dry food cost based on actual nutritional needs
-        const totalDryGrams = results.boxSummary.totalDryGrams * (totalDays / results.boxSummary.totalDays)
+        // Build schedule for this variant and derive consumption
+        const variantSchedule = buildVariantSchedule(results.weeklyData, totalDays)
+
+        const totalDryGramsRaw = variantSchedule.reduce((sum, day) => sum + day.dryGrams, 0)
+        const totalWetGramsRaw = variantSchedule.reduce((sum, day) => sum + day.wetGrams, 0)
+        const totalWetUnitsRaw = variantSchedule.reduce((sum, day) => sum + day.units, 0)
+
+        const totalDryGrams = boxType.includeDryFood ? totalDryGramsRaw : 0
+        const totalWetGrams = boxType.includeWetFood ? totalWetGramsRaw : 0
+        const suggestedWetUnits = boxType.includeWetFood ? Math.ceil(totalWetUnitsRaw) : 0
+        const wetUnitsUsed = boxType.includeWetFood
+          ? (boxBuilder.boxWetMode === 'fixed_total'
+            ? Math.max(0, Math.floor(boxBuilder.boxTotalUnits))
+            : suggestedWetUnits)
+          : 0
+
         const dryCost = boxType.includeDryFood ? (totalDryGrams / 1000) * priceDryPerKg : 0
 
-        // Calculate wet food cost based on box type configuration
-        let wetCost = 0
-        if (boxType.includeWetFood) {
-          const wetBagsPerWeek = boxType.wetFoodBagsPerWeek
-          const totalWetBags = wetBagsPerWeek * weeks
-          wetCost = totalWetBags * priceWetUnit
-        }
+        // Calculate wet food cost based on calculated units (auto) or manual mode
+        const wetCost = boxType.includeWetFood ? wetUnitsUsed * priceWetUnit : 0
 
         // Calculate treat cost
         const treatUnitsPerDuration = boxType.treatUnitsPerDuration || { week: 0, twoWeeks: 0, month: 0 }
@@ -871,12 +905,20 @@ export function useCatNutrition() {
             totalWithDeliveryBeforeDiscount: roundedTotalWithDeliveryBeforeDiscount,
             totalWithDeliveryAfterDiscount: roundedTotalWithDeliveryAfterDiscount,
           },
+          consumption: {
+            dryGrams: totalDryGrams,
+            wetGrams: totalWetGrams,
+            wetUnitsSuggested: suggestedWetUnits,
+            wetUnitsUsed,
+          },
+          durationDays: totalDays,
+          breakdown: variantSchedule,
         })
       }
     }
 
     return boxPricings
-  }, [pricing, boxTypeConfigs])
+  }, [pricing, boxTypeConfigs, boxBuilder])
 
   const applyPresetSelection = useCallback((boxId: string | undefined, variantDuration: 'week' | 'twoWeeks' | 'month' | undefined) => {
     if (!boxId || !variantDuration) return
