@@ -293,52 +293,68 @@ export const BREED_WEIGHT_RANGES: Record<string, BreedRange> = {
 const DAY_NAMES_AR = ['السبت','الأحد','الاثنين','الثلاثاء','الأربعاء','الخميس','الجمعة']
 
 // Box types configuration
-export const BOX_TYPES: BoxTypeConfig[] = [
+  export const BOX_TYPES: BoxTypeConfig[] = [
   {
-    id: 'mimi',
-    name: 'ميمي',
-    description: 'البوكس الاقتصادي - دراي فود فقط بدون إضافات',
-    includeDryFood: true,
-    includeWetFood: false,
-    wetFoodBagsPerWeek: 0,
-    includeTreat: false,
-    treatUnitsPerDuration: {
-      week: 0,
-      twoWeeks: 0,
-      month: 0,
-    },
-    enabledDurations: ['week', 'twoWeeks'],
+  id: 'mimi',
+  name: 'ميمي',
+  description: 'البوكس الاقتصادي - دراي فود فقط بدون إضافات',
+  includeDryFood: true,
+  includeWetFood: false,
+  wetFoodBagsPerWeek: 0,
+  includeTreat: false,
+  treatUnitsPerDuration: {
+  week: 0,
+  twoWeeks: 0,
+  month: 0,
+  },
+  enabledDurations: ['week', 'twoWeeks'],
   },
   {
-    id: 'toty',
-    name: 'توتي',
-    includeDryFood: true,
-    includeWetFood: true,
-    wetFoodBagsPerWeek: 2,
-    includeTreat: true,
-    treatUnitsPerDuration: {
-      week: 1,
-      twoWeeks: 1,
-      month: 2,
-    },
-    enabledDurations: ['week', 'twoWeeks'],
+  id: 'toty',
+  name: 'توتي',
+  description: 'دراي فود + ويت فود (كيس واحد/أسبوع) بدون تريت',
+  includeDryFood: true,
+  includeWetFood: true,
+  wetFoodBagsPerWeek: 1,
+  includeTreat: false,
+  treatUnitsPerDuration: {
+  week: 0,
+  twoWeeks: 0,
+  month: 0,
+  },
+  enabledDurations: ['week', 'twoWeeks'],
   },
   {
-    id: 'qatqoot_azam',
-    name: 'القطقوط الأعظم',
-    description: 'دراي فود + ثلاثة أكياس ويت لكل أسبوع + تريت',
-    includeDryFood: true,
-    includeWetFood: true,
-    wetFoodBagsPerWeek: 3,
-    includeTreat: true,
-    treatUnitsPerDuration: {
-      week: 2,
-      twoWeeks: 2,
-      month: 4,
-    },
-    enabledDurations: ['week', 'twoWeeks'],
+  id: 'qatty',
+  name: 'قطتى',
+  description: 'دراي فود + كيسين ويت لكل أسبوع + تريت واحد للبوكس',
+  includeDryFood: true,
+  includeWetFood: true,
+  wetFoodBagsPerWeek: 2,
+  includeTreat: true,
+  treatUnitsPerDuration: {
+  week: 1,
+  twoWeeks: 1,
+  month: 1,
   },
-]
+  enabledDurations: ['week', 'twoWeeks'],
+  },
+    {
+      id: 'qatqoot_azam',
+      name: 'القطقوط الأعظم',
+      description: 'دراي فود + ثلاثة أكياس ويت لكل أسبوع + تريتين للبوكس',
+      includeDryFood: true,
+      includeWetFood: true,
+      wetFoodBagsPerWeek: 3,
+      includeTreat: true,
+      treatUnitsPerDuration: {
+        week: 2,
+        twoWeeks: 2,
+        month: 2,
+      },
+      enabledDurations: ['week', 'twoWeeks'],
+    },
+  ]
 
 export const BOX_VARIANTS: BoxVariant[] = [
   {
@@ -610,6 +626,8 @@ export function useCatNutrition() {
         next[key] = toNumber(value, prev[key as any] as any)
       } else if (key === 'ageUnit' || key === 'lifeStage' || key === 'sex' || key === 'neuter' || key === 'activity' || key === 'weightGoal' || key === 'specialCond' || key === 'breed') {
         next[key] = value
+      } else if (key === 'specialDetails') {
+        next[key] = value && typeof value === 'object' ? { ...value } : {}
       } else {
         next[key] = String(value)
       }
