@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 
 import { useCatNutrition, BoxVariant as NutritionBoxVariant, BoxPricing as NutritionBoxPricing } from '@/hooks/useCatNutrition'
 import { Button } from '@/components/ui/button'
@@ -55,7 +55,48 @@ export default function CatNutritionCalculator() {
     bcsSuggestionReasonLive,
     BOX_TYPES,
     BOX_VARIANTS,
+    applyPresetSelection,
   } = useCatNutrition()
+
+  const selectedPresetBox = useMemo(() => {
+    if (boxBuilder.presetBoxId) {
+      const found = BOX_TYPES.find((box) => box.id === boxBuilder.presetBoxId)
+      if (found) return found
+    }
+    return BOX_TYPES[0]
+  }, [BOX_TYPES, boxBuilder.presetBoxId])
+
+  const availableVariants = useMemo(() => {
+    if (!selectedPresetBox) return BOX_VARIANTS
+    if (!selectedPresetBox.enabledDurations || selectedPresetBox.enabledDurations.length === 0) {
+      return BOX_VARIANTS
+    }
+    return BOX_VARIANTS.filter((variant) => selectedPresetBox.enabledDurations.includes(variant.duration))
+  }, [BOX_VARIANTS, selectedPresetBox])
+
+  const currentPresetBoxId = selectedPresetBox?.id ?? ''
+  const currentPresetVariantDuration = (boxBuilder.presetVariantDuration as 'week' | 'twoWeeks' | 'month' | undefined) ?? (availableVariants[0]?.duration ?? 'week')
+
+  const handlePresetBoxChange = (nextBoxId: string) => {
+    handleBoxBuilderChange('presetBoxId', nextBoxId)
+    const changeTargetBox = BOX_TYPES.find((box) => box.id === nextBoxId)
+    let resolvedDuration: 'week' | 'twoWeeks' | 'month' = currentPresetVariantDuration
+    if (changeTargetBox?.enabledDurations && changeTargetBox.enabledDurations.length > 0) {
+      if (!changeTargetBox.enabledDurations.includes(resolvedDuration)) {
+        resolvedDuration = changeTargetBox.enabledDurations[0]
+      }
+    }
+    handleBoxBuilderChange('presetVariantDuration', resolvedDuration)
+    applyPresetSelection(nextBoxId, resolvedDuration)
+  }
+
+  const handlePresetVariantChange = (duration: 'week' | 'twoWeeks' | 'month') => {
+    handleBoxBuilderChange('presetVariantDuration', duration)
+    const targetBoxId = boxBuilder.presetBoxId ?? selectedPresetBox?.id
+    if (targetBoxId) {
+      applyPresetSelection(targetBoxId, duration)
+    }
+  }
 
   const [isSaving, setIsSaving] = useState(false)
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'success' | 'error'>('idle')
@@ -1270,6 +1311,43 @@ export default function CatNutritionCalculator() {
             <CardDescription>احسب ما تحتاجه لفترة معينة</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
+            <div className="space-y-3">
+              <Label>اختيار البوكس الجاهز</Label>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <Select value={currentPresetBoxId} onValueChange={handlePresetBoxChange}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="اختر البوكس" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {BOX_TYPES.map((box) => (
+                      <SelectItem key={box.id} value={box.id}>
+                        {box.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+
+                <Select
+                  value={currentPresetVariantDuration}
+                  onValueChange={(value) => handlePresetVariantChange(value as 'week' | 'twoWeeks' | 'month')}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="اختر المدة" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {availableVariants.map((variant) => (
+                      <SelectItem key={variant.duration} value={variant.duration}>
+                        {variant.durationLabel}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <p className="text-xs text-gray-500">
+                اختيارك يضبط نوع البوكس وعدد الأيام تلقائياً حسب المدة المختارة.
+              </p>
+            </div>
+
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <div className="space-y-2">
                 <Label>نوع البوكس</Label>

@@ -52,6 +52,8 @@ interface BoxBuilder {
   boxSplitDays: number;
   boxTotalUnits: number;
   boxCount?: number;
+  presetBoxId?: string;
+  presetVariantDuration?: 'week' | 'twoWeeks' | 'month';
 }
 
 interface Pricing {
@@ -485,6 +487,8 @@ export function useCatNutrition() {
     boxWetMode: 'auto_total',
     boxSplitDays: 7,
     boxTotalUnits: 0,
+    presetBoxId: 'mimi',
+    presetVariantDuration: 'month',
   })
 
   const [boxTypeConfigs, setBoxTypeConfigs] = useState<BoxTypeConfig[]>(() => BOX_TYPES.map(box => ({ ...box })))
@@ -873,6 +877,21 @@ export function useCatNutrition() {
 
     return boxPricings
   }, [pricing, boxTypeConfigs])
+
+  const applyPresetSelection = useCallback((boxId: string | undefined, variantDuration: 'week' | 'twoWeeks' | 'month' | undefined) => {
+    if (!boxId || !variantDuration) return
+    const selectedBox = boxTypeConfigs.find((box) => box.id === boxId)
+    const selectedVariant = BOX_VARIANTS.find((variant) => variant.duration === variantDuration)
+    if (!selectedBox || !selectedVariant) return
+
+    setBoxBuilder((prev) => ({
+      ...prev,
+      boxType: variantDuration === 'week' ? 'weekly' : variantDuration === 'twoWeeks' ? 'custom' : 'monthly30',
+      customDays: variantDuration === 'twoWeeks' ? 14 : variantDuration === 'week' ? 7 : 30,
+      presetBoxId: boxId,
+      presetVariantDuration: variantDuration,
+    }))
+  }, [boxTypeConfigs])
 
   const calcRER = useCallback((weightKg: number) => {
     // NRC 2006 - Chapter 2: Energy Requirements
@@ -1380,5 +1399,6 @@ export function useCatNutrition() {
     bcsSuggestionReasonLive,
     BOX_TYPES,
     BOX_VARIANTS,
+    applyPresetSelection,
   }
 }
