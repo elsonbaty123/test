@@ -294,6 +294,7 @@ const DAY_NAMES_AR = ['السبت','الأحد','الاثنين','الثلاثا
 
 // Box types configuration
   export const BOX_TYPES: BoxTypeConfig[] = [
+<<<<<<< HEAD
   {
   id: 'mimi',
   name: 'ميمي',
@@ -336,6 +337,52 @@ const DAY_NAMES_AR = ['السبت','الأحد','الاثنين','الثلاثا
   week: 1,
   twoWeeks: 1,
   month: 1,
+=======
+    {
+      id: 'mimi',
+      name: 'ميمي',
+      description: 'البوكس الاقتصادي - دراي فود فقط بدون إضافات',
+      includeDryFood: true,
+      includeWetFood: false,
+      wetFoodBagsPerWeek: 0,
+      includeTreat: false,
+      treatUnitsPerDuration: {
+        week: 0,
+        twoWeeks: 0,
+        month: 0,
+      },
+      enabledDurations: ['week', 'twoWeeks'],
+    },
+    {
+      id: 'toty',
+      name: 'توتي',
+      description: 'دراي فود + ويت فود (كيس واحد/أسبوع) + تريت',
+      includeDryFood: true,
+      includeWetFood: true,
+      wetFoodBagsPerWeek: 2,
+      includeTreat: true,
+      treatUnitsPerDuration: {
+        week: 1,
+        twoWeeks: 1,
+        month: 2,
+      },
+      enabledDurations: ['week', 'twoWeeks'],
+    },
+    {
+      id: 'qatqoot_azam',
+      name: 'القطقوط الأعظم',
+      description: 'دراي فود + ثلاثة أكياس ويت لكل أسبوع + تريت',
+      includeDryFood: true,
+    includeWetFood: true,
+    wetFoodBagsPerWeek: 3,
+    includeTreat: true,
+    treatUnitsPerDuration: {
+      week: 2,
+      twoWeeks: 2,
+      month: 4,
+    },
+    enabledDurations: ['week', 'twoWeeks'],
+>>>>>>> 284ccce3a4d44a9aad8e0567f61f473646ea34dc
   },
   enabledDurations: ['week', 'twoWeeks'],
   },
