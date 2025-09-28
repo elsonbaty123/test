@@ -368,6 +368,11 @@ function formatNumber(n: number, digits = 0) {
   return n.toFixed(digits)
 }
 
+function roundToNearestFive(n: number) {
+  if (!Number.isFinite(n)) return 0
+  return Math.round(n / 5) * 5
+}
+
 function round1(n: number) {
   return Math.round(n * 10) / 10
 }
@@ -831,6 +836,15 @@ export function useCatNutrition() {
         const perDay = totalDays > 0 ? (totalCostWithDelivery / totalDays) : 0
         const savings = discountAmount
 
+        const roundedTotalCostBeforeDiscount = roundToNearestFive(totalCostBeforeDiscount)
+        const roundedTotalCostAfterDiscount = roundToNearestFive(totalCostAfterDiscount)
+        const roundedTotalWithDeliveryBeforeDiscount = roundToNearestFive(totalWithDeliveryBeforeDiscount)
+        const roundedTotalWithDeliveryAfterDiscount = roundToNearestFive(totalWithDeliveryAfterDiscount)
+        const roundedTotalCostWithDelivery = roundedTotalWithDeliveryAfterDiscount
+        const roundedDiscountAmount = Math.max(0, roundedTotalCostBeforeDiscount - roundedTotalCostAfterDiscount)
+        const roundedSavings = Math.max(0, roundedTotalWithDeliveryBeforeDiscount - roundedTotalWithDeliveryAfterDiscount)
+        const roundedPerDay = totalDays > 0 ? roundedTotalCostWithDelivery / totalDays : 0
+
         boxPricings.push({
           boxType,
           variant,
@@ -842,16 +856,16 @@ export function useCatNutrition() {
             additionalCosts: additionalCostsTotal,
             totalCostBeforeProfit,
             profitAmount,
-            totalCostWithProfit,
-            discountAmount,
-            totalCostBeforeDiscount,
-            totalCostAfterDiscount,
-            totalCostWithDelivery,
+            totalCostWithProfit: roundedTotalCostBeforeDiscount,
+            discountAmount: roundedDiscountAmount,
+            totalCostBeforeDiscount: roundedTotalCostBeforeDiscount,
+            totalCostAfterDiscount: roundedTotalCostAfterDiscount,
+            totalCostWithDelivery: roundedTotalCostWithDelivery,
             deliveryCost,
-            perDay,
-            savings,
-            totalWithDeliveryBeforeDiscount,
-            totalWithDeliveryAfterDiscount,
+            perDay: roundedPerDay,
+            savings: roundedSavings,
+            totalWithDeliveryBeforeDiscount: roundedTotalWithDeliveryBeforeDiscount,
+            totalWithDeliveryAfterDiscount: roundedTotalWithDeliveryAfterDiscount,
           },
         })
       }
