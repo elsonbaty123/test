@@ -237,6 +237,15 @@ export interface BoxPricing {
   };
   durationDays: number;
   breakdown: WeeklyDay[];
+  planDays: Array<{
+    dayNumber: number;
+    dayLabel: string;
+    type: WeeklyDay['type'];
+    der: number;
+    dryGrams: number;
+    wetGrams: number;
+    wetUnits: number;
+  }>;
 }
 
 // Activity levels aligned with WSAVA/NRC typical ranges
@@ -826,6 +835,15 @@ export function useCatNutrition() {
         // Calculate dry food cost based on actual nutritional needs
         // Build schedule for this variant and derive consumption
         const variantSchedule = buildVariantSchedule(results.weeklyData, totalDays)
+        const planDays = variantSchedule.map((day, idx) => ({
+          dayNumber: idx + 1,
+          dayLabel: results.weeklyData[idx % results.weeklyData.length].day,
+          type: day.type,
+          der: day.der,
+          dryGrams: day.dryGrams,
+          wetGrams: day.wetGrams,
+          wetUnits: day.units,
+        }))
 
         const totalDryGramsRaw = variantSchedule.reduce((sum, day) => sum + day.dryGrams, 0)
         const totalWetGramsRaw = variantSchedule.reduce((sum, day) => sum + day.wetGrams, 0)
@@ -833,7 +851,9 @@ export function useCatNutrition() {
 
         const totalDryGrams = boxType.includeDryFood ? totalDryGramsRaw : 0
         const totalWetGrams = boxType.includeWetFood ? totalWetGramsRaw : 0
-        const suggestedWetUnits = boxType.includeWetFood ? Math.ceil(totalWetUnitsRaw) : 0
+        const configWetUnits = boxType.includeWetFood ? Math.ceil(boxType.wetFoodBagsPerWeek * weeks) : 0
+        const scheduleWetUnits = boxType.includeWetFood ? Math.ceil(totalWetUnitsRaw) : 0
+        const suggestedWetUnits = boxType.includeWetFood ? Math.max(configWetUnits, scheduleWetUnits) : 0
         const wetUnitsUsed = boxType.includeWetFood
           ? (boxBuilder.boxWetMode === 'fixed_total'
             ? Math.max(0, Math.floor(boxBuilder.boxTotalUnits))
@@ -913,6 +933,7 @@ export function useCatNutrition() {
           },
           durationDays: totalDays,
           breakdown: variantSchedule,
+          planDays,
         })
       }
     }
