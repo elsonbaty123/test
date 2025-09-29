@@ -117,6 +117,11 @@ export const BoxLabelPrintButton: React.FC<BoxLabelPrintButtonProps> = ({
           },
           payload: {
             boxSummary,
+            results,
+            catData,
+            foodData,
+            pricing,
+            costs,
           }
         })
       })
