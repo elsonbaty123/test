@@ -137,6 +137,10 @@ export default function CatNutritionCalculator() {
     applyPresetSelection(targetBoxId, targetDuration)
   }
 
+  const handleAutoSyncToggle = (checked: boolean) => {
+    setAutoSyncSelection(checked)
+  }
+
   // Calculate box pricings automatically when data is available
   const boxPricings = useMemo(() => {
     if (catData.name && catData.weight && foodData.dry100 && pricing.priceDryPerKg && pricing.treatPrice) {
