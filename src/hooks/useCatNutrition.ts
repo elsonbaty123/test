@@ -393,6 +393,40 @@ function roundToNearestFive(n: number) {
   return Math.round(n / 5) * 5
 }
 
+function selectEvenlyDistributedIndices(total: number, count: number, preferred: number[] = []): number[] {
+  if (count <= 0 || total <= 0) return []
+  const result: number[] = []
+  const used = new Set<number>()
+  for (const idx of preferred) {
+    if (result.length >= count) break
+    if (idx >= 0 && idx < total && !used.has(idx)) {
+      result.push(idx)
+      used.add(idx)
+    }
+  }
+  if (result.length >= count) return result.slice(0, count)
+  const remaining = count - result.length
+  const step = total / Math.max(remaining, 1)
+  let cursor = 0
+  while (result.length < count) {
+    let idx = Math.min(total - 1, Math.floor(cursor))
+    if (used.has(idx)) {
+      let forward = idx
+      while (forward < total && used.has(forward)) forward++
+      if (forward >= total) {
+        forward = 0
+        while (forward < total && used.has(forward)) forward++
+        if (forward >= total) break
+      }
+      idx = forward
+    }
+    result.push(idx)
+    used.add(idx)
+    cursor += step
+  }
+  return result.slice(0, count)
+}
+
 function buildVariantSchedule(weeklyData: WeeklyDay[], totalDays: number): WeeklyDay[] {
   if (!weeklyData.length || totalDays <= 0) return []
   const schedule: WeeklyDay[] = []
@@ -840,16 +874,7 @@ export function useCatNutrition() {
 
         // Calculate dry food cost based on actual nutritional needs
         // Build schedule for this variant and derive consumption
-        const variantSchedule = buildVariantSchedule(results.weeklyData, totalDays)
-        const planDays = variantSchedule.map((day, idx) => ({
-          dayNumber: idx + 1,
-          dayLabel: results.weeklyData[idx % results.weeklyData.length].day,
-          type: day.type,
-          der: day.der,
-          dryGrams: day.dryGrams,
-          wetGrams: day.wetGrams,
-          wetUnits: day.units,
-        }))
+        const baseSchedule = buildVariantSchedule(results.weeklyData, totalDays)
 
         const totalDryGramsRaw = variantSchedule.reduce((sum, day) => sum + day.dryGrams, 0)
         const totalWetGramsRaw = variantSchedule.reduce((sum, day) => sum + day.wetGrams, 0)
