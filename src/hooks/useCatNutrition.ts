@@ -540,6 +540,8 @@ export function useCatNutrition() {
     enabledDurations: [...box.enabledDurations],
   })))
 
+  const [autoSyncSelection, setAutoSyncSelection] = useState(true)
+
   const [pricing, setPricing] = useState<Pricing>({
     currency: 'EGP',
     priceDryPerKg: '0',
@@ -804,6 +806,7 @@ export function useCatNutrition() {
   const calculateBoxPricing = useCallback((results: Results): BoxPricing[] => {
     if (!results) return []
 
+
     const boxPricings: BoxPricing[] = []
     const priceDryPerKg = toNumber(pricing.priceDryPerKg, 0)
     const priceWetUnit = toNumber(pricing.priceWetUnit, 0)
@@ -852,8 +855,6 @@ export function useCatNutrition() {
         const totalWetGramsRaw = variantSchedule.reduce((sum, day) => sum + day.wetGrams, 0)
         const totalWetUnitsRaw = variantSchedule.reduce((sum, day) => sum + day.units, 0)
 
-        const totalDryGrams = boxType.includeDryFood ? totalDryGramsRaw : 0
-        const totalWetGrams = boxType.includeWetFood ? totalWetGramsRaw : 0
         const configWetUnits = boxType.includeWetFood ? Math.ceil(boxType.wetFoodBagsPerWeek * weeks) : 0
         const scheduleWetUnits = boxType.includeWetFood ? Math.ceil(totalWetUnitsRaw) : 0
         const suggestedWetUnits = boxType.includeWetFood ? Math.max(configWetUnits, scheduleWetUnits) : 0
@@ -862,6 +863,26 @@ export function useCatNutrition() {
             ? Math.max(0, Math.floor(boxBuilder.boxTotalUnits))
             : suggestedWetUnits)
           : 0
+
+        const wetUnitsDelta = boxType.includeWetFood ? (wetUnitsUsed - totalWetUnitsRaw) : 0
+        const wetUnitGramsValue = Math.max(1, toNumber(foodData.wetUnitGrams, 85))
+        const wetKcalPerUnitValue = foodData.wetMode === 'perUnit'
+          ? Math.max(1, toNumber(foodData.wetKcalPerUnit, 85))
+          : (Math.max(1, toNumber(foodData.wet100, 80)) * wetUnitGramsValue) / 100
+        const dryKcalPerGram = boxType.includeDryFood ? toNumber(foodData.dry100, 380) / 100 : 0
+
+        let adjustedDryGrams = boxType.includeDryFood ? totalDryGramsRaw : 0
+        if (boxType.includeDryFood && dryKcalPerGram > 0) {
+          adjustedDryGrams = Math.max(0, totalDryGramsRaw - (wetUnitsDelta * wetKcalPerUnitValue) / dryKcalPerGram)
+        }
+
+        let adjustedWetGrams = boxType.includeWetFood ? totalWetGramsRaw : 0
+        if (boxType.includeWetFood) {
+          adjustedWetGrams = Math.max(0, totalWetGramsRaw + wetUnitsDelta * wetUnitGramsValue)
+        }
+
+        const totalDryGrams = boxType.includeDryFood ? adjustedDryGrams : 0
+        const totalWetGrams = boxType.includeWetFood ? adjustedWetGrams : 0
 
         const dryCost = boxType.includeDryFood ? (totalDryGrams / 1000) * priceDryPerKg : 0
 
@@ -942,7 +963,7 @@ export function useCatNutrition() {
     }
 
     return boxPricings
-  }, [pricing, boxTypeConfigs, boxBuilder])
+  }, [pricing, boxTypeConfigs, boxBuilder, foodData, weeklyPlan])
 
   const applyPresetSelection = useCallback((boxId: string | undefined, variantDuration: 'week' | 'twoWeeks' | 'month' | undefined) => {
     if (!boxId || !variantDuration) return
@@ -950,14 +971,65 @@ export function useCatNutrition() {
     const selectedVariant = BOX_VARIANTS.find((variant) => variant.duration === variantDuration)
     if (!selectedBox || !selectedVariant) return
 
-    setBoxBuilder((prev) => ({
-      ...prev,
-      boxType: variantDuration === 'week' ? 'weekly' : variantDuration === 'twoWeeks' ? 'custom' : 'monthly30',
-      customDays: variantDuration === 'twoWeeks' ? 14 : variantDuration === 'week' ? 7 : 30,
-      presetBoxId: boxId,
-      presetVariantDuration: variantDuration,
-    }))
-  }, [boxTypeConfigs])
+    setBoxBuilder((prev) => {
+      const nextBoxType = variantDuration === 'week' ? 'weekly' : variantDuration === 'twoWeeks' ? 'custom' : 'monthly30'
+      const nextCustomDays = variantDuration === 'twoWeeks' ? 14 : variantDuration === 'week' ? 7 : 30
+      const defaultWetUnits = selectedBox.includeWetFood
+        ? Math.ceil(selectedBox.wetFoodBagsPerWeek * selectedVariant.multiplier)
+        : 0
+
+      return {
+        ...prev,
+        boxType: nextBoxType,
+        customDays: nextCustomDays,
+        presetBoxId: boxId,
+        presetVariantDuration: variantDuration,
+        boxWetMode: autoSyncSelection ? 'auto_total' : prev.boxWetMode,
+        boxTotalUnits: autoSyncSelection ? defaultWetUnits : prev.boxTotalUnits,
+      }
+    })
+
+    if (autoSyncSelection) {
+      setWeeklyPlan((prev) => {
+        const wetDaysCount = selectedBox.includeWetFood
+          ? Math.min(7, Math.max(0, Math.round(selectedBox.wetFoodBagsPerWeek)))
+          : 0
+        const wetDays = Array(7).fill(false)
+        if (wetDaysCount > 0) {
+          const step = 7 / wetDaysCount
+          let assigned = 0
+          let idx = 0
+          while (assigned < wetDaysCount && idx < wetDays.length) {
+            const targetIndex = Math.min(6, Math.floor(idx * step))
+            if (!wetDays[targetIndex]) {
+              wetDays[targetIndex] = true
+              assigned++
+            }
+            idx++
+          }
+          let probe = 0
+          while (assigned < wetDaysCount && probe < wetDays.length) {
+            if (!wetDays[probe]) {
+              wetDays[probe] = true
+              assigned++
+            }
+            probe++
+          }
+        }
+
+        const normalizedWetMealIndex = selectedBox.includeWetFood
+          ? Math.min(Math.max(prev.wetMealIndex || 1, 1), Math.max(1, catData.meals))
+          : prev.wetMealIndex
+
+        return {
+          ...prev,
+          wetDaysCount,
+          wetDays,
+          wetMealIndex: normalizedWetMealIndex,
+        }
+      })
+    }
+  }, [autoSyncSelection, boxTypeConfigs, catData.meals, BOX_VARIANTS])
 
   const calcRER = useCallback((weightKg: number) => {
     // NRC 2006 - Chapter 2: Energy Requirements
@@ -1466,5 +1538,7 @@ export function useCatNutrition() {
     BOX_TYPES,
     BOX_VARIANTS,
     applyPresetSelection,
+    autoSyncSelection,
+    setAutoSyncSelection,
   }
 }

@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Switch } from '@/components/ui/switch'
 import { CommandDialog, CommandInput, CommandList, CommandEmpty, CommandGroup, CommandItem } from '@/components/ui/command'
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -56,6 +57,8 @@ export default function CatNutritionCalculator() {
     BOX_TYPES,
     BOX_VARIANTS,
     applyPresetSelection,
+    autoSyncSelection,
+    setAutoSyncSelection,
   } = useCatNutrition()
 
   const selectedPresetBox = useMemo(() => {
@@ -96,6 +99,23 @@ export default function CatNutritionCalculator() {
     if (targetBoxId) {
       applyPresetSelection(targetBoxId, duration)
     }
+  }
+
+  const handleAutoSyncToggle = (checked: boolean) => {
+    setAutoSyncSelection(checked)
+    if (checked) {
+      const targetBoxId = boxBuilder.presetBoxId ?? selectedPresetBox?.id
+      const targetDuration = (boxBuilder.presetVariantDuration as 'week' | 'twoWeeks' | 'month' | undefined) ?? currentPresetVariantDuration
+      if (targetBoxId) {
+        applyPresetSelection(targetBoxId, targetDuration)
+      }
+    }
+  }
+
+  const handleSelectPricingBox = (boxPricing: NutritionBoxPricing) => {
+    const targetBoxId = boxPricing.boxType.id
+    const targetDuration = boxPricing.variant.duration
+    applyPresetSelection(targetBoxId, targetDuration)
   }
 
   const [isSaving, setIsSaving] = useState(false)
@@ -559,9 +579,7 @@ export default function CatNutritionCalculator() {
             boxPricings={calculateBoxPricing(results)}
             currency={pricing.currency}
             formatNumber={formatNumber}
-            onSelectBox={(boxPricing) => {
-              console.log('Selected box:', boxPricing)
-            }}
+            onSelectBox={handleSelectPricingBox}
           />
         )}
 
@@ -1173,7 +1191,9 @@ export default function CatNutritionCalculator() {
         <Card>
           <CardHeader>
             <CardTitle>التخطيط الأسبوعي</CardTitle>
-            <CardDescription>حدد الأيام التي ستُعطى فيها طعام ويت</CardDescription>
+            <CardDescription>
+              اضبط أيام الويت المتوقعة حسب نوع البوكس المختار. يمكنك تعطيل التزامن التلقائي من إعدادات صانع البوكسات.
+            </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -1187,15 +1207,22 @@ export default function CatNutritionCalculator() {
                     value={weeklyPlan.wetDaysCount}
                     onChange={(e) => handleWeeklyPlanChange('wetDaysCount', parseInt(e.target.value))}
                     className="w-20"
+                    disabled={autoSyncSelection}
                   />
                   <Button
                     variant="outline"
                     onClick={() => autoDistributeWetDays(weeklyPlan.wetDaysCount)}
                     size="sm"
+                    disabled={autoSyncSelection}
                   >
                     توزيع تلقائي
                   </Button>
                 </div>
+                {autoSyncSelection && (
+                  <p className="text-xs text-gray-500">
+                    يتم ضبط الأيام تلقائياً حسب البوكس المختار. عطّل التزامن من صانع البوكسات للتعديل اليدوي.
+                  </p>
+                )}
               </div>
 
               <div className="space-y-2">
@@ -1203,6 +1230,7 @@ export default function CatNutritionCalculator() {
                 <Select 
                   value={weeklyPlan.wetMealIndex.toString()} 
                   onValueChange={(value) => handleWeeklyPlanChange('wetMealIndex', parseInt(value))}
+                  disabled={autoSyncSelection}
                 >
                   <SelectTrigger>
                     <SelectValue />
@@ -1227,6 +1255,7 @@ export default function CatNutritionCalculator() {
                       id={`day-${index}`}
                       checked={weeklyPlan.wetDays[index]}
                       onCheckedChange={() => handleWetDayToggle(index)}
+                      disabled={autoSyncSelection}
                     />
                     <Label htmlFor={`day-${index}`} className="text-sm">
                       {day}
@@ -1346,6 +1375,16 @@ export default function CatNutritionCalculator() {
               <p className="text-xs text-gray-500">
                 اختيارك يضبط نوع البوكس وعدد الأيام تلقائياً حسب المدة المختارة.
               </p>
+            </div>
+
+            <div className="grid grid-cols-1 gap-4">
+              <div className="flex items-center justify-between rounded-lg border border-slate-200 bg-white p-3">
+                <div>
+                  <Label className="text-sm font-medium">مزامنة تلقائية مع البوكس المختار</Label>
+                  <p className="text-xs text-gray-500">عند التفعيل، يتم ضبط جدول الويت وصانع البوكس تلقائياً حسب البوكس المختار.</p>
+                </div>
+                <Switch checked={autoSyncSelection} onCheckedChange={handleAutoSyncToggle} />
+              </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
