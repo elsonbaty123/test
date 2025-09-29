@@ -326,8 +326,8 @@ export const BOX_TYPES: BoxTypeConfig[] = [
     enabledDurations: ['week', 'twoWeeks'],
   },
   {
-    id: 'qatqoot_azam',
-    name: 'القطقوط الأعظم',
+    id: 'qatty',
+    name: 'قطتى',
     description: 'دراي فود + ويت فود (كيسين/أسبوع) + تريت',
     includeDryFood: true,
     includeWetFood: true,
@@ -341,12 +341,27 @@ export const BOX_TYPES: BoxTypeConfig[] = [
     enabledDurations: ['week', 'twoWeeks'],
   },
   {
-    id: 'qatqoot_azam_premium',
-    name: 'القطقوط الأعظم - بريميم',
+    id: 'qatqoot_azam',
+    name: 'القطقوط الأعظم',
     description: 'دراي فود + ويت فود (3 أكياس/أسبوع) + تريت',
     includeDryFood: true,
     includeWetFood: true,
     wetFoodBagsPerWeek: 3,
+    includeTreat: true,
+    treatUnitsPerDuration: {
+      week: 1,
+      twoWeeks: 1,
+      month: 1,
+    },
+    enabledDurations: ['week', 'twoWeeks'],
+  },
+  {
+    id: 'qatqoot_azam_premium',
+    name: 'القطقوط الأعظم - بريميم',
+    description: 'دراي فود + ويت فود (4 أكياس/أسبوع) + تريتين',
+    includeDryFood: true,
+    includeWetFood: true,
+    wetFoodBagsPerWeek: 4,
     includeTreat: true,
     treatUnitsPerDuration: {
       week: 2,
@@ -594,10 +609,11 @@ export function useCatNutrition() {
     discountPercentage: '0',
     paidAmount: '0',
     boxContents: {
-      mimi: 'دراي فود فقط (بدون ويت أو تريت)',
-      toty: 'دراي فود + كيس ويت واحد لكل أسبوع (بدون تريت)',
-      qatty: 'دراي فود + كيسين ويت لكل أسبوع + تريت واحد للبوكس',
-      qatqoot_azam: 'دراي فود + ثلاثة أكياس ويت لكل أسبوع + تريتين للبوكس',
+      mimi: 'دراي فود فقط + تريت هدية',
+      toty: 'دراي فود + كيس ويت واحد/أسبوع + تريت',
+      qatty: 'دراي فود + كيسين ويت/أسبوع + تريت',
+      qatqoot_azam: 'دراي فود + 3 أكياس ويت/أسبوع + تريت',
+      qatqoot_azam_premium: 'دراي فود + 4 أكياس ويت/أسبوع + تريتين',
     },
   })
 

@@ -85,6 +85,9 @@ function selectEvenlyDistributedIndices(total: number, count: number): number[] 
   } else if (count === 3) {
     // For 3 wet days, distribute evenly
     result.push(1, 3, 5) // Monday, Wednesday, Friday
+  } else if (count === 4) {
+    // For 4 wet days, distribute evenly
+    result.push(0, 2, 4, 6) // Saturday, Monday, Wednesday, Friday
   } else {
     // For more days, use mathematical distribution
     const step = (total - 1) / (count - 1)
@@ -190,12 +193,20 @@ export function calculateBoxSpecificNutrition(
     const dryKcalPerMeal = new Array(meals).fill(0)
     
     if (isWet) {
-      // في أيام الويت فود، وجبة واحدة ويت والباقي دراي
-      wetKcalPerMeal[wetMealIndex - 1] = perMealTarget
+      // في أيام الويت فود: وجبة واحدة ويت (كيس واحد فقط) والباقي دراي
+      // استخدم وحدة واحدة فقط من الويت فود (كيس واحد)
+      const wetKcalPerUnit = foodData.wetMode === 'perUnit'
+        ? Math.max(1, toNumber(foodData.wetKcalPerUnit, 80))
+        : (Math.max(1, toNumber(foodData.wet100, 80)) * Math.max(1, toNumber(foodData.wetUnitGrams, 85))) / 100
+      
+      wetKcalPerMeal[wetMealIndex - 1] = wetKcalPerUnit // وحدة واحدة فقط
+      
+      // الباقي من السعرات يأتي من الدراي فود
+      const remainingKcal = der - wetKcalPerUnit
+      const dryKcalPerMealAmount = remainingKcal / meals
+      
       for (let j = 0; j < meals; j++) {
-        if (j !== wetMealIndex - 1) {
-          dryKcalPerMeal[j] = perMealTarget
-        }
+        dryKcalPerMeal[j] = dryKcalPerMealAmount
       }
     } else {
       // في أيام الدراي فقط، كل الوجبات دراي
@@ -215,10 +226,8 @@ export function calculateBoxSpecificNutrition(
     const wetGramsTotal = totalWetKcal / Math.max(1e-6, wetKcalPerGram)
     const dryGramsTotal = totalDryKcal * dryGramsPerKcal
     
-    let dayUnits = 0
-    if (wetGramsTotal > 0 && wetUnitGrams > 0) {
-      dayUnits = wetGramsTotal / wetUnitGrams
-    }
+    // في أيام الويت فود، استخدم وحدة واحدة فقط (كيس واحد)
+    let dayUnits = isWet ? 1 : 0
     
     // Create meals breakdown
     const mealsBreakdown = wetKcalPerMeal.map((wetKcal, idx) => {
@@ -226,10 +235,8 @@ export function calculateBoxSpecificNutrition(
       const wetGramsForMeal = wetKcal / Math.max(1e-6, wetKcalPerGram)
       const dryGramsForMeal = dryKcal * dryGramsPerKcal
       
-      let wetUnitsForMeal = 0
-      if (wetGramsForMeal > 0 && wetUnitGrams > 0) {
-        wetUnitsForMeal = wetGramsForMeal / wetUnitGrams
-      }
+      // في وجبة الويت فود، استخدم وحدة واحدة فقط
+      let wetUnitsForMeal = (wetKcal > 0 && isWet && idx === wetMealIndex - 1) ? 1 : 0
       
       return {
         mealIndex: idx + 1,
