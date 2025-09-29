@@ -121,7 +121,6 @@ export default function CatNutritionCalculator() {
       }
     }
   }
-{{ ... }}
 
   const handleSelectPricingBox = (boxPricing: NutritionBoxPricing) => {
     const targetBoxId = boxPricing.boxType.id
