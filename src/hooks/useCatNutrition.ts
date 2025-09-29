@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useCallback, useMemo } from 'react'
+import { calculateBoxSpecificNutrition } from '@/utils/boxCalculations'
 
 interface CatData {
   name: string;
@@ -872,9 +873,17 @@ export function useCatNutrition() {
 
         const packagingCostPerBox = packagingCostByVariant
 
-        // Calculate dry food cost based on actual nutritional needs
-        // Build schedule for this variant and derive consumption
-        const variantSchedule = buildVariantSchedule(results.weeklyData, totalDays)
+        // Calculate nutrition specifically for this box type
+        const boxSpecificWeeklyData = calculateBoxSpecificNutrition(
+          boxType,
+          variant,
+          catData,
+          foodData,
+          weeklyPlan.wetMealIndex
+        )
+        
+        // Build schedule for this variant using box-specific data
+        const variantSchedule = buildVariantSchedule(boxSpecificWeeklyData, totalDays)
         const planDays = variantSchedule.map((day, idx) => ({
           dayNumber: idx + 1,
           dayLabel: day.day ?? `اليوم ${idx + 1}`,
@@ -990,14 +999,14 @@ export function useCatNutrition() {
             wetUnitsUsed,
           },
           durationDays: totalDays,
-          breakdown: variantSchedule,
+          breakdown: boxSpecificWeeklyData,
           planDays,
         })
       }
     }
 
     return boxPricings
-  }, [pricing, boxTypeConfigs, boxBuilder, foodData, weeklyPlan])
+  }, [pricing, boxTypeConfigs, boxBuilder, foodData, weeklyPlan, catData])
 
   const applyPresetSelection = useCallback((boxId: string | undefined, variantDuration: 'week' | 'twoWeeks' | 'month' | undefined) => {
     if (!boxId || !variantDuration) return
