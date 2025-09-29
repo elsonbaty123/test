@@ -366,7 +366,7 @@ const BoxPricingDisplay: React.FC<BoxPricingDisplayProps> = ({
                         </div>
                       </div>
 
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-3 border-t mt-3">
+                      <div className="flex flex-col gap-2 pt-3 border-t mt-3">
                         {onSelectBox && (
                           <Button
                             onClick={() => {
@@ -379,24 +379,29 @@ const BoxPricingDisplay: React.FC<BoxPricingDisplayProps> = ({
                             }}
                             className="w-full bg-blue-600 hover:bg-blue-700 text-white"
                             variant="default"
+                            size="lg"
                           >
                             ✓ اختيار هذا البوكس
                           </Button>
                         )}
-                        <Button
-                          variant="secondary"
-                          onClick={() => handlePrintBoxSchedule(pricing)}
-                          className="w-full"
-                        >
-                          طباعة جدول هذا البوكس
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          className="w-full"
-                          onClick={() => setExpandedVariantId(isExpanded ? null : variantId)}
-                        >
-                          {isExpanded ? 'إخفاء تفاصيل الجدول' : 'عرض تفاصيل الجدول'}
-                        </Button>
+                        <div className="grid grid-cols-2 gap-2">
+                          <Button
+                            variant="secondary"
+                            onClick={() => handlePrintBoxSchedule(pricing)}
+                            className="w-full"
+                            size="sm"
+                          >
+                            طباعة الجدول
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            className="w-full"
+                            size="sm"
+                            onClick={() => setExpandedVariantId(isExpanded ? null : variantId)}
+                          >
+                            {isExpanded ? 'إخفاء التفاصيل' : 'عرض التفاصيل'}
+                          </Button>
+                        </div>
                       </div>
 
                       {isExpanded && (
