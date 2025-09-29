@@ -163,7 +163,7 @@ export default function CatNutritionCalculator() {
     weeklyPlan.wetMealIndex,
     // دالة الحساب
     calculateBoxPricingDirect
-  ]
+  ])
 
   const [isSaving, setIsSaving] = useState(false)
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'success' | 'error'>('idle')
