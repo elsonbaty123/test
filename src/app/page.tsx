@@ -21,6 +21,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { PrintButton } from '@/components/print/PrintButton'
 import { BoxLabelPrintButton } from '@/components/labels/BoxLabelPrintButton'
 import { ReprintReceiptButton } from '@/components/labels/ReprintReceiptButton'
+import { EditReceiptButton } from '@/components/labels/EditReceiptButton'
+import { ReprintReportButton } from '@/components/labels/ReprintReportButton'
 import BoxPricingDisplay from '@/components/BoxPricingDisplay'
 
 export default function CatNutritionCalculator() {
@@ -824,21 +826,36 @@ export default function CatNutritionCalculator() {
                         <TableCell>{o.planDuration || '-'}</TableCell>
                         <TableCell>{(o.totals?.totalCostWithDelivery ?? 0).toLocaleString('ar-EG')} {o.currency || pricing.currency}</TableCell>
                         <TableCell>{(o.paidAmount ?? 0).toLocaleString('ar-EG')} {o.currency || pricing.currency}</TableCell>
-                        <TableCell className="flex gap-2">
-                          <ReprintReceiptButton
-                            client={{ name: ordersClientName, phone: catData.clientPhone, address: catData.clientAddress }}
-                            order={o}
-                            variant="outline"
-                            size="sm"
-                          />
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="text-red-600 border-red-300 hover:bg-red-50"
-                            onClick={() => deleteOrder(ordersClientName, o.orderNo)}
-                          >
-                            حذف
-                          </Button>
+                        <TableCell>
+                          <div className="flex flex-wrap gap-2">
+                            <ReprintReceiptButton
+                              client={{ name: ordersClientName, phone: catData.clientPhone, address: catData.clientAddress }}
+                              order={o}
+                              variant="outline"
+                              size="sm"
+                            />
+                            <ReprintReportButton
+                              client={{ name: ordersClientName, phone: catData.clientPhone, address: catData.clientAddress }}
+                              order={o}
+                              variant="outline"
+                              size="sm"
+                            />
+                            <EditReceiptButton
+                              client={{ name: ordersClientName, phone: catData.clientPhone, address: catData.clientAddress }}
+                              order={o}
+                              variant="outline"
+                              size="sm"
+                              className="border-blue-300 text-blue-600 hover:bg-blue-50"
+                            />
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="text-red-600 border-red-300 hover:bg-red-50"
+                              onClick={() => deleteOrder(ordersClientName, o.orderNo)}
+                            >
+                              حذف
+                            </Button>
+                          </div>
                         </TableCell>
                       </TableRow>
                     ))}

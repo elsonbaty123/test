@@ -3,7 +3,7 @@
 import React, { useEffect, useState, Suspense } from 'react'
 import { CustomerReceipt } from '@/components/labels/CustomerReceipt'
 import { Button } from '@/components/ui/button'
-import { Printer, ArrowLeft, Download } from 'lucide-react'
+import { Printer, ArrowLeft, Download, Save, Edit2 } from 'lucide-react'
 import { useRouter, useSearchParams } from 'next/navigation'
 
 function ReceiptContent() {
@@ -12,6 +12,9 @@ function ReceiptContent() {
   const [receiptData, setReceiptData] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [paidAmount, setPaidAmount] = useState<number>(0)
+  const [isEditMode, setIsEditMode] = useState(false)
+  const [editableData, setEditableData] = useState<any>({})
+  const [saveMessage, setSaveMessage] = useState('')
 
   useEffect(() => {
     // Get receipt data from URL params or localStorage
@@ -45,7 +48,56 @@ function ReceiptContent() {
     if (receiptData) {
       const updatedData = { ...receiptData, paidAmount: value }
       localStorage.setItem(`receipt_${receiptData.orderNo}`, JSON.stringify(updatedData))
+      setReceiptData(updatedData)
     }
+  }
+
+  const handleEnterEditMode = () => {
+    setIsEditMode(true)
+    setEditableData({
+      boxName: receiptData.boxName || '',
+      boxDuration: receiptData.boxDuration || '',
+      paidAmount: paidAmount
+    })
+  }
+
+  const handleSaveChanges = async () => {
+    if (!receiptData) return
+
+    try {
+      // Update receipt data
+      const updatedReceipt = {
+        ...receiptData,
+        boxName: editableData.boxName,
+        boxDuration: editableData.boxDuration,
+        paidAmount: editableData.paidAmount
+      }
+
+      // Save to localStorage
+      localStorage.setItem(`receipt_${receiptData.orderNo}`, JSON.stringify(updatedReceipt))
+      
+      // Update state
+      setReceiptData(updatedReceipt)
+      setPaidAmount(editableData.paidAmount)
+      setIsEditMode(false)
+      
+      // Show success message
+      setSaveMessage('✓ تم حفظ التعديلات بنجاح')
+      setTimeout(() => setSaveMessage(''), 3000)
+      
+      // Optionally update in database
+      // You can add API call here to update the order in database
+      
+    } catch (error) {
+      console.error('Error saving changes:', error)
+      setSaveMessage('✗ فشل في حفظ التعديلات')
+      setTimeout(() => setSaveMessage(''), 3000)
+    }
+  }
+
+  const handleCancelEdit = () => {
+    setIsEditMode(false)
+    setEditableData({})
   }
 
   const handleDownload = () => {
@@ -190,31 +242,96 @@ function ReceiptContent() {
               </div>
             </div>
             
-            <div className="flex items-center gap-3">
-              <div className="flex items-center gap-2">
-                <label className="text-sm font-medium text-gray-700">المبلغ المدفوع:</label>
-                <input
-                  type="number"
-                  value={paidAmount}
-                  onChange={(e) => handlePaidAmountChange(Number(e.target.value) || 0)}
-                  className="w-24 px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="0"
-                  min="0"
-                />
-                <span className="text-sm text-gray-600">جنيه</span>
-              </div>
-              <Button onClick={handleDownload} variant="outline" size="sm">
-                <Download className="w-4 h-4 ml-2" />
-                تحميل
-              </Button>
-              <Button onClick={handlePrint} size="sm" className="bg-blue-600 hover:bg-blue-700">
-                <Printer className="w-4 h-4 ml-2" />
-                طباعة
-              </Button>
+            <div className="flex items-center gap-3 flex-wrap">
+              {!isEditMode ? (
+                <>
+                  <div className="flex items-center gap-2">
+                    <label className="text-sm font-medium text-gray-700">المبلغ المدفوع:</label>
+                    <input
+                      type="number"
+                      value={paidAmount}
+                      onChange={(e) => handlePaidAmountChange(Number(e.target.value) || 0)}
+                      className="w-24 px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      placeholder="0"
+                      min="0"
+                    />
+                    <span className="text-sm text-gray-600">جنيه</span>
+                  </div>
+                  <Button onClick={handleEnterEditMode} variant="outline" size="sm" className="border-blue-300 text-blue-600 hover:bg-blue-50">
+                    <Edit2 className="w-4 h-4 ml-2" />
+                    تعديل البيانات
+                  </Button>
+                  <Button onClick={handleDownload} variant="outline" size="sm">
+                    <Download className="w-4 h-4 ml-2" />
+                    تحميل
+                  </Button>
+                  <Button onClick={handlePrint} size="sm" className="bg-blue-600 hover:bg-blue-700">
+                    <Printer className="w-4 h-4 ml-2" />
+                    طباعة
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <Button onClick={handleSaveChanges} size="sm" className="bg-green-600 hover:bg-green-700">
+                    <Save className="w-4 h-4 ml-2" />
+                    حفظ التعديلات
+                  </Button>
+                  <Button onClick={handleCancelEdit} variant="outline" size="sm">
+                    إلغاء
+                  </Button>
+                </>
+              )}
+              {saveMessage && (
+                <span className={`text-sm font-medium ${saveMessage.includes('✓') ? 'text-green-600' : 'text-red-600'}`}>
+                  {saveMessage}
+                </span>
+              )}
             </div>
           </div>
         </div>
       </div>
+
+      {/* Edit Fields */}
+      {isEditMode && (
+        <div className="max-w-4xl mx-auto px-4 py-4">
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+            <h3 className="font-semibold text-blue-900 mb-3">تعديل بيانات الإيصال</h3>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">نوع البوكس</label>
+                <input
+                  type="text"
+                  value={editableData.boxName || ''}
+                  onChange={(e) => setEditableData({...editableData, boxName: e.target.value})}
+                  className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="مثال: ميمي"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">مدة البوكس</label>
+                <input
+                  type="text"
+                  value={editableData.boxDuration || ''}
+                  onChange={(e) => setEditableData({...editableData, boxDuration: e.target.value})}
+                  className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="مثال: أسبوع واحد"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">المبلغ المدفوع</label>
+                <input
+                  type="number"
+                  value={editableData.paidAmount || 0}
+                  onChange={(e) => setEditableData({...editableData, paidAmount: Number(e.target.value) || 0})}
+                  className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="0"
+                  min="0"
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Receipt Content */}
       <div className="max-w-4xl mx-auto px-4 py-8">
@@ -225,9 +342,9 @@ function ReceiptContent() {
             pricing={receiptData.pricing}
             costs={receiptData.costs}
             orderNo={receiptData.orderNo}
-            paidAmount={paidAmount}
-            boxName={receiptData.boxName || ''}
-            boxDuration={receiptData.boxDuration || ''}
+            paidAmount={isEditMode ? editableData.paidAmount : paidAmount}
+            boxName={isEditMode ? editableData.boxName : (receiptData.boxName || '')}
+            boxDuration={isEditMode ? editableData.boxDuration : (receiptData.boxDuration || '')}
           />
         </div>
         
