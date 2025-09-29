@@ -1231,6 +1231,70 @@ export default function CatNutritionCalculator() {
                 </SelectContent>
               </Select>
             </div>
+            
+            {/* الحالات الخاصة - منقولة من بيانات القطة */}
+            <div className="col-span-full">
+              <hr className="my-4" />
+              <h4 className="font-medium mb-3">الحالات الخاصة</h4>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div className="space-y-2">
+                  <Label>الحالة الصحية</Label>
+                  <Select value={catData.specialCond} onValueChange={(value) => handleCatDataChange('specialCond', value)}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">طبيعية</SelectItem>
+                      <SelectItem value="pregnant">حامل</SelectItem>
+                      <SelectItem value="lactating">مُرضعة</SelectItem>
+                      <SelectItem value="ckd">قصور كلوي مزمن (CKD)</SelectItem>
+                      <SelectItem value="hyperthyroid">فرط نشاط الغدة الدرقية</SelectItem>
+                      <SelectItem value="diabetes">السكري</SelectItem>
+                      <SelectItem value="recovery">فترة نقاهة</SelectItem>
+                      <SelectItem value="cardiac">مشاكل قلبية</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {catData.specialCond === 'pregnant' && (
+                  <div className="space-y-2">
+                    <Label>أسبوع الحمل (1-9)</Label>
+                    <Input
+                      type="number"
+                      min="1"
+                      max="9"
+                      value={catData.pregWeek}
+                      onChange={(e) => handleCatDataChange('pregWeek', parseInt(e.target.value))}
+                    />
+                  </div>
+                )}
+
+                {catData.specialCond === 'lactating' && (
+                  <>
+                    <div className="space-y-2">
+                      <Label>أسبوع الرضاعة (1-8)</Label>
+                      <Input
+                        type="number"
+                        min="1"
+                        max="8"
+                        value={catData.lacWeek}
+                        onChange={(e) => handleCatDataChange('lacWeek', parseInt(e.target.value))}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>عدد الصغار (1-8)</Label>
+                      <Input
+                        type="number"
+                        min="1"
+                        max="8"
+                        value={catData.lacKittens}
+                        onChange={(e) => handleCatDataChange('lacKittens', parseInt(e.target.value))}
+                      />
+                    </div>
+                  </>
+                )}
+              </div>
+            </div>
           </CardContent>
         </Card>
 
@@ -1314,71 +1378,7 @@ export default function CatNutritionCalculator() {
           </CardContent>
         </Card>
 
-        {/* Special Conditions Section */}
-        <Card>
-          <CardHeader>
-            <CardTitle>الحالات الخاصة</CardTitle>
-            <CardDescription>حدد إذا كانت القطة لديها حالة صحية خاصة</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label>الحالة الصحية</Label>
-              <Select value={catData.specialCond} onValueChange={(value) => handleCatDataChange('specialCond', value)}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="none">طبيعية</SelectItem>
-                  <SelectItem value="pregnant">حامل</SelectItem>
-                  <SelectItem value="lactating">مُرضعة</SelectItem>
-                  <SelectItem value="ckd">قصور كلوي مزمن (CKD)</SelectItem>
-                  <SelectItem value="hyperthyroid">فرط نشاط الغدة الدرقية</SelectItem>
-                  <SelectItem value="diabetes">السكري</SelectItem>
-                  <SelectItem value="recovery">فترة نقاهة</SelectItem>
-                  <SelectItem value="cardiac">مشاكل قلبية</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
 
-            {catData.specialCond === 'pregnant' && (
-              <div className="space-y-2">
-                <Label>أسبوع الحمل (1-9)</Label>
-                <Input
-                  type="number"
-                  min="1"
-                  max="9"
-                  value={catData.pregWeek}
-                  onChange={(e) => handleCatDataChange('pregWeek', parseInt(e.target.value))}
-                />
-              </div>
-            )}
-
-            {catData.specialCond === 'lactating' && (
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label>أسبوع الرضاعة (1-8)</Label>
-                  <Input
-                    type="number"
-                    min="1"
-                    max="8"
-                    value={catData.lacWeek}
-                    onChange={(e) => handleCatDataChange('lacWeek', parseInt(e.target.value))}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>عدد الصغار (1-8)</Label>
-                  <Input
-                    type="number"
-                    min="1"
-                    max="8"
-                    value={catData.lacKittens}
-                    onChange={(e) => handleCatDataChange('lacKittens', parseInt(e.target.value))}
-                  />
-                </div>
-              </div>
-            )}
-          </CardContent>
-        </Card>
 
         {/* Box Builder */}
         <Card>

@@ -41,6 +41,7 @@ interface CatData {
   pregWeek: number;
   lacWeek: number;
   lacKittens: number;
+  specialDetails: Record<string, any>;
 }
 
 interface FoodData {
@@ -136,28 +137,64 @@ export function calculateBoxSpecificNutrition(
     else stage = 'senior'
   }
 
-  // Calculate factor based on life stage and conditions
-  if (specialCond === 'pregnant') {
+  // Calculate factor using the same logic as in useCatNutrition
+  // Special conditions with primary override
+  if (specialCond === 'pregnant' && sex === 'female') {
     factor = pregWeek <= 6 ? 1.6 : 2.0
-  } else if (specialCond === 'lactating') {
+  } else if (specialCond === 'lactating' && sex === 'female') {
     const lacFactor = 2.0 + (lacKittens - 1) * 0.25
     factor = Math.min(lacFactor, 6.0)
-  } else if (stage === 'kitten_young') {
-    factor = 2.5
-  } else if (stage === 'kitten_older') {
-    factor = 2.0
+  } else if (specialCond === 'ckd') {
+    // Override to CKD factor (IRIS-aligned, with safe minimum)
+    const st = toNumber(catData.specialDetails?.ckdStage, 2)
+    factor = st >= 4 ? 0.8 : st >= 3 ? 0.9 : 1.0
   } else {
-    // Adult/senior with activity and neuter status
-    const activityInfo = ACTIVITY_LEVELS[activity as keyof typeof ACTIVITY_LEVELS] || ACTIVITY_LEVELS.moderate
-    factor = neuter ? activityInfo.multiplier : activityInfo.multiplier + 0.2
+    // Life stage factors
+    if (stage === 'kitten_young') {
+      factor = 2.5
+    } else if (stage === 'kitten_older') {
+      factor = 2.0
+    } else {
+      // Adult/senior base activity factor
+      const activityInfo = ACTIVITY_LEVELS[activity as keyof typeof ACTIVITY_LEVELS] || ACTIVITY_LEVELS.moderate
+      factor = activityInfo.multiplier
+      
+      // Neuter status adjustment
+      if (neuter) {
+        factor *= 0.8
+      }
+      
+      // BCS and weight goal adjustments
+      if (bcs <= 3) {
+        factor *= 1.2 // Underweight
+      } else if (bcs >= 7) {
+        if (weightGoal === 'loss') {
+          factor *= 0.8 // Weight loss
+        } else {
+          factor *= 0.9 // Overweight maintenance
+        }
+      }
+      
+      // Weight goal adjustments for normal BCS
+      if (bcs >= 4 && bcs <= 6) {
+        if (weightGoal === 'gain') factor *= 1.2
+        else if (weightGoal === 'loss') factor *= 0.8
+      }
+    }
     
-    // BCS adjustments
-    if (bcs <= 3) factor *= 1.2
-    else if (bcs >= 7) factor *= 0.8
-    
-    // Weight goal adjustments
-    if (weightGoal === 'gain') factor *= 1.2
-    else if (weightGoal === 'loss') factor *= 0.8
+    // Medical conditions (multiplicative)
+    if (specialCond === 'hyperthyroid') {
+      const treated = !!catData.specialDetails?.hyperthyroidTreated
+      factor *= treated ? 1.0 : 1.3
+    }
+    if (specialCond === 'diabetes') {
+      const controlled = !!catData.specialDetails?.diabetesControlled
+      factor *= controlled ? 1.0 : 1.1
+    }
+    if (specialCond === 'recovery') {
+      const w = toNumber(catData.specialDetails?.recoveryWeeks, 2)
+      factor *= w <= 2 ? 1.3 : 1.1
+    }
   }
 
   const der = rer * factor
