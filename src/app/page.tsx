@@ -125,7 +125,45 @@ export default function CatNutritionCalculator() {
       return calculateBoxPricingDirect()
     }
     return []
-  }, [catData.name, catData.weight, foodData.dry100, pricing.priceDryPerKg, pricing.treatPrice, calculateBoxPricingDirect])
+  }, [
+    // بيانات القطة الأساسية
+    catData.name,
+    catData.weight,
+    catData.ageValue,
+    catData.ageUnit,
+    catData.activity,
+    catData.bcs,
+    catData.weightGoal,
+    catData.specialCond,
+    catData.pregWeek,
+    catData.lacWeek,
+    catData.lacKittens,
+    catData.sex,
+    catData.neuter,
+    catData.meals,
+    // بيانات الطعام
+    foodData.dry100,
+    foodData.wet100,
+    foodData.wetKcalPerUnit,
+    foodData.wetUnitGrams,
+    foodData.wetMode,
+    // بيانات التسعير
+    pricing.priceDryPerKg,
+    pricing.priceWetUnit,
+    pricing.treatPrice,
+    pricing.packagingCost,
+    pricing.packagingCosts.week,
+    pricing.packagingCosts.twoWeeks,
+    pricing.packagingCosts.month,
+    pricing.additionalCosts,
+    pricing.deliveryCost,
+    pricing.profitPercentage,
+    pricing.discountPercentage,
+    // الخطة الأسبوعية
+    weeklyPlan.wetMealIndex,
+    // دالة الحساب
+    calculateBoxPricingDirect
+  ]
 
   const [isSaving, setIsSaving] = useState(false)
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'success' | 'error'>('idle')
