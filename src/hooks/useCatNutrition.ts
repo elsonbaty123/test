@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useCallback, useMemo } from 'react'
-import { calculateBoxSpecificNutrition } from '@/utils/boxCalculations'
 
 interface CatData {
   name: string;
@@ -873,12 +872,14 @@ export function useCatNutrition() {
 
         const packagingCostPerBox = packagingCostByVariant
 
-        // Calculate nutrition specifically for this box type
-        const boxSpecificWeeklyData = calculateBoxSpecificNutrition(
+        // استخدم النتائج الصحيحة من calculateNutrition بدلاً من حساب منفصل
+        const baseWeeklyData = nutritionResults.weeklyData
+        
+        // أنشئ خطة أسبوعية مخصصة لهذا البوكس
+        const boxSpecificWeeklyData = createBoxSpecificWeeklyPlan(
+          baseWeeklyData,
           boxType,
           variant,
-          catData,
-          foodData,
           weeklyPlan.wetMealIndex
         )
         
@@ -1003,11 +1004,115 @@ export function useCatNutrition() {
     }
 
     return boxPricings
-  }, [pricing, boxTypeConfigs, boxBuilder, foodData, weeklyPlan, catData])
+  }, [
+    pricing, 
+    boxTypeConfigs, 
+    boxBuilder, 
+    foodData, 
+    weeklyPlan, 
+    catData,
+    calculateNutrition,
+    createBoxSpecificWeeklyPlan,
+    selectEvenlyDistributedIndices
+  ])
+  
+  // دالة لإنشاء خطة أسبوعية مخصصة لبوكس معين
+  const createBoxSpecificWeeklyPlan = useCallback((
+    baseWeeklyData: WeeklyDay[],
+    boxType: BoxTypeConfig,
+    variant: BoxVariant,
+    wetMealIndex: number
+  ): WeeklyDay[] => {
+    if (!baseWeeklyData || baseWeeklyData.length === 0) return []
+    
+    // احسب عدد أيام الويت فود حسب البوكس
+    const wetDaysCount = boxType.includeWetFood ? boxType.wetFoodBagsPerWeek : 0
+    
+    // اختر أيام الويت فود بشكل متوازن
+    const wetDayIndices = selectEvenlyDistributedIndices(7, wetDaysCount)
+    
+    // أنشئ خطة جديدة بناءً على البيانات الأساسية
+    return baseWeeklyData.map((day, index) => {
+      const shouldHaveWet = wetDayIndices.includes(index)
+      const baseDER = day.der
+      
+      if (shouldHaveWet && boxType.includeWetFood) {
+        // يوم ويت فود: وحدة واحدة فقط + باقي السعرات دراي
+        const wetKcalPerUnit = foodData.wetMode === 'perUnit'
+          ? toNumber(foodData.wetKcalPerUnit, 80)
+          : (toNumber(foodData.wet100, 80) * toNumber(foodData.wetUnitGrams, 85)) / 100
+        
+        const wetKcal = wetKcalPerUnit // وحدة واحدة فقط
+        const dryKcal = Math.max(0, baseDER - wetKcal)
+        const dryGrams = dryKcal / (toNumber(foodData.dry100, 350) / 100)
+        const wetGrams = foodData.wetMode === 'perUnit'
+          ? toNumber(foodData.wetUnitGrams, 85)
+          : (wetKcal / toNumber(foodData.wet100, 80)) * 100
+        
+        return {
+          ...day,
+          type: 'wet',
+          wetKcal: Math.round(wetKcal * 10) / 10,
+          dryKcal: Math.round(dryKcal * 10) / 10,
+          wetGrams: Math.round(wetGrams * 10) / 10,
+          dryGrams: Math.round(dryGrams * 10) / 10,
+          units: 1, // وحدة واحدة فقط
+          servingSize: toNumber(foodData.wetUnitGrams, 85)
+        }
+      } else {
+        // يوم دراي فقط
+        const dryGrams = baseDER / (toNumber(foodData.dry100, 350) / 100)
+        
+        return {
+          ...day,
+          type: 'dry',
+          wetKcal: 0,
+          dryKcal: Math.round(baseDER * 10) / 10,
+          wetGrams: 0,
+          dryGrams: Math.round(dryGrams * 10) / 10,
+          units: 0,
+          servingSize: 0
+        }
+      }
+    })
+  }, [foodData])
+  
+  // دالة لتوزيع الأيام بشكل متوازن
+  const selectEvenlyDistributedIndices = useCallback((total: number, count: number): number[] => {
+    if (count <= 0 || total <= 0) return []
+    if (count >= total) return Array.from({ length: total }, (_, i) => i)
+    
+    const result: number[] = []
+    
+    if (count === 1) {
+      result.push(3) // الأربعاء (وسط الأسبوع)
+    } else if (count === 2) {
+      result.push(1, 5) // الاثنين والجمعة
+    } else if (count === 3) {
+      result.push(1, 3, 5) // الاثنين والأربعاء والجمعة
+    } else {
+      // لأيام أكثر، استخدم توزيع رياضي
+      const step = (total - 1) / (count - 1)
+      for (let i = 0; i < count; i++) {
+        const index = Math.round(i * step)
+        if (index < total && !result.includes(index)) {
+          result.push(index)
+        }
+      }
+    }
+    
+    return result.slice(0, count)
+  }, [])
 
   // Calculate box pricing without requiring main results
   const calculateBoxPricingDirect = useCallback((): BoxPricing[] => {
     if (!catData || !foodData || !catData.weight || !foodData.dry100) {
+      return []
+    }
+    
+    // أولاً: احسب الاحتياجات الغذائية بنفس منطق calculateNutrition
+    const nutritionResults = calculateNutrition()
+    if (!nutritionResults || !nutritionResults.weeklyData || nutritionResults.weeklyData.length === 0) {
       return []
     }
 
@@ -1042,12 +1147,14 @@ export function useCatNutrition() {
 
         const packagingCostPerBox = packagingCostByVariant
 
-        // Calculate nutrition specifically for this box type
-        const boxSpecificWeeklyData = calculateBoxSpecificNutrition(
+        // استخدم النتائج الصحيحة من calculateNutrition بدلاً من حساب منفصل
+        const baseWeeklyData = nutritionResults.weeklyData
+        
+        // أنشئ خطة أسبوعية مخصصة لهذا البوكس
+        const boxSpecificWeeklyData = createBoxSpecificWeeklyPlan(
+          baseWeeklyData,
           boxType,
           variant,
-          catData,
-          foodData,
           weeklyPlan.wetMealIndex
         )
         
