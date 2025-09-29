@@ -1,9 +1,10 @@
 'use client'
 
-import React, { useMemo, useRef } from 'react'
+import React, { useMemo, useRef, useState } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { BoxPricing as NutritionBoxPricing, BoxTypeConfig as NutritionBoxTypeConfig, BoxVariant as NutritionBoxVariant } from '@/hooks/useCatNutrition'
 
 type DisplayBoxTypeConfig = NutritionBoxTypeConfig
@@ -23,6 +24,8 @@ const BoxPricingDisplay: React.FC<BoxPricingDisplayProps> = ({
   formatNumber,
   onSelectBox
 }) => {
+  const [expandedVariantId, setExpandedVariantId] = useState<string | null>(null)
+
   if (!boxPricings || boxPricings.length === 0) {
     return null
   }
@@ -257,7 +260,11 @@ const BoxPricingDisplay: React.FC<BoxPricingDisplayProps> = ({
 
                 {/* Pricing variants */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {pricings.map((pricing) => (
+                  {pricings.map((pricing) => {
+                    const variantId = `${typeId}-${pricing.variant.duration}`
+                    const isExpanded = expandedVariantId === variantId
+
+                    return (
                     <div key={`${typeId}-${pricing.variant.duration}`} className="bg-white rounded-lg p-4 border shadow-sm">
                       <div className="flex items-center justify-between mb-3">
                         <h4 className="font-semibold text-gray-800">
@@ -376,9 +383,67 @@ const BoxPricingDisplay: React.FC<BoxPricingDisplayProps> = ({
                         >
                           طباعة جدول هذا البوكس
                         </Button>
+                        <Button
+                          variant="ghost"
+                          className="w-full"
+                          onClick={() => setExpandedVariantId(isExpanded ? null : variantId)}
+                        >
+                          {isExpanded ? 'إخفاء تفاصيل الجدول' : 'عرض تفاصيل الجدول'}
+                        </Button>
                       </div>
+
+                      {isExpanded && (
+                        <div className="mt-4 space-y-4 border-t pt-4">
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm bg-slate-50 border border-slate-200 rounded-lg p-4">
+                            <div>
+                              <div className="text-gray-500">إجمالي الدراي</div>
+                              <div className="font-semibold text-slate-800">{formatNumber(pricing.consumption.dryGrams, 0)} جم</div>
+                            </div>
+                            <div>
+                              <div className="text-gray-500">إجمالي الويت</div>
+                              <div className="font-semibold text-slate-800">
+                                {pricing.boxType.includeWetFood ? `${formatNumber(pricing.consumption.wetGrams, 0)} جم` : 'لا يوجد'}
+                              </div>
+                            </div>
+                            <div>
+                              <div className="text-gray-500">أكياس الويت المستخدمة</div>
+                              <div className="font-semibold text-slate-800">
+                                {pricing.boxType.includeWetFood ? formatNumber(pricing.consumption.wetUnitsUsed, 0) : '0'}
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="overflow-x-auto">
+                            <Table>
+                              <TableHeader>
+                                <TableRow>
+                                  <TableHead className="text-right">اليوم</TableHead>
+                                  <TableHead className="text-right">النوع</TableHead>
+                                  <TableHead className="text-right">السعرات</TableHead>
+                                  <TableHead className="text-right">دراي (جم)</TableHead>
+                                  <TableHead className="text-right">ويت (جم)</TableHead>
+                                  <TableHead className="text-right">وحدات ويت</TableHead>
+                                </TableRow>
+                              </TableHeader>
+                              <TableBody>
+                                {pricing.planDays.map((planDay) => (
+                                  <TableRow key={planDay.dayNumber} className={planDay.type === 'wet' ? 'bg-blue-50' : ''}>
+                                    <TableCell className="font-medium text-slate-700">يوم {planDay.dayNumber}</TableCell>
+                                    <TableCell className="text-slate-600">{planDay.type === 'wet' ? 'ويت' : 'دراي'}</TableCell>
+                                    <TableCell className="text-slate-600">{formatNumber(planDay.der, 0)}</TableCell>
+                                    <TableCell className="text-slate-600">{formatNumber(planDay.dryGrams, 0)}</TableCell>
+                                    <TableCell className="text-slate-600">{formatNumber(planDay.wetGrams, 0)}</TableCell>
+                                    <TableCell className="text-slate-600">{formatNumber(planDay.wetUnits ?? 0, 2)}</TableCell>
+                                  </TableRow>
+                                ))}
+                              </TableBody>
+                            </Table>
+                          </div>
+                        </div>
+                      )}
                     </div>
-                  ))}
+                    )
+                  })}
                 </div>
               </div>
             )
