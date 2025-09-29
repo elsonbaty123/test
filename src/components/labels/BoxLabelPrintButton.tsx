@@ -63,6 +63,7 @@ export const BoxLabelPrintButton: React.FC<BoxLabelPrintButtonProps> = ({
     // Get selected box name and duration from localStorage
     const selectedBoxName = localStorage.getItem('selectedBoxName') || ''
     const selectedBoxDuration = localStorage.getItem('selectedBoxDuration') || ''
+    const selectedBoxPrice = localStorage.getItem('selectedBoxPrice') || ''
     
     // Prepare receipt data with box count and full cost details
     const receiptData = {
@@ -70,6 +71,7 @@ export const BoxLabelPrintButton: React.FC<BoxLabelPrintButtonProps> = ({
       catData,
       boxName: selectedBoxName || boxSummary?.selectedBoxName || '',
       boxDuration: selectedBoxDuration || boxSummary?.selectedBoxDuration || boxSummary?.planDuration || '',
+      boxPrice: parseFloat(selectedBoxPrice) || costs?.totalCostWithDelivery || 0,
       boxSummary: {
         ...boxSummary,
         boxCount: boxSummary?.boxCount || 1
@@ -95,6 +97,7 @@ export const BoxLabelPrintButton: React.FC<BoxLabelPrintButtonProps> = ({
           catName: catData?.name,
           boxName: selectedBoxName || boxSummary?.selectedBoxName || '',
           boxDuration: selectedBoxDuration || boxSummary?.selectedBoxDuration || boxSummary?.planDuration || '',
+          boxPrice: parseFloat(selectedBoxPrice) || costs?.totalCostWithDelivery || 0,
           planDuration: boxSummary?.planDuration,
           paidAmount: parseFloat(pricing?.paidAmount || '0'),
           totals: {

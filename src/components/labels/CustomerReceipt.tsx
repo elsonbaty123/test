@@ -13,6 +13,7 @@ interface CustomerReceiptProps {
   paidAmount?: number
   boxName?: string
   boxDuration?: string
+  boxPrice?: number
 }
 
 export const CustomerReceipt: React.FC<CustomerReceiptProps> = ({
@@ -23,7 +24,8 @@ export const CustomerReceipt: React.FC<CustomerReceiptProps> = ({
   orderNo: orderNoProp,
   paidAmount = 0,
   boxName = '',
-  boxDuration = ''
+  boxDuration = '',
+  boxPrice
 }) => {
   const formatDate = () => {
     return new Date().toLocaleDateString('ar-EG', {
@@ -50,13 +52,16 @@ export const CustomerReceipt: React.FC<CustomerReceiptProps> = ({
 
   // Pricing helpers
   const currency = pricing?.currency || 'جنيه'
-  const total = Number(costs?.totalCostWithProfit || 0)
-  const afterDiscount = Number(costs?.totalCostAfterDiscount || 0)
-  const delivery = Number(costs?.deliveryCost || 0)
-  const amountDue = Number(costs?.totalCostWithDelivery || (afterDiscount + delivery))
-  const discountValue = Math.max(0, total - afterDiscount)
+  // استخدام سعر البوكس المحدد إذا كان متاحاً، وإلا استخدام السعر من ملخص التكاليف
+  const amountDue = Number(boxPrice || costs?.totalCostWithDelivery || 0)
   const paid = Number(paidAmount || 0)
   const remaining = Math.max(0, amountDue - paid)
+  
+  // للتوافق مع الأكواد القديمة
+  const total = Number(costs?.totalCostWithProfit || costs?.subtotalCost || 0)
+  const delivery = Number(costs?.deliveryCost || 0)
+  const afterDiscount = Number(costs?.totalCostAfterDiscount || 0)
+  const discountValue = Math.max(0, total - afterDiscount)
 
   return (
     <div className="customer-receipt" dir="rtl" style={{

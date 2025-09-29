@@ -28,6 +28,7 @@ interface ReprintReceiptButtonProps {
     catName?: string
     boxName?: string
     boxDuration?: string
+    boxPrice?: number
     planDuration?: string
     paidAmount?: number
     payload?: { boxSummary?: any }
@@ -80,6 +81,7 @@ export const ReprintReceiptButton: React.FC<ReprintReceiptButtonProps> = ({
       catData,
       boxName: order.boxName || '',
       boxDuration: order.boxDuration || order.planDuration || '',
+      boxPrice: order.boxPrice || order.totals.totalCostWithDelivery || 0,
       boxSummary: {
         ...boxSummary,
         boxCount: boxSummary?.boxCount || 1

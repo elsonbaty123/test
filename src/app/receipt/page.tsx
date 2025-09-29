@@ -54,10 +54,13 @@ function ReceiptContent() {
 
   const handleEnterEditMode = () => {
     setIsEditMode(true)
+    // حفظ القيم الأصلية لمقارنتها
     setEditableData({
       boxName: receiptData.boxName || '',
       boxDuration: receiptData.boxDuration || '',
-      paidAmount: paidAmount
+      paidAmount: paidAmount,
+      originalBoxName: receiptData.boxName || '',
+      originalBoxDuration: receiptData.boxDuration || ''
     })
   }
 
@@ -65,16 +68,38 @@ function ReceiptContent() {
     if (!receiptData) return
 
     try {
+      // التحقق من أن الحقول ليست فارغة، إلا إذا كانت القيمة الأصلية فارغة
+      const finalBoxName = editableData.boxName?.trim() || editableData.originalBoxName || receiptData.boxName || ''
+      const finalBoxDuration = editableData.boxDuration?.trim() || editableData.originalBoxDuration || receiptData.boxDuration || ''
+      
       // Update receipt data
       const updatedReceipt = {
         ...receiptData,
-        boxName: editableData.boxName,
-        boxDuration: editableData.boxDuration,
+        boxName: finalBoxName,
+        boxDuration: finalBoxDuration,
         paidAmount: editableData.paidAmount
       }
 
       // Save to localStorage
       localStorage.setItem(`receipt_${receiptData.orderNo}`, JSON.stringify(updatedReceipt))
+      
+      // Update in database via API
+      const response = await fetch('/api/orders', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          orderNo: receiptData.orderNo,
+          updates: {
+            boxName: finalBoxName,
+            boxDuration: finalBoxDuration,
+            paidAmount: editableData.paidAmount
+          }
+        })
+      })
+
+      if (!response.ok) {
+        throw new Error('فشل في تحديث البيانات في قاعدة البيانات')
+      }
       
       // Update state
       setReceiptData(updatedReceipt)
@@ -82,16 +107,13 @@ function ReceiptContent() {
       setIsEditMode(false)
       
       // Show success message
-      setSaveMessage('✓ تم حفظ التعديلات بنجاح')
+      setSaveMessage('✓ تم حفظ التعديلات بنجاح في قاعدة البيانات')
       setTimeout(() => setSaveMessage(''), 3000)
-      
-      // Optionally update in database
-      // You can add API call here to update the order in database
       
     } catch (error) {
       console.error('Error saving changes:', error)
-      setSaveMessage('✗ فشل في حفظ التعديلات')
-      setTimeout(() => setSaveMessage(''), 3000)
+      setSaveMessage('✗ فشل في حفظ التعديلات: ' + (error as Error).message)
+      setTimeout(() => setSaveMessage(''), 5000)
     }
   }
 
@@ -345,6 +367,7 @@ function ReceiptContent() {
             paidAmount={isEditMode ? editableData.paidAmount : paidAmount}
             boxName={isEditMode ? editableData.boxName : (receiptData.boxName || '')}
             boxDuration={isEditMode ? editableData.boxDuration : (receiptData.boxDuration || '')}
+            boxPrice={receiptData.boxPrice}
           />
         </div>
         

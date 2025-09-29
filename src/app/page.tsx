@@ -128,13 +128,15 @@ export default function CatNutritionCalculator() {
     const targetBoxId = boxPricing.boxType.id
     const targetDuration = boxPricing.variant.duration
     
-    // Save selected box name and duration for receipt
+    // Save selected box name, duration, and price for receipt
     const boxName = boxPricing.boxType.name
     const boxDuration = boxPricing.variant.durationLabel
+    const boxPrice = boxPricing.pricingDetails.totalCostWithDelivery.toString()
     
     // Store in localStorage for receipt
     localStorage.setItem('selectedBoxName', boxName)
     localStorage.setItem('selectedBoxDuration', boxDuration)
+    localStorage.setItem('selectedBoxPrice', boxPrice)
     
     applyPresetSelection(targetBoxId, targetDuration)
   }

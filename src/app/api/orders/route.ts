@@ -94,6 +94,65 @@ export async function GET(req: Request) {
   }
 }
 
+export async function PUT(req: Request) {
+  try {
+    const body = await req.json()
+    const orderNo = (body?.orderNo || '').trim()
+    const updates = body?.updates || {}
+    
+    if (!orderNo) return NextResponse.json({ error: 'رقم الطلب مطلوب' }, { status: 400 })
+
+    const db = getDb()
+    
+    // Find the customer that has this order
+    const customers = await db.customer.findMany()
+    let targetCustomer: typeof customers[0] | null = null
+    
+    for (const customer of customers) {
+      let dataObj: any = {}
+      try { dataObj = JSON.parse((customer.data as unknown as string) || '{}') } catch {}
+      const orders: any[] = Array.isArray(dataObj?.orders) ? dataObj.orders : []
+      
+      if (orders.some(o => o && o.orderNo === orderNo)) {
+        targetCustomer = customer
+        break
+      }
+    }
+
+    if (!targetCustomer) {
+      return NextResponse.json({ error: 'الطلب غير موجود' }, { status: 404 })
+    }
+
+    let dataObj: any = {}
+    try { dataObj = JSON.parse((targetCustomer.data as unknown as string) || '{}') } catch {}
+    const orders: any[] = Array.isArray(dataObj?.orders) ? dataObj.orders : []
+    
+    // Find and update the order
+    const orderIndex = orders.findIndex(o => o && o.orderNo === orderNo)
+    if (orderIndex >= 0) {
+      orders[orderIndex] = {
+        ...orders[orderIndex],
+        ...updates,
+        updatedAt: new Date().toISOString()
+      }
+      
+      dataObj.orders = orders
+      
+      await db.customer.update({
+        where: { name: targetCustomer.name },
+        data: { data: JSON.stringify(dataObj) }
+      })
+      
+      return NextResponse.json({ ok: true, order: orders[orderIndex] })
+    }
+    
+    return NextResponse.json({ error: 'فشل في تحديث الطلب' }, { status: 500 })
+  } catch (e) {
+    console.error('PUT /api/orders error:', e)
+    return NextResponse.json({ error: 'Server error' }, { status: 500 })
+  }
+}
+
 export async function DELETE(req: Request) {
   try {
     const body = await req.json().catch(() => null)
