@@ -355,21 +355,6 @@ export const BOX_TYPES: BoxTypeConfig[] = [
     },
     enabledDurations: ['week', 'twoWeeks'],
   },
-  {
-    id: 'qatqoot_azam_premium',
-    name: 'القطقوط الأعظم - بريميم',
-    description: 'دراي فود + ويت فود (4 أكياس/أسبوع) + تريتين',
-    includeDryFood: true,
-    includeWetFood: true,
-    wetFoodBagsPerWeek: 4,
-    includeTreat: true,
-    treatUnitsPerDuration: {
-      week: 2,
-      twoWeeks: 2,
-      month: 2,
-    },
-    enabledDurations: ['week'], // البريميم متاح أسبوعياً فقط
-  },
 ]
 
 
@@ -613,7 +598,6 @@ export function useCatNutrition() {
       toty: 'دراي فود + كيس ويت واحد/أسبوع',
       qatty: 'دراي فود + كيسين ويت/أسبوع + تريت',
       qatqoot_azam: 'دراي فود + 3 أكياس ويت/أسبوع + تريتين',
-      qatqoot_azam_premium: 'دراي فود + 4 أكياس ويت/أسبوع + تريتين',
     },
   })
 

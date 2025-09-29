@@ -85,9 +85,6 @@ function selectEvenlyDistributedIndices(total: number, count: number): number[] 
   } else if (count === 3) {
     // For 3 wet days, distribute evenly
     result.push(1, 3, 5) // Monday, Wednesday, Friday
-  } else if (count === 4) {
-    // For 4 wet days, distribute evenly
-    result.push(0, 2, 4, 6) // Saturday, Monday, Wednesday, Friday
   } else {
     // For more days, use mathematical distribution
     const step = (total - 1) / (count - 1)
