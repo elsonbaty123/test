@@ -1822,6 +1822,7 @@ export function useCatNutrition() {
       // Costs calculation
       const priceDryPerKg = toNumber(pricing.priceDryPerKg, 0)
       const priceWetUnit = toNumber(pricing.priceWetUnit, 0)
+      const treatPrice = toNumber(pricing.treatPrice, 0)
       const packagingCost = (() => {
         const fallback = toNumber(pricing.packagingCost, 0)
         const costsByDuration = pricing.packagingCosts || { week: '0', twoWeeks: '0', month: '0' }
@@ -1834,10 +1835,20 @@ export function useCatNutrition() {
       const profitPercentage = toNumber(pricing.profitPercentage, 0)
       const discountPercentage = toNumber(pricing.discountPercentage, 0)
       
+      // حساب تكلفة التريت بناءً على نوع البوكس المختار
+      let treatCost = 0
+      if (boxBuilder.presetBoxId) {
+        const selectedBox = boxTypeConfigs.find(box => box.id === boxBuilder.presetBoxId)
+        const duration = boxBuilder.presetVariantDuration || 'month'
+        if (selectedBox && selectedBox.includeTreat) {
+          treatCost = treatPrice * selectedBox.treatUnitsPerDuration[duration]
+        }
+      }
+      
       const totalDryKg = totalDryGrams / 1000
       const dryCost = totalDryKg * priceDryPerKg
       const wetCost = unitsUsed * priceWetUnit
-      const subtotalCost = dryCost + wetCost
+      const subtotalCost = dryCost + wetCost + treatCost
       const totalCostBeforeProfit = subtotalCost + packagingCost + additionalCosts
       const profitAmount = (totalCostBeforeProfit * profitPercentage) / 100
       const totalCostWithProfit = totalCostBeforeProfit + profitAmount
@@ -1848,7 +1859,7 @@ export function useCatNutrition() {
       setCosts({
         dryCost,
         wetCost,
-        treatCost: 0, // Will be calculated based on box type
+        treatCost,
         packagingCost,
         additionalCosts,
         subtotalCost,
