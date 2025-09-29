@@ -874,8 +874,16 @@ export function useCatNutrition() {
 
         // Calculate dry food cost based on actual nutritional needs
         // Build schedule for this variant and derive consumption
-        const baseSchedule = buildVariantSchedule(results.weeklyData, totalDays)
-        const variantSchedule = baseSchedule
+        const variantSchedule = buildVariantSchedule(results.weeklyData, totalDays)
+        const planDays = variantSchedule.map((day, idx) => ({
+          dayNumber: idx + 1,
+          dayLabel: day.day ?? `اليوم ${idx + 1}`,
+          type: day.type,
+          der: day.der,
+          dryGrams: day.dryGrams,
+          wetGrams: day.wetGrams,
+          wetUnits: day.units,
+        }))
 
         const totalDryGramsRaw = variantSchedule.reduce((sum, day) => sum + day.dryGrams, 0)
         const totalWetGramsRaw = variantSchedule.reduce((sum, day) => sum + day.wetGrams, 0)
