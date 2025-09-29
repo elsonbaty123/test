@@ -51,6 +51,7 @@ export default function CatNutritionCalculator() {
     autoDistributeWetDays,
     calculateNutrition,
     calculateBoxPricing,
+    calculateBoxPricingDirect,
     formatNumber,
     bcsSuggestedLive,
     bcsSuggestionReasonLive,
@@ -117,6 +118,14 @@ export default function CatNutritionCalculator() {
     const targetDuration = boxPricing.variant.duration
     applyPresetSelection(targetBoxId, targetDuration)
   }
+
+  // Calculate box pricings automatically when data is available
+  const boxPricings = useMemo(() => {
+    if (catData.name && catData.weight && foodData.dry100 && pricing.priceDryPerKg && pricing.treatPrice) {
+      return calculateBoxPricingDirect()
+    }
+    return []
+  }, [catData.name, catData.weight, foodData.dry100, pricing.priceDryPerKg, pricing.treatPrice, calculateBoxPricingDirect])
 
   const [isSaving, setIsSaving] = useState(false)
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'success' | 'error'>('idle')
@@ -573,10 +582,10 @@ export default function CatNutritionCalculator() {
               </Alert>
             )}
 
-        {/* Box Pricing Display - repositioned under cost summary */}
-        {catData.name && catData.weight && foodData.dry100 && pricing.priceDryPerKg && pricing.treatPrice && results && (
+        {/* Box Pricing Display - now shows automatically when basic data is available */}
+        {boxPricings.length > 0 && (
           <BoxPricingDisplay
-            boxPricings={calculateBoxPricing(results)}
+            boxPricings={boxPricings}
             currency={pricing.currency}
             formatNumber={formatNumber}
             onSelectBox={handleSelectPricingBox}

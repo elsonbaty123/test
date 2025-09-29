@@ -1008,6 +1008,172 @@ export function useCatNutrition() {
     return boxPricings
   }, [pricing, boxTypeConfigs, boxBuilder, foodData, weeklyPlan, catData])
 
+  // Calculate box pricing without requiring main results
+  const calculateBoxPricingDirect = useCallback((): BoxPricing[] => {
+    if (!catData || !foodData || !catData.weight || !foodData.dry100) {
+      return []
+    }
+
+    const boxPricings: BoxPricing[] = []
+    const priceDryPerKg = toNumber(pricing.priceDryPerKg, 0)
+    const priceWetUnit = toNumber(pricing.priceWetUnit, 0)
+    const treatPrice = toNumber(pricing.treatPrice, 0)
+    const packagingCostFallback = toNumber(pricing.packagingCost, 0)
+    const additionalCosts = toNumber(pricing.additionalCosts, 0)
+    const deliveryCost = toNumber(pricing.deliveryCost, 0)
+    const profitPercentage = toNumber(pricing.profitPercentage, 0)
+    const discountPercentage = toNumber(pricing.discountPercentage, 0)
+
+    for (const boxType of boxTypeConfigs) {
+      for (const variant of BOX_VARIANTS) {
+        if (boxType.enabledDurations && boxType.enabledDurations.length > 0 && !boxType.enabledDurations.includes(variant.duration)) {
+          continue
+        }
+
+        const totalDays = variant.duration === 'week' ? 7 : variant.duration === 'twoWeeks' ? 14 : 30
+        const weeks = totalDays / 7
+
+        const packagingCostByVariant = (() => {
+          if (variant.duration === 'twoWeeks') {
+            return toNumber(pricing.packagingCosts?.twoWeeks, packagingCostFallback)
+          }
+          if (variant.duration === 'week') {
+            return toNumber(pricing.packagingCosts?.week, packagingCostFallback)
+          }
+          return toNumber(pricing.packagingCosts?.month, packagingCostFallback)
+        })()
+
+        const packagingCostPerBox = packagingCostByVariant
+
+        // Calculate nutrition specifically for this box type
+        const boxSpecificWeeklyData = calculateBoxSpecificNutrition(
+          boxType,
+          variant,
+          catData,
+          foodData,
+          weeklyPlan.wetMealIndex
+        )
+        
+        // Build schedule for this variant using box-specific data
+        const variantSchedule = buildVariantSchedule(boxSpecificWeeklyData, totalDays)
+        const planDays = variantSchedule.map((day, idx) => ({
+          dayNumber: idx + 1,
+          dayLabel: day.day ?? `اليوم ${idx + 1}`,
+          type: day.type,
+          der: day.der,
+          dryGrams: day.dryGrams,
+          wetGrams: day.wetGrams,
+          wetUnits: day.units,
+        }))
+
+        const totalDryGramsRaw = variantSchedule.reduce((sum, day) => sum + day.dryGrams, 0)
+        const totalWetGramsRaw = variantSchedule.reduce((sum, day) => sum + day.wetGrams, 0)
+        const totalWetUnitsRaw = variantSchedule.reduce((sum, day) => sum + day.units, 0)
+
+        const configWetUnits = boxType.includeWetFood ? Math.ceil(boxType.wetFoodBagsPerWeek * weeks) : 0
+        const scheduleWetUnits = boxType.includeWetFood ? Math.ceil(totalWetUnitsRaw) : 0
+        const suggestedWetUnits = boxType.includeWetFood ? Math.max(configWetUnits, scheduleWetUnits) : 0
+        const wetUnitsUsed = boxType.includeWetFood
+          ? (boxBuilder.boxWetMode === 'fixed_total'
+            ? Math.max(0, Math.floor(boxBuilder.boxTotalUnits))
+            : suggestedWetUnits)
+          : 0
+
+        const wetUnitsDelta = boxType.includeWetFood ? (wetUnitsUsed - totalWetUnitsRaw) : 0
+        const wetUnitGramsValue = Math.max(1, toNumber(foodData.wetUnitGrams, 85))
+        const wetKcalPerUnitValue = foodData.wetMode === 'perUnit'
+          ? Math.max(1, toNumber(foodData.wetKcalPerUnit, 85))
+          : (Math.max(1, toNumber(foodData.wet100, 80)) * wetUnitGramsValue) / 100
+        const dryKcalPerGram = boxType.includeDryFood ? toNumber(foodData.dry100, 380) / 100 : 0
+
+        let adjustedDryGrams = boxType.includeDryFood ? totalDryGramsRaw : 0
+        if (boxType.includeDryFood && dryKcalPerGram > 0) {
+          adjustedDryGrams = Math.max(0, totalDryGramsRaw - (wetUnitsDelta * wetKcalPerUnitValue) / dryKcalPerGram)
+        }
+
+        let adjustedWetGrams = boxType.includeWetFood ? totalWetGramsRaw : 0
+        if (boxType.includeWetFood) {
+          adjustedWetGrams = Math.max(0, totalWetGramsRaw + wetUnitsDelta * wetUnitGramsValue)
+        }
+
+        const totalDryGrams = boxType.includeDryFood ? adjustedDryGrams : 0
+        const totalWetGrams = boxType.includeWetFood ? adjustedWetGrams : 0
+
+        const dryCost = boxType.includeDryFood ? (totalDryGrams / 1000) * priceDryPerKg : 0
+        const wetCost = boxType.includeWetFood ? wetUnitsUsed * priceWetUnit : 0
+
+        // Calculate treat cost
+        const treatUnitsPerDuration = boxType.treatUnitsPerDuration || { week: 0, twoWeeks: 0, month: 0 }
+        const treatUnitsForVariant = variant.duration === 'week'
+          ? treatUnitsPerDuration.week
+          : variant.duration === 'twoWeeks'
+            ? treatUnitsPerDuration.twoWeeks
+            : treatUnitsPerDuration.month
+        const treatCostTotal = boxType.includeTreat ? treatPrice * treatUnitsForVariant : 0
+
+        const packagingCostTotal = packagingCostPerBox * variant.packagingMultiplier
+        const additionalCostsTotal = additionalCosts * variant.multiplier
+
+        const subtotalCost = dryCost + wetCost + treatCostTotal
+        const totalCostBeforeProfit = subtotalCost + packagingCostTotal + additionalCostsTotal
+        const profitAmount = (totalCostBeforeProfit * profitPercentage) / 100
+        const totalCostWithProfit = totalCostBeforeProfit + profitAmount
+        const discountAmount = (totalCostWithProfit * discountPercentage) / 100
+        const totalCostBeforeDiscount = totalCostWithProfit
+        const totalCostAfterDiscount = totalCostBeforeDiscount - discountAmount
+        const totalWithDeliveryBeforeDiscount = totalCostBeforeDiscount + deliveryCost
+        const totalCostWithDelivery = totalCostAfterDiscount + deliveryCost
+        const totalWithDeliveryAfterDiscount = totalCostWithDelivery
+        const perDay = totalDays > 0 ? (totalCostWithDelivery / totalDays) : 0
+        const savings = discountAmount
+
+        const roundedTotalCostBeforeDiscount = roundToNearestFive(totalCostBeforeDiscount)
+        const roundedTotalCostAfterDiscount = roundToNearestFive(totalCostAfterDiscount)
+        const roundedTotalWithDeliveryBeforeDiscount = roundToNearestFive(totalWithDeliveryBeforeDiscount)
+        const roundedTotalWithDeliveryAfterDiscount = roundToNearestFive(totalWithDeliveryAfterDiscount)
+        const roundedTotalCostWithDelivery = roundedTotalWithDeliveryAfterDiscount
+        const roundedDiscountAmount = Math.max(0, roundedTotalCostBeforeDiscount - roundedTotalCostAfterDiscount)
+        const roundedSavings = Math.max(0, roundedTotalWithDeliveryBeforeDiscount - roundedTotalWithDeliveryAfterDiscount)
+        const roundedPerDay = totalDays > 0 ? roundedTotalCostWithDelivery / totalDays : 0
+
+        boxPricings.push({
+          boxType,
+          variant,
+          costs: {
+            dryCost,
+            wetCost,
+            treatCost: treatCostTotal,
+            packagingCost: packagingCostTotal,
+            additionalCosts: additionalCostsTotal,
+            totalCostBeforeProfit,
+            profitAmount,
+            totalCostWithProfit: roundedTotalCostBeforeDiscount,
+            discountAmount: roundedDiscountAmount,
+            totalCostBeforeDiscount: roundedTotalCostBeforeDiscount,
+            totalCostAfterDiscount: roundedTotalCostAfterDiscount,
+            totalCostWithDelivery: roundedTotalCostWithDelivery,
+            deliveryCost,
+            perDay: roundedPerDay,
+            savings: roundedSavings,
+            totalWithDeliveryBeforeDiscount: roundedTotalWithDeliveryBeforeDiscount,
+            totalWithDeliveryAfterDiscount: roundedTotalWithDeliveryAfterDiscount,
+          },
+          consumption: {
+            dryGrams: totalDryGrams,
+            wetGrams: totalWetGrams,
+            wetUnitsSuggested: suggestedWetUnits,
+            wetUnitsUsed,
+          },
+          durationDays: totalDays,
+          breakdown: boxSpecificWeeklyData,
+          planDays,
+        })
+      }
+    }
+
+    return boxPricings
+  }, [pricing, boxTypeConfigs, boxBuilder, foodData, weeklyPlan, catData])
+
   const applyPresetSelection = useCallback((boxId: string | undefined, variantDuration: 'week' | 'twoWeeks' | 'month' | undefined) => {
     if (!boxId || !variantDuration) return
     const selectedBox = boxTypeConfigs.find((box) => box.id === boxId)
@@ -1575,6 +1741,7 @@ export function useCatNutrition() {
     autoDistributeWetDays,
     calculateNutrition,
     calculateBoxPricing,
+    calculateBoxPricingDirect,
     formatNumber,
     bcsSuggestedLive,
     bcsSuggestionReasonLive,
