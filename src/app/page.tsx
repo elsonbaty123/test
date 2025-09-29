@@ -835,12 +835,14 @@ export default function CatNutritionCalculator() {
                               order={o}
                               variant="outline"
                               size="sm"
+                              className="border-gray-300"
                             />
                             <ReprintReportButton
                               client={{ name: ordersClientName, phone: catData.clientPhone, address: catData.clientAddress }}
                               order={o}
                               variant="outline"
                               size="sm"
+                              className="border-gray-300"
                             />
                             <EditReceiptButton
                               client={{ name: ordersClientName, phone: catData.clientPhone, address: catData.clientAddress }}

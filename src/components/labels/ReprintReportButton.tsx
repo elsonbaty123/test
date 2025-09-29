@@ -37,12 +37,18 @@ export const ReprintReportButton: React.FC<ReprintReportButtonProps> = ({
   }
 
   const handlePrint = () => {
-    const printWindow = window.open('', '_blank', 'width=900,height=1024')
-    if (!printWindow) return
-
     const boxSummary = order.payload?.boxSummary || {}
     const results = order.payload?.results
     const currency = order.payload?.pricing?.currency || 'جنيه'
+
+    // Check if data is available
+    if (!results?.weeklyPlan && !boxSummary?.totalDays) {
+      alert('⚠️ البيانات الكاملة للتقرير غير متوفرة لهذا الطلب.\n\nهذا طلب قديم تم حفظه قبل إضافة ميزة التقارير.\nيمكنك فقط طباعة الإيصال.')
+      return
+    }
+
+    const printWindow = window.open('', '_blank', 'width=900,height=1024')
+    if (!printWindow) return
 
     // Build the weekly plan table
     let tableHtml = ''
@@ -73,6 +79,12 @@ export const ReprintReportButton: React.FC<ReprintReportButtonProps> = ({
             `).join('')}
           </tbody>
         </table>
+      `
+    } else {
+      tableHtml = `
+        <div style="padding: 20px; background: #fff3cd; border: 1px solid #ffc107; border-radius: 8px; margin: 20px 0;">
+          <p style="color: #856404; margin: 0;">⚠️ الجدول الأسبوعي غير متوفر لهذا الطلب.</p>
+        </div>
       `
     }
 
@@ -152,13 +164,7 @@ export const ReprintReportButton: React.FC<ReprintReportButtonProps> = ({
     printWindow.document.close()
   }
 
-  // Check if report data is available
-  const hasReportData = order.payload?.results || order.payload?.boxSummary
-
-  if (!hasReportData) {
-    return null // Don't show button if no report data
-  }
-
+  // Always show the button
   return (
     <Button 
       variant={variant} 
