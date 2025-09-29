@@ -96,141 +96,101 @@ export const PrintableReport: React.FC<PrintableReportProps> = ({
           .print-report {
             font-family: 'Arial', sans-serif;
             font-size: 12px;
-            line-height: 1.5;
-            color: #1f2937;
+            line-height: 1.4;
+            color: #000;
             background: white;
-            padding: 20px;
           }
           
           .print-header {
             text-align: center;
-            background: linear-gradient(135deg, #0ea5e9 0%, #06b6d4 100%);
-            color: white;
-            padding: 25px;
-            border-radius: 12px;
-            margin-bottom: 25px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            border-bottom: 2px solid #0ea5e9;
+            padding-bottom: 15px;
+            margin-bottom: 20px;
           }
           
           .print-title {
-            font-size: 24px;
+            font-size: 18px;
             font-weight: bold;
-            margin-bottom: 8px;
-            letter-spacing: 0.5px;
+            color: #0ea5e9;
+            margin-bottom: 5px;
           }
           
           .print-subtitle {
-            font-size: 13px;
-            opacity: 0.95;
-            margin-top: 4px;
+            font-size: 12px;
+            color: #666;
           }
           
           .print-section {
-            margin-bottom: 25px;
+            margin-bottom: 20px;
             page-break-inside: avoid;
-            background: #f9fafb;
-            padding: 15px;
-            border-radius: 10px;
-            border: 1px solid #e5e7eb;
           }
           
           .print-section-title {
-            font-size: 16px;
+            font-size: 14px;
             font-weight: bold;
             color: #0ea5e9;
-            border-bottom: 2px solid #0ea5e9;
-            padding-bottom: 8px;
-            margin-bottom: 15px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-          }
-          
-          .print-section-title::before {
-            content: '●';
-            color: #0ea5e9;
-            font-size: 20px;
+            border-bottom: 1px solid #e5e7eb;
+            padding-bottom: 5px;
+            margin-bottom: 10px;
           }
           
           .print-grid {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
-            gap: 12px;
+            gap: 10px;
             margin-bottom: 15px;
           }
           
           .print-grid-3 {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
-            gap: 12px;
+            gap: 10px;
             margin-bottom: 15px;
           }
           
           .print-field {
             display: flex;
             justify-content: space-between;
-            align-items: center;
-            padding: 10px 12px;
-            background: white;
-            border-radius: 6px;
-            border: 1px solid #e5e7eb;
+            align-items: flex-start;
+            padding: 5px 0;
+            border-bottom: 1px dotted #ccc;
             gap: 10px;
           }
           
           .print-field-label {
-            font-weight: 600;
+            font-weight: bold;
             color: #374151;
-            min-width: 100px;
+            min-width: 80px;
             flex-shrink: 0;
-            font-size: 11px;
           }
           
           .print-field-value {
-            color: #111827;
+            color: #000;
             text-align: right;
             flex: 1;
-            font-weight: 500;
-            font-size: 12px;
           }
           
           .print-table {
             width: 100%;
-            border-collapse: separate;
-            border-spacing: 0;
+            border-collapse: collapse;
             margin-bottom: 15px;
-            border-radius: 8px;
-            overflow: hidden;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
           }
           
           .print-table th,
           .print-table td {
-            border: 1px solid #d1d5db;
-            padding: 10px 8px;
+            border: 1px solid #ccc;
+            padding: 8px;
             text-align: center;
             font-size: 11px;
           }
           
           .print-table th {
-            background: linear-gradient(180deg, #0ea5e9 0%, #0284c7 100%);
-            color: white;
+            background-color: #f3f4f6;
             font-weight: bold;
-            font-size: 12px;
-            text-transform: uppercase;
-            letter-spacing: 0.3px;
-          }
-          
-          .print-table tbody tr:nth-child(even) {
-            background-color: #f9fafb;
-          }
-          
-          .print-table tbody tr:hover {
-            background-color: #f0f9ff;
           }
           
           .print-table .wet-day {
-            background-color: #dbeafe !important;
-            font-weight: 600;
+            background-color: #dbeafe;
           }
           
           .print-highlights {
@@ -242,86 +202,34 @@ export const PrintableReport: React.FC<PrintableReportProps> = ({
           
           .print-highlight {
             text-align: center;
-            padding: 18px 12px;
-            background: linear-gradient(135deg, #0ea5e9 0%, #06b6d4 100%);
-            color: white;
-            border-radius: 10px;
-            box-shadow: 0 4px 6px rgba(14, 165, 233, 0.3);
+            padding: 10px;
+            border: 2px solid #0ea5e9;
+            border-radius: 8px;
           }
           
           .print-highlight-value {
-            font-size: 22px;
+            font-size: 16px;
             font-weight: bold;
-            margin-bottom: 6px;
+            color: #0ea5e9;
           }
           
           .print-highlight-label {
-            font-size: 11px;
-            opacity: 0.95;
-            line-height: 1.3;
+            font-size: 10px;
+            color: #666;
+            margin-top: 5px;
           }
           
           .print-footer {
             margin-top: 30px;
             text-align: center;
             font-size: 10px;
-            color: #6b7280;
-            border-top: 2px solid #e5e7eb;
-            padding-top: 15px;
+            color: #666;
+            border-top: 1px solid #e5e7eb;
+            padding-top: 10px;
           }
           
           .no-print {
             display: none !important;
-          }
-          
-          .meal-details-grid {
-            display: grid;
-            grid-template-columns: repeat(7, 1fr);
-            gap: 8px;
-            margin-top: 15px;
-          }
-          
-          .meal-day-card {
-            background: white;
-            border: 1px solid #e5e7eb;
-            border-radius: 8px;
-            padding: 10px 8px;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-          }
-          
-          .meal-day-header {
-            font-weight: bold;
-            font-size: 11px;
-            margin-bottom: 8px;
-            padding-bottom: 6px;
-            border-bottom: 2px solid #0ea5e9;
-            color: #0ea5e9;
-            text-align: center;
-          }
-          
-          .meal-card {
-            background: #f9fafb;
-            border: 1px solid #e5e7eb;
-            border-radius: 4px;
-            padding: 6px;
-            margin-bottom: 6px;
-          }
-          
-          .meal-card:last-child {
-            margin-bottom: 0;
-          }
-          
-          .meal-title {
-            font-weight: bold;
-            font-size: 9px;
-            color: #374151;
-            margin-bottom: 4px;
-          }
-          
-          .meal-info {
-            font-size: 8px;
-            line-height: 1.4;
-            color: #6b7280;
           }
         }
       `}</style>
@@ -473,44 +381,43 @@ export const PrintableReport: React.FC<PrintableReportProps> = ({
           </tbody>
         </table>
 
-        {/* Meal Details - Enhanced Layout */}
-        <div style={{ marginTop: '20px' }}>
-          <div className="print-section-title">تفاصيل الوجبات اليومية</div>
-          <div className="meal-details-grid">
+        {/* Meal Details - Compact Layout */}
+        <div style={{ marginTop: '15px' }}>
+          <div style={{ fontWeight: 'bold', fontSize: '14px', marginBottom: '10px', color: '#0ea5e9' }}>تفاصيل الوجبات</div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '10px' }}>
             {results.weeklyData.map((day: any, dayIndex: number) => (
-              <div key={dayIndex} className="meal-day-card">
-                <div className="meal-day-header">
-                  <div>{day.day}</div>
-                  <div style={{ 
+              <div key={dayIndex} style={{ border: '1px solid #e5e7eb', borderRadius: '4px', padding: '8px', fontSize: '10px' }}>
+                <div style={{ fontWeight: 'bold', marginBottom: '6px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <span>{day.day}</span>
+                  <span style={{ 
                     backgroundColor: day.type === 'wet' ? '#dbeafe' : '#f3f4f6',
                     color: day.type === 'wet' ? '#1e40af' : '#374151',
-                    padding: '2px 6px',
-                    borderRadius: '4px',
-                    fontSize: '9px',
-                    marginTop: '4px',
-                    display: 'inline-block'
+                    padding: '1px 6px',
+                    borderRadius: '8px',
+                    fontSize: '9px'
                   }}>
-                    {day.type === 'wet' ? '🥫 ويت' : '🥘 دراي'}
-                  </div>
+                    {day.type === 'wet' ? 'ويت' : 'دراي'}
+                  </span>
                 </div>
-                <div>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(70px, 1fr))', gap: '4px' }}>
                   {day.mealsBreakdown.map((meal: any, mealIndex: number) => {
+                    // Determine display based on package type
                     const isPouch = foodData.wetPackType === 'pouch'
                     
                     return (
-                      <div key={mealIndex} className="meal-card">
-                        <div className="meal-title">وجبة {meal.mealIndex}</div>
-                        <div className="meal-info">
-                          <div>⚡ {formatNumber(meal.kcal, 0)} ك.ك</div>
+                      <div key={mealIndex} style={{ backgroundColor: '#f9fafb', border: '1px solid #e5e7eb', borderRadius: '3px', padding: '4px' }}>
+                        <div style={{ fontWeight: 'bold', fontSize: '9px', marginBottom: '2px' }}>وجبة {meal.mealIndex}</div>
+                        <div style={{ fontSize: '8px', lineHeight: '1.2' }}>
+                          <div>{formatNumber(meal.kcal, 0)} ك.ك</div>
                           {meal.wetGrams > 0 && (
                             <div>
                               {isPouch 
-                                ? `🥫 ${formatNumber(meal.wetUnits || 0, 1)} باوتش`
-                                : `🥫 ${formatNumber(meal.wetGrams, 0)} جرام`
+                                ? `باوتش: ${formatNumber(meal.wetUnits || 0, 1)} وحدة`
+                                : `ويت: ${formatNumber(meal.wetGrams, 0)}ج`
                               }
                             </div>
                           )}
-                          {meal.dryGrams > 0 && <div>🥘 {formatNumber(meal.dryGrams, 0)} جرام</div>}
+                          {meal.dryGrams > 0 && <div>دراي: {formatNumber(meal.dryGrams, 0)}ج</div>}
                         </div>
                       </div>
                     )
@@ -525,29 +432,14 @@ export const PrintableReport: React.FC<PrintableReportProps> = ({
       {/* Recommendations */}
       {results.recommendations && results.recommendations.length > 0 && (
         <div className="print-section">
-          <div className="print-section-title">التوصيات الهامة</div>
-          <ul style={{ margin: 0, paddingRight: '20px', fontSize: '11px', lineHeight: '1.8' }}>
+          <div className="print-section-title">التوصيات</div>
+          <ul style={{ margin: 0, paddingRight: '20px', fontSize: '11px' }}>
             {results.recommendations.map((rec: string, index: number) => (
-              <li key={index} style={{ marginBottom: '8px', color: '#374151' }}>
-                <strong style={{ color: '#0ea5e9' }}>●</strong> {rec}
-              </li>
+              <li key={index} style={{ marginBottom: '3px' }}>{rec}</li>
             ))}
           </ul>
         </div>
       )}
-
-      {/* Footer */}
-      <div className="print-footer">
-        <div style={{ marginBottom: '8px', fontSize: '12px', fontWeight: 'bold', color: '#0ea5e9' }}>
-          🐱 Bastet Pet - نظام تغذية القطط الاحترافي
-        </div>
-        <div style={{ marginBottom: '5px' }}>
-          تم إنشاء هذا التقرير بواسطة نظام حساب علمي دقيق معتمد على معايير FEDIAF
-        </div>
-        <div style={{ fontSize: '9px', color: '#9ca3af' }}>
-          للاستفسارات والدعم، تواصل معنا | تاريخ الطباعة: {formatDate()}
-        </div>
-      </div>
 
     </div>
   )

@@ -117,13 +117,6 @@ export default function CatNutritionCalculator() {
     const targetBoxId = boxPricing.boxType.id
     const targetDuration = boxPricing.variant.duration
     applyPresetSelection(targetBoxId, targetDuration)
-    // Scroll to box builder section smoothly
-    setTimeout(() => {
-      const boxBuilderElement = document.querySelector('[data-section="box-builder"]')
-      if (boxBuilderElement) {
-        boxBuilderElement.scrollIntoView({ behavior: 'smooth', block: 'start' })
-      }
-    }, 100)
   }
 
   // Calculate box pricings automatically when data is available
@@ -482,165 +475,6 @@ export default function CatNutritionCalculator() {
         </div>
       </header>
 
-      {/* Sticky Save/Load Bar */}
-      <div className="sticky top-0 z-50 bg-white border-b shadow-sm">
-        <div className="max-w-6xl mx-auto p-3">
-          <div className="flex flex-wrap items-center gap-3">
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button 
-                    size="sm"
-                    variant="outline" 
-                    onClick={async () => {
-                      if (!catData.clientName.trim()) {
-                        setSaveStatus('error')
-                        setSaveMessage('الرجاء إدخال اسم العميل أولاً')
-                        setTimeout(() => setSaveStatus('idle'), 3000)
-                        return
-                      }
-                      
-                      setSaveStatus('saving')
-                      setIsSaving(true)
-                      setSaveMessage('جاري حفظ البيانات...')
-                      
-                      try {
-                        const res = await fetch('/api/clients', {
-                          method: 'POST',
-                          headers: { 'Content-Type': 'application/json' },
-                          body: JSON.stringify({
-                            clientName: catData.clientName,
-                            clientPhone: catData.clientPhone,
-                            clientAddress: catData.clientAddress,
-                            data: {
-                              catData,
-                              foodData,
-                              weeklyPlan,
-                              boxBuilder,
-                              pricing
-                            }
-                          })
-                        })
-                        const json = await res.json()
-                        
-                        if (!res.ok) throw new Error(json?.error || 'فشل في الحفظ')
-                        
-                        setSaveStatus('success')
-                        setSaveMessage('تم حفظ بيانات العميل بنجاح ✓')
-                        await loadClients()
-                        setTimeout(() => setSaveStatus('idle'), 3000)
-                      } catch (e) {
-                        console.error('Save failed:', e)
-                        setSaveStatus('error')
-                        setSaveMessage('فشل في حفظ البيانات: ' + (e as Error).message)
-                        setTimeout(() => setSaveStatus('idle'), 5000)
-                      } finally {
-                        setIsSaving(false)
-                      }
-                    }}
-                    disabled={isSaving || !catData.clientName.trim()}
-                  >
-                    💾 {isSaving ? 'جاري الحفظ...' : 'حفظ البيانات'}
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>يحفظ جميع بيانات القطة والطعام والخطة</p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button 
-                    size="sm"
-                    variant="outline"
-                    onClick={async () => {
-                      if (!catData.clientName.trim()) {
-                        setSaveStatus('error')
-                        setSaveMessage('الرجاء اختيار عميل أولاً')
-                        setTimeout(() => setSaveStatus('idle'), 3000)
-                        return
-                      }
-                      
-                      setSaveStatus('saving')
-                      setSaveMessage('جاري تحميل بيانات العميل...')
-                      
-                      try {
-                        const res = await fetch(`/api/clients?name=${encodeURIComponent(catData.clientName)}`)
-                        const json = await res.json()
-                        if (!res.ok) throw new Error(json?.error || 'غير موجود')
-                        const data = json?.data
-                        
-                        if (data?.catData) {
-                          Object.entries(data.catData).forEach(([k, v]) => {
-                            handleCatDataChange(k as any, v as any)
-                          })
-                        }
-                        if (data?.foodData) {
-                          Object.entries(data.foodData).forEach(([k, v]) => {
-                            handleFoodDataChange(k as any, v as any)
-                          })
-                        }
-                        if (data?.weeklyPlan) {
-                          const wp = data.weeklyPlan
-                          if (Array.isArray(wp.wetDays)) {
-                            handleWeeklyPlanChange('wetDays', wp.wetDays)
-                            handleWeeklyPlanChange('wetDaysCount', wp.wetDays.filter((b: boolean) => !!b).length)
-                          }
-                          if (typeof wp.wetMealIndex !== 'undefined') handleWeeklyPlanChange('wetMealIndex', wp.wetMealIndex)
-                        }
-                        if (data?.boxBuilder) {
-                          Object.entries(data.boxBuilder).forEach(([k, v]) => {
-                            handleBoxBuilderChange(k as any, v as any)
-                          })
-                        }
-                        if (data?.pricing) {
-                          Object.entries(data.pricing).forEach(([k, v]) => {
-                            handlePricingChange(k as any, v as any)
-                          })
-                        }
-                        
-                        setSaveStatus('success')
-                        setSaveMessage('تم تحميل بيانات العميل بنجاح ✓')
-                        setTimeout(() => setSaveStatus('idle'), 3000)
-                      } catch (e) {
-                        console.error('Load failed:', e)
-                        setSaveStatus('error')
-                        setSaveMessage('فشل في تحميل بيانات العميل: ' + (e as Error).message)
-                        setTimeout(() => setSaveStatus('idle'), 5000)
-                      }
-                    }}
-                    disabled={!catData.clientName.trim()}
-                  >
-                    📥 تحميل البيانات
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>يحمّل بيانات محفوظة سابقاً لهذا العميل</p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-
-            {/* Status Indicator */}
-            {saveStatus !== 'idle' && (
-              <div className={`flex items-center gap-2 px-3 py-1 rounded text-sm ${
-                saveStatus === 'saving' ? 'bg-blue-50 text-blue-700' :
-                saveStatus === 'success' ? 'bg-green-50 text-green-700' :
-                'bg-red-50 text-red-700'
-              }`}>
-                {saveStatus === 'saving' && (
-                  <div className="w-3 h-3 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
-                )}
-                {saveStatus === 'success' && <span>✓</span>}
-                {saveStatus === 'error' && <span>✗</span>}
-                <span className="text-xs">{saveMessage}</span>
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-
       <div className="max-w-6xl mx-auto p-4 md:p-6 space-y-6">
         {/* Progress Indicator - Mobile Friendly */}
         <div className="md:hidden bg-white rounded-lg p-4 shadow-sm">
@@ -786,6 +620,16 @@ export default function CatNutritionCalculator() {
               </Alert>
             )}
 
+        {/* Box Pricing Display - now shows automatically when basic data is available */}
+        {boxPricings.length > 0 && (
+          <BoxPricingDisplay
+            boxPricings={boxPricings}
+            currency={pricing.currency}
+            formatNumber={formatNumber}
+            onSelectBox={handleSelectPricingBox}
+          />
+        )}
+
             {orders.length > 0 ? (
               <div className="overflow-x-auto">
                 <Table>
@@ -832,6 +676,228 @@ export default function CatNutritionCalculator() {
               </div>
             ) : (
               <p className="text-sm text-gray-500">لا توجد طلبات لهذا العميل بعد.</p>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Save/Load Data Section - Moved to top */}
+        <Card>
+          <CardHeader>
+            <CardTitle>حفظ وتحميل البيانات</CardTitle>
+            <CardDescription>احفظ بيانات العميل لاستعمالها لاحقاً</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="flex flex-wrap gap-4">
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button 
+                      variant="outline" 
+                      onClick={async () => {
+                        if (!catData.clientName.trim()) {
+                          setSaveStatus('error')
+                          setSaveMessage('الرجاء إدخال اسم العميل أولاً')
+                          setTimeout(() => setSaveStatus('idle'), 3000)
+                          return
+                        }
+                        
+                        setSaveStatus('saving')
+                        setIsSaving(true)
+                        setSaveMessage('جاري حفظ البيانات...')
+                        
+                        try {
+                          const res = await fetch('/api/clients', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                              clientName: catData.clientName,
+                              clientPhone: catData.clientPhone,
+                              clientAddress: catData.clientAddress,
+                              data: {
+                                catData,
+                                foodData,
+                                weeklyPlan,
+                                boxBuilder,
+                                pricing
+                              }
+                            })
+                          })
+                          const json = await res.json()
+                          
+                          if (!res.ok) throw new Error(json?.error || 'فشل في الحفظ')
+                          
+                          setSaveStatus('success')
+                          setSaveMessage('تم حفظ بيانات العميل بنجاح ✓')
+                          await loadClients() // Refresh client list
+                          
+                          // Reset status after success message
+                          setTimeout(() => setSaveStatus('idle'), 3000)
+                        } catch (e) {
+                          console.error('Save failed:', e)
+                          setSaveStatus('error')
+                          setSaveMessage('فشل في حفظ البيانات: ' + (e as Error).message)
+                          setTimeout(() => setSaveStatus('idle'), 5000)
+                        } finally {
+                          setIsSaving(false)
+                        }
+                      }}
+                      disabled={isSaving || !catData.clientName.trim()}
+                    >
+                      {isSaving ? 'جاري الحفظ...' : 'حفظ بيانات العميل'}
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>يحفظ جميع بيانات القطة والطعام والجدوهة</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button 
+                      variant="outline"
+                      onClick={async () => {
+                        if (!catData.clientName.trim()) {
+                          setSaveStatus('error')
+                          setSaveMessage('الرجاء اختيار عميل أولاً')
+                          setTimeout(() => setSaveStatus('idle'), 3000)
+                          return
+                        }
+                        
+                        setSaveStatus('saving')
+                        setSaveMessage('جاري تحميل بيانات العميل...')
+                        
+                        try {
+                          const res = await fetch(`/api/clients?name=${encodeURIComponent(catData.clientName)}`)
+                          const json = await res.json()
+                          if (!res.ok) throw new Error(json?.error || 'غير موجود')
+                          const data = json?.data
+                          
+                          if (data?.catData) {
+                            Object.entries(data.catData).forEach(([k, v]) => {
+                              handleCatDataChange(k as any, v as any)
+                            })
+                          }
+                          if (data?.foodData) {
+                            Object.entries(data.foodData).forEach(([k, v]) => {
+                              handleFoodDataChange(k as any, v as any)
+                            })
+                          }
+                          if (data?.weeklyPlan) {
+                            const wp = data.weeklyPlan
+                            if (Array.isArray(wp.wetDays)) {
+                              handleWeeklyPlanChange('wetDays', wp.wetDays)
+                              handleWeeklyPlanChange('wetDaysCount', wp.wetDays.filter((b: boolean) => !!b).length)
+                            }
+                            if (typeof wp.wetMealIndex !== 'undefined') handleWeeklyPlanChange('wetMealIndex', wp.wetMealIndex)
+                          }
+                          if (data?.boxBuilder) {
+                            Object.entries(data.boxBuilder).forEach(([k, v]) => {
+                              handleBoxBuilderChange(k as any, v as any)
+                            })
+                          }
+                          if (data?.pricing) {
+                            Object.entries(data.pricing).forEach(([k, v]) => {
+                              handlePricingChange(k as any, v as any)
+                            })
+                          }
+                          
+                          setSaveStatus('success')
+                          setSaveMessage('تم تحميل بيانات العميل بنجاح ✓')
+                          setTimeout(() => setSaveStatus('idle'), 3000)
+                        } catch (e) {
+                          console.error('Load failed:', e)
+                          setSaveStatus('error')
+                          setSaveMessage('فشل في تحميل بيانات العميل: ' + (e as Error).message)
+                          setTimeout(() => setSaveStatus('idle'), 5000)
+                        }
+                      }}
+                      disabled={!catData.clientName.trim()}
+                    >
+                      تحميل بيانات العميل
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>يحمّل بيانات محفوظة سابقاً لهذا العميل</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className="text-red-600 border-red-300 hover:bg-red-50"
+                      onClick={async () => {
+                        const name = catData.clientName.trim()
+                        if (!name) {
+                          setSaveStatus('error')
+                          setSaveMessage('الرجاء إدخال/اختيار اسم العميل أولاً')
+                          setTimeout(() => setSaveStatus('idle'), 3000)
+                          return
+                        }
+                        const ok = window.confirm(`سيتم حذف بيانات العميل "${name}" نهائياً. هل أنت متأكد؟`)
+                        if (!ok) return
+                        try {
+                          setSaveStatus('saving')
+                          setSaveMessage('جاري حذف العميل...')
+                          const res = await fetch('/api/clients', {
+                            method: 'DELETE',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ name })
+                          })
+                          const json = await res.json().catch(() => ({}))
+                          if (!res.ok) throw new Error(json?.error || 'فشل حذف العميل')
+                          // Clear client fields
+                          handleCatDataChange('clientName', '')
+                          handleCatDataChange('clientPhone', '')
+                          handleCatDataChange('clientAddress', '')
+                          setClientSearchTerm('')
+                          setShowClientDropdown(false)
+                          await loadClients('')
+                          setSaveStatus('success')
+                          setSaveMessage('تم حذف العميل بنجاح ✓')
+                          setTimeout(() => setSaveStatus('idle'), 3000)
+                        } catch (e) {
+                          console.error('Delete client failed:', e)
+                          setSaveStatus('error')
+                          setSaveMessage('فشل في حذف العميل: ' + (e as Error).message)
+                          setTimeout(() => setSaveStatus('idle'), 5000)
+                        }
+                      }}
+                    >
+                      حذف العميل
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>حذف العميل والبيانات المرتبطة به</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </div>
+
+            {/* Save/Load Status Indicator */}
+            {saveStatus !== 'idle' && (
+              <div className={`mt-4 p-3 rounded-lg text-sm ${
+                saveStatus === 'saving' ? 'bg-blue-50 text-blue-700 border border-blue-200' :
+                saveStatus === 'success' ? 'bg-green-50 text-green-700 border border-green-200' :
+                'bg-red-50 text-red-700 border border-red-200'
+              }`}>
+                <div className="flex items-center gap-2">
+                  {saveStatus === 'saving' && (
+                    <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+                  )}
+                  {saveStatus === 'success' && (
+                    <div className="w-4 h-4 bg-green-600 rounded-full flex items-center justify-center text-white text-xs">✓</div>
+                  )}
+                  {saveStatus === 'error' && (
+                    <div className="w-4 h-4 bg-red-600 rounded-full flex items-center justify-center text-white text-xs">✗</div>
+                  )}
+                  <span>{saveMessage}</span>
+                </div>
+              </div>
             )}
           </CardContent>
         </Card>
@@ -1315,7 +1381,7 @@ export default function CatNutritionCalculator() {
 
 
         {/* Box Builder */}
-        <Card data-section="box-builder">
+        <Card>
           <CardHeader>
             <CardTitle>صانع البوكسات</CardTitle>
             <CardDescription>احسب ما تحتاجه لفترة معينة</CardDescription>
@@ -1940,83 +2006,6 @@ export default function CatNutritionCalculator() {
             {isCalculating ? 'جاري الحساب...' : 'احسب الجدول'}
           </Button>
         </div>
-
-        {/* Results Section - Only shows after calculation */}
-        {results && (
-          <>
-            {/* Box Pricing Display */}
-            {boxPricings.length > 0 && (
-              <BoxPricingDisplay
-                boxPricings={boxPricings}
-                currency={pricing.currency}
-                formatNumber={formatNumber}
-                onSelectBox={handleSelectPricingBox}
-              />
-            )}
-
-            {/* Cost Summary */}
-            <Card>
-              <CardHeader>
-                <CardTitle>ملخص التكاليف</CardTitle>
-                <CardDescription>تفاصيل التكلفة الإجمالية للخطة</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  <div className="flex justify-between items-center pb-2 border-b">
-                    <span className="text-gray-600">دراي فود:</span>
-                    <span className="font-medium">{formatNumber(costs.dryCost, 2)} {pricing.currency}</span>
-                  </div>
-                  <div className="flex justify-between items-center pb-2 border-b">
-                    <span className="text-gray-600">ويت فود:</span>
-                    <span className="font-medium">{formatNumber(costs.wetCost, 2)} {pricing.currency}</span>
-                  </div>
-                  {costs.treatCost > 0 && (
-                    <div className="flex justify-between items-center pb-2 border-b">
-                      <span className="text-gray-600">تريت:</span>
-                      <span className="font-medium">{formatNumber(costs.treatCost, 2)} {pricing.currency}</span>
-                    </div>
-                  )}
-                  <div className="flex justify-between items-center pb-2 border-b">
-                    <span className="text-gray-600">تكاليف التغليف:</span>
-                    <span className="font-medium">{formatNumber(costs.packagingCost, 2)} {pricing.currency}</span>
-                  </div>
-                  {costs.additionalCosts > 0 && (
-                    <div className="flex justify-between items-center pb-2 border-b">
-                      <span className="text-gray-600">تكاليف إضافية:</span>
-                      <span className="font-medium">{formatNumber(costs.additionalCosts, 2)} {pricing.currency}</span>
-                    </div>
-                  )}
-                  <div className="flex justify-between items-center pb-2 border-b bg-blue-50 p-2 rounded">
-                    <span className="font-medium text-blue-900">المجموع الفرعي:</span>
-                    <span className="font-bold text-blue-900">{formatNumber(costs.subtotalCost, 2)} {pricing.currency}</span>
-                  </div>
-                  <div className="flex justify-between items-center pb-2 border-b">
-                    <span className="text-gray-600">الربح ({pricing.profitPercentage}%):</span>
-                    <span className="font-medium">{formatNumber(costs.profitAmount, 2)} {pricing.currency}</span>
-                  </div>
-                  {costs.discountAmount > 0 && (
-                    <div className="flex justify-between items-center pb-2 border-b text-green-600">
-                      <span>الخصم ({pricing.discountPercentage}%):</span>
-                      <span className="font-medium">-{formatNumber(costs.discountAmount, 2)} {pricing.currency}</span>
-                    </div>
-                  )}
-                  <div className="flex justify-between items-center pb-2 border-b">
-                    <span className="text-gray-600">التوصيل:</span>
-                    <span className="font-medium">{formatNumber(costs.deliveryCost, 2)} {pricing.currency}</span>
-                  </div>
-                  <div className="flex justify-between items-center pt-2 bg-green-50 p-3 rounded-lg">
-                    <span className="text-lg font-bold text-green-900">الإجمالي النهائي:</span>
-                    <span className="text-xl font-bold text-green-900">{formatNumber(costs.totalCostWithDelivery, 2)} {pricing.currency}</span>
-                  </div>
-                  <div className="flex justify-between items-center text-sm text-gray-600">
-                    <span>التكلفة اليومية:</span>
-                    <span>{formatNumber(costs.perDay, 2)} {pricing.currency}/يوم</span>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </>
-        )}
 
         {/* Print Button - placed before results as per convention */}
         {results && (
