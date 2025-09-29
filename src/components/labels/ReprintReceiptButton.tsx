@@ -11,12 +11,25 @@ interface ReprintReceiptButtonProps {
     createdAt?: string
     currency?: string
     totals: {
+      dryCost?: number
+      wetCost?: number
+      treatCost?: number
+      packagingCost?: number
+      additionalCosts?: number
+      subtotalCost?: number
+      totalCostBeforeProfit?: number
+      profitAmount?: number
       totalCostWithProfit?: number
+      discountAmount?: number
       totalCostAfterDiscount?: number
       deliveryCost?: number
       totalCostWithDelivery?: number
     }
     catName?: string
+    boxName?: string
+    boxDuration?: string
+    planDuration?: string
+    paidAmount?: number
     payload?: { boxSummary?: any }
   }
   variant?: 'default' | 'outline' | 'secondary'
@@ -41,7 +54,16 @@ export const ReprintReceiptButton: React.FC<ReprintReceiptButtonProps> = ({
 
     const pricing = { currency: order.currency || '' }
     const costs = {
+      dryCost: order.totals.dryCost || 0,
+      wetCost: order.totals.wetCost || 0,
+      treatCost: order.totals.treatCost || 0,
+      packagingCost: order.totals.packagingCost || 0,
+      additionalCosts: order.totals.additionalCosts || 0,
+      subtotalCost: order.totals.subtotalCost || 0,
+      totalCostBeforeProfit: order.totals.totalCostBeforeProfit || 0,
+      profitAmount: order.totals.profitAmount || 0,
       totalCostWithProfit: order.totals.totalCostWithProfit || 0,
+      discountAmount: order.totals.discountAmount || 0,
       totalCostAfterDiscount: order.totals.totalCostAfterDiscount || 0,
       deliveryCost: order.totals.deliveryCost || 0,
       totalCostWithDelivery: order.totals.totalCostWithDelivery || 0,
@@ -56,13 +78,15 @@ export const ReprintReceiptButton: React.FC<ReprintReceiptButtonProps> = ({
     const receiptData = {
       orderNo: order.orderNo,
       catData,
+      boxName: order.boxName || '',
+      boxDuration: order.boxDuration || order.planDuration || '',
       boxSummary: {
         ...boxSummary,
         boxCount: boxSummary?.boxCount || 1
       },
       pricing,
       costs,
-      paidAmount: 0, // Default to 0, can be updated in receipt page
+      paidAmount: order.paidAmount || 0,
       timestamp: order.createdAt || new Date().toISOString()
     }
 

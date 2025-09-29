@@ -369,11 +369,18 @@ const BoxPricingDisplay: React.FC<BoxPricingDisplayProps> = ({
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-3 border-t mt-3">
                         {onSelectBox && (
                           <Button
-                            onClick={() => onSelectBox(pricing)}
-                            className="w-full"
-                            variant="outline"
+                            onClick={() => {
+                              onSelectBox(pricing)
+                              // Scroll to box builder section
+                              window.scrollTo({
+                                top: 0,
+                                behavior: 'smooth'
+                              })
+                            }}
+                            className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+                            variant="default"
                           >
-                            اختيار هذا البوكس
+                            ✓ اختيار هذا البوكس
                           </Button>
                         )}
                         <Button

@@ -226,6 +226,8 @@ function ReceiptContent() {
             costs={receiptData.costs}
             orderNo={receiptData.orderNo}
             paidAmount={paidAmount}
+            boxName={receiptData.boxName || ''}
+            boxDuration={receiptData.boxDuration || ''}
           />
         </div>
         

@@ -60,10 +60,12 @@ export const BoxLabelPrintButton: React.FC<BoxLabelPrintButtonProps> = ({
       orderNo = `${y}${m}${day}-${hh}${mm}`
     }
 
-    // Prepare receipt data with box count
+    // Prepare receipt data with box count and full cost details
     const receiptData = {
       orderNo,
       catData,
+      boxName: boxSummary?.selectedBoxName || '',
+      boxDuration: boxSummary?.selectedBoxDuration || boxSummary?.planDuration || '',
       boxSummary: {
         ...boxSummary,
         boxCount: boxSummary?.boxCount || 1
@@ -77,7 +79,7 @@ export const BoxLabelPrintButton: React.FC<BoxLabelPrintButtonProps> = ({
     // Save receipt data to localStorage
     localStorage.setItem(`receipt_${orderNo}`, JSON.stringify(receiptData))
 
-    // Persist order number linked to the client
+    // Persist order number linked to the client with full cost breakdown
     try {
       await fetch('/api/orders', {
         method: 'POST',
@@ -87,13 +89,24 @@ export const BoxLabelPrintButton: React.FC<BoxLabelPrintButtonProps> = ({
           orderNo,
           currency: pricing?.currency,
           catName: catData?.name,
+          boxName: boxSummary?.selectedBoxName || '',
+          boxDuration: boxSummary?.selectedBoxDuration || boxSummary?.planDuration || '',
           planDuration: boxSummary?.planDuration,
           paidAmount: parseFloat(pricing?.paidAmount || '0'),
           totals: {
-            totalCostWithProfit: costs?.totalCostWithProfit,
-            totalCostAfterDiscount: costs?.totalCostAfterDiscount,
-            deliveryCost: costs?.deliveryCost,
-            totalCostWithDelivery: costs?.totalCostWithDelivery,
+            dryCost: costs?.dryCost || 0,
+            wetCost: costs?.wetCost || 0,
+            treatCost: costs?.treatCost || 0,
+            packagingCost: costs?.packagingCost || 0,
+            additionalCosts: costs?.additionalCosts || 0,
+            subtotalCost: costs?.subtotalCost || 0,
+            totalCostBeforeProfit: costs?.totalCostBeforeProfit || 0,
+            profitAmount: costs?.profitAmount || 0,
+            totalCostWithProfit: costs?.totalCostWithProfit || 0,
+            discountAmount: costs?.discountAmount || 0,
+            totalCostAfterDiscount: costs?.totalCostAfterDiscount || 0,
+            deliveryCost: costs?.deliveryCost || 0,
+            totalCostWithDelivery: costs?.totalCostWithDelivery || 0,
           },
           payload: {
             boxSummary,

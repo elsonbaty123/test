@@ -11,6 +11,8 @@ interface CustomerReceiptProps {
   costs: any
   orderNo?: string
   paidAmount?: number
+  boxName?: string
+  boxDuration?: string
 }
 
 export const CustomerReceipt: React.FC<CustomerReceiptProps> = ({
@@ -19,7 +21,9 @@ export const CustomerReceipt: React.FC<CustomerReceiptProps> = ({
   pricing,
   costs,
   orderNo: orderNoProp,
-  paidAmount = 0
+  paidAmount = 0,
+  boxName = '',
+  boxDuration = ''
 }) => {
   const formatDate = () => {
     return new Date().toLocaleDateString('ar-EG', {
@@ -268,7 +272,7 @@ export const CustomerReceipt: React.FC<CustomerReceiptProps> = ({
             paddingBottom: '6px'
           }}>نوع الطلب</div>
           
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '8px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
             <div style={{
               background: 'white',
               padding: '8px',
@@ -276,8 +280,8 @@ export const CustomerReceipt: React.FC<CustomerReceiptProps> = ({
               border: '1px solid #3498db',
               textAlign: 'center'
             }}>
-              <div style={{ fontSize: '11px', color: '#3498db', fontWeight: '600', marginBottom: '3px' }}>نوع الخدمة</div>
-              <div style={{ fontSize: '12px', color: '#2c3e50', fontWeight: '500' }}>خطة تغذية القطة</div>
+              <div style={{ fontSize: '11px', color: '#3498db', fontWeight: '600', marginBottom: '3px' }}>نوع البوكس</div>
+              <div style={{ fontSize: '12px', color: '#2c3e50', fontWeight: '500' }}>{boxName || 'غير محدد'}</div>
             </div>
             
             <div style={{
@@ -287,21 +291,8 @@ export const CustomerReceipt: React.FC<CustomerReceiptProps> = ({
               border: '1px solid #3498db',
               textAlign: 'center'
             }}>
-              <div style={{ fontSize: '11px', color: '#3498db', fontWeight: '600', marginBottom: '3px' }}>مدة الخطة</div>
-              <div style={{ fontSize: '12px', color: '#2c3e50', fontWeight: '500' }}>{boxSummary?.totalDays || 0} يوم</div>
-            </div>
-            
-            <div style={{
-              background: 'white',
-              padding: '8px',
-              borderRadius: '6px',
-              border: '1px solid #3498db',
-              textAlign: 'center'
-            }}>
-              <div style={{ fontSize: '11px', color: '#3498db', fontWeight: '600', marginBottom: '3px' }}>عدد البوكسات</div>
-              <div style={{ fontSize: '12px', color: '#2c3e50', fontWeight: '500' }}>
-                {boxSummary?.boxCount || 1} بوكس
-              </div>
+              <div style={{ fontSize: '11px', color: '#3498db', fontWeight: '600', marginBottom: '3px' }}>مدة البوكس</div>
+              <div style={{ fontSize: '12px', color: '#2c3e50', fontWeight: '500' }}>{boxDuration || (boxSummary?.totalDays || 0) + ' يوم'}</div>
             </div>
           </div>
           
@@ -320,45 +311,139 @@ export const CustomerReceipt: React.FC<CustomerReceiptProps> = ({
 
         {/* Billing Summary */}
         <div style={{
-          background: 'linear-gradient(135deg, #27ae60 0%, #2ecc71 100%)',
-          color: 'white',
+          background: '#f8f9fa',
+          border: '2px solid #dee2e6',
           borderRadius: '8px',
-          padding: '12px',
-          boxShadow: '0 4px 15px rgba(39, 174, 96, 0.3)'
+          padding: '12px'
         }}>
           <div style={{
-            fontSize: '16px',
+            fontSize: '15px',
             fontWeight: '700',
-            textAlign: 'center',
+            color: '#2c3e50',
             marginBottom: '10px',
-            textShadow: '1px 1px 2px rgba(0,0,0,0.3)'
+            textAlign: 'center',
+            borderBottom: '2px solid #495057',
+            paddingBottom: '6px'
           }}>الحساب</div>
           
-          <div style={{
-            background: 'rgba(255,255,255,0.1)',
-            borderRadius: '6px',
-            padding: '10px'
-          }}>
+          <div style={{ background: 'white', borderRadius: '6px', padding: '10px', border: '1px solid #dee2e6' }}>
+            {costs.dryCost > 0 && (
+              <div style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                padding: '5px 0',
+                borderBottom: '1px solid #e9ecef',
+                fontSize: '12px',
+                color: '#495057'
+              }}>
+                <span>دراي فود:</span>
+                <span style={{ fontWeight: '600' }}>{formatNumber(costs.dryCost, 0)} {currency}</span>
+              </div>
+            )}
+            
+            {costs.wetCost > 0 && (
+              <div style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                padding: '5px 0',
+                borderBottom: '1px solid #e9ecef',
+                fontSize: '12px',
+                color: '#495057'
+              }}>
+                <span>ويت فود:</span>
+                <span style={{ fontWeight: '600' }}>{formatNumber(costs.wetCost, 0)} {currency}</span>
+              </div>
+            )}
+            
+            {costs.treatCost > 0 && (
+              <div style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                padding: '5px 0',
+                borderBottom: '1px solid #e9ecef',
+                fontSize: '12px',
+                color: '#495057'
+              }}>
+                <span>تريت:</span>
+                <span style={{ fontWeight: '600' }}>{formatNumber(costs.treatCost, 0)} {currency}</span>
+              </div>
+            )}
+            
+            {costs.packagingCost > 0 && (
+              <div style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                padding: '5px 0',
+                borderBottom: '1px solid #e9ecef',
+                fontSize: '12px',
+                color: '#495057'
+              }}>
+                <span>تكاليف التغليف:</span>
+                <span style={{ fontWeight: '600' }}>{formatNumber(costs.packagingCost, 0)} {currency}</span>
+              </div>
+            )}
+            
+            {costs.additionalCosts > 0 && (
+              <div style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                padding: '5px 0',
+                borderBottom: '1px solid #e9ecef',
+                fontSize: '12px',
+                color: '#495057'
+              }}>
+                <span>تكاليف إضافية:</span>
+                <span style={{ fontWeight: '600' }}>{formatNumber(costs.additionalCosts, 0)} {currency}</span>
+              </div>
+            )}
+            
             <div style={{
               display: 'flex',
               justifyContent: 'space-between',
               alignItems: 'center',
-              padding: '6px 0',
-              borderBottom: '1px solid rgba(255,255,255,0.2)',
-              fontSize: '13px'
+              padding: '8px',
+              borderBottom: '1px solid #dee2e6',
+              fontSize: '13px',
+              fontWeight: '700',
+              color: '#495057',
+              background: '#e9ecef',
+              borderRadius: '4px',
+              marginTop: '4px'
             }}>
-              <span>الإجمالي الفرعي:</span>
-              <span style={{ fontWeight: '600' }}>{formatNumber(total, 0)} {currency}</span>
+              <span>المجموع الفرعي:</span>
+              <span>{formatNumber(costs.subtotalCost || total, 0)} {currency}</span>
             </div>
+            
+            {costs.profitAmount > 0 && (
+              <div style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                padding: '5px 0',
+                borderBottom: '1px solid #e9ecef',
+                fontSize: '12px',
+                color: '#495057',
+                marginTop: '4px'
+              }}>
+                <span>الربح:</span>
+                <span style={{ fontWeight: '600' }}>{formatNumber(costs.profitAmount, 0)} {currency}</span>
+              </div>
+            )}
             
             {discountValue > 0 && (
               <div style={{
                 display: 'flex',
                 justifyContent: 'space-between',
                 alignItems: 'center',
-                padding: '6px 0',
-                borderBottom: '1px solid rgba(255,255,255,0.2)',
-                fontSize: '13px'
+                padding: '5px 0',
+                borderBottom: '1px solid #e9ecef',
+                fontSize: '12px',
+                color: '#28a745'
               }}>
                 <span>الخصم:</span>
                 <span style={{ fontWeight: '600' }}>-{formatNumber(discountValue, 0)} {currency}</span>
@@ -370,9 +455,10 @@ export const CustomerReceipt: React.FC<CustomerReceiptProps> = ({
                 display: 'flex',
                 justifyContent: 'space-between',
                 alignItems: 'center',
-                padding: '6px 0',
-                borderBottom: '1px solid rgba(255,255,255,0.2)',
-                fontSize: '13px'
+                padding: '5px 0',
+                borderBottom: '1px solid #e9ecef',
+                fontSize: '12px',
+                color: '#495057'
               }}>
                 <span>رسوم التوصيل:</span>
                 <span style={{ fontWeight: '600' }}>{formatNumber(delivery, 0)} {currency}</span>
@@ -385,12 +471,11 @@ export const CustomerReceipt: React.FC<CustomerReceiptProps> = ({
               alignItems: 'center',
               fontWeight: '700',
               fontSize: '15px',
-              paddingTop: '10px',
-              marginTop: '6px',
-              borderTop: '2px solid rgba(255,255,255,0.3)',
-              background: 'rgba(255,255,255,0.1)',
               padding: '10px',
-              borderRadius: '4px'
+              marginTop: '8px',
+              background: 'linear-gradient(135deg, #495057 0%, #6c757d 100%)',
+              color: 'white',
+              borderRadius: '6px'
             }}>
               <span>المبلغ الإجمالي:</span>
               <span>{formatNumber(amountDue, 0)} {currency}</span>
@@ -401,13 +486,16 @@ export const CustomerReceipt: React.FC<CustomerReceiptProps> = ({
                 display: 'flex',
                 justifyContent: 'space-between',
                 alignItems: 'center',
-                padding: '6px 0',
-                borderBottom: '1px solid rgba(255,255,255,0.2)',
+                padding: '8px',
                 fontSize: '13px',
-                marginTop: '8px'
+                marginTop: '8px',
+                background: '#d4edda',
+                border: '1px solid #c3e6cb',
+                borderRadius: '4px',
+                color: '#155724'
               }}>
-                <span>المبلغ المدفوع:</span>
-                <span style={{ fontWeight: '600', color: '#2ecc71' }}>{formatNumber(paid, 0)} {currency}</span>
+                <span style={{ fontWeight: '600' }}>المبلغ المدفوع:</span>
+                <span style={{ fontWeight: '700' }}>{formatNumber(paid, 0)} {currency}</span>
               </div>
             )}
             
@@ -416,13 +504,17 @@ export const CustomerReceipt: React.FC<CustomerReceiptProps> = ({
                 display: 'flex',
                 justifyContent: 'space-between',
                 alignItems: 'center',
-                padding: '6px 0',
+                padding: '8px',
                 fontSize: '13px',
                 fontWeight: '600',
-                color: '#e74c3c'
+                background: '#f8d7da',
+                border: '1px solid #f5c6cb',
+                color: '#721c24',
+                borderRadius: '4px',
+                marginTop: '6px'
               }}>
                 <span>المبلغ المتبقي:</span>
-                <span>{formatNumber(remaining, 0)} {currency}</span>
+                <span style={{ fontWeight: '700' }}>{formatNumber(remaining, 0)} {currency}</span>
               </div>
             )}
             
@@ -434,8 +526,9 @@ export const CustomerReceipt: React.FC<CustomerReceiptProps> = ({
                 padding: '8px',
                 fontSize: '14px',
                 fontWeight: '700',
-                color: '#2ecc71',
-                background: 'rgba(46, 204, 113, 0.1)',
+                color: '#155724',
+                background: '#d4edda',
+                border: '2px solid #c3e6cb',
                 borderRadius: '4px',
                 marginTop: '8px'
               }}>
