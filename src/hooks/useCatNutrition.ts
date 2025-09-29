@@ -1012,10 +1012,41 @@ export function useCatNutrition() {
     weeklyPlan, 
     catData,
     calculateNutrition,
-    createBoxSpecificWeeklyPlan,
-    selectEvenlyDistributedIndices
+    createBoxSpecificWeeklyPlan
   ])
   
+  // دالة لتوزيع أيام الويت فود بشكل متوازن حسب عدد الأكياس
+  const selectBoxWetDayIndices = useCallback((count: number): number[] => {
+    if (count <= 0) return []
+    if (count >= 7) return Array.from({ length: 7 }, (_, i) => i)
+
+    const result: number[] = []
+
+    switch (count) {
+      case 1:
+        result.push(3) // الأربعاء (وسط الأسبوع)
+        break
+      case 2:
+        result.push(1, 5) // الاثنين والجمعة
+        break
+      case 3:
+        result.push(1, 3, 5) // الاثنين والأربعاء والجمعة
+        break
+      default: {
+        const step = (7 - 1) / (count - 1)
+        for (let i = 0; i < count; i++) {
+          const index = Math.round(i * step)
+          if (!result.includes(index)) {
+            result.push(index)
+          }
+        }
+        break
+      }
+    }
+
+    return result.slice(0, count)
+  }, [])
+
   // دالة لإنشاء خطة أسبوعية مخصصة لبوكس معين
   const createBoxSpecificWeeklyPlan = useCallback((
     baseWeeklyData: WeeklyDay[],
@@ -1027,28 +1058,61 @@ export function useCatNutrition() {
     
     // احسب عدد أيام الويت فود حسب البوكس
     const wetDaysCount = boxType.includeWetFood ? boxType.wetFoodBagsPerWeek : 0
-    
+
     // اختر أيام الويت فود بشكل متوازن
-    const wetDayIndices = selectEvenlyDistributedIndices(7, wetDaysCount)
-    
+    const wetDayIndices = selectBoxWetDayIndices(Math.min(wetDaysCount, 7))
+
+    const wetUnitGramsValue = Math.max(1, toNumber(foodData.wetUnitGrams, 85))
+    const dryKcalPerGram = Math.max(1e-6, toNumber(foodData.dry100, 350) / 100)
+    const wetKcalPerGram = foodData.wetMode === 'perUnit'
+      ? Math.max(1e-6, toNumber(foodData.wetKcalPerUnit, 80) / wetUnitGramsValue)
+      : Math.max(1e-6, toNumber(foodData.wet100, 80) / 100)
+
     // أنشئ خطة جديدة بناءً على البيانات الأساسية
     return baseWeeklyData.map((day, index) => {
       const shouldHaveWet = wetDayIndices.includes(index)
       const baseDER = day.der
-      
+      const mealsCount = day.mealsBreakdown?.length ?? 0
+      const normalizedMeals = mealsCount > 0
+        ? day.mealsBreakdown!
+        : Array.from({ length: Math.max(1, day.mealsBreakdown?.length ?? 1) }, (_, mealIdx) => ({
+            mealIndex: mealIdx + 1,
+            kcal: 0,
+            wetGrams: 0,
+            dryGrams: 0,
+            wetUnits: 0,
+          }))
+      const safeWetMealIndex = normalizedMeals.length > 0
+        ? Math.max(0, Math.min(normalizedMeals.length - 1, (wetMealIndex ?? 1) - 1))
+        : 0
+
       if (shouldHaveWet && boxType.includeWetFood) {
         // يوم ويت فود: وحدة واحدة فقط + باقي السعرات دراي
-        const wetKcalPerUnit = foodData.wetMode === 'perUnit'
+        const wetKcal = Math.max(0, foodData.wetMode === 'perUnit'
           ? toNumber(foodData.wetKcalPerUnit, 80)
-          : (toNumber(foodData.wet100, 80) * toNumber(foodData.wetUnitGrams, 85)) / 100
-        
-        const wetKcal = wetKcalPerUnit // وحدة واحدة فقط
+          : (toNumber(foodData.wet100, 80) * wetUnitGramsValue) / 100)
         const dryKcal = Math.max(0, baseDER - wetKcal)
-        const dryGrams = dryKcal / (toNumber(foodData.dry100, 350) / 100)
-        const wetGrams = foodData.wetMode === 'perUnit'
-          ? toNumber(foodData.wetUnitGrams, 85)
-          : (wetKcal / toNumber(foodData.wet100, 80)) * 100
-        
+        const dryGrams = dryKcal / dryKcalPerGram
+        const wetGrams = wetKcal / wetKcalPerGram
+        const dryKcalPerMeal = normalizedMeals.length > 0 ? dryKcal / normalizedMeals.length : dryKcal
+
+        const mealsBreakdown = normalizedMeals.map((meal, mealIdx) => {
+          const mealWetKcal = mealIdx === safeWetMealIndex ? wetKcal : 0
+          const mealDryKcal = dryKcalPerMeal
+          const mealTotalKcal = mealWetKcal + mealDryKcal
+          const mealWetGrams = mealWetKcal / wetKcalPerGram
+          const mealDryGrams = mealDryKcal / dryKcalPerGram
+          const mealWetUnits = mealIdx === safeWetMealIndex ? 1 : 0
+
+          return {
+            ...meal,
+            kcal: Math.round(mealTotalKcal * 10) / 10,
+            wetGrams: Math.round(mealWetGrams * 10) / 10,
+            dryGrams: Math.round(mealDryGrams * 10) / 10,
+            wetUnits: Math.round(mealWetUnits * 100) / 100,
+          }
+        })
+
         return {
           ...day,
           type: 'wet',
@@ -1057,52 +1121,42 @@ export function useCatNutrition() {
           wetGrams: Math.round(wetGrams * 10) / 10,
           dryGrams: Math.round(dryGrams * 10) / 10,
           units: 1, // وحدة واحدة فقط
-          servingSize: toNumber(foodData.wetUnitGrams, 85)
+          servingSize: wetUnitGramsValue,
+          mealsBreakdown,
         }
-      } else {
-        // يوم دراي فقط
-        const dryGrams = baseDER / (toNumber(foodData.dry100, 350) / 100)
-        
+      }
+
+      // يوم دراي فقط
+      const dryKcal = baseDER
+      const dryGrams = dryKcal / dryKcalPerGram
+      const dryKcalPerMeal = normalizedMeals.length > 0 ? dryKcal / normalizedMeals.length : dryKcal
+
+      const mealsBreakdown = normalizedMeals.map((meal) => {
+        const mealDryKcal = dryKcalPerMeal
+        const mealDryGrams = mealDryKcal / dryKcalPerGram
+
         return {
-          ...day,
-          type: 'dry',
-          wetKcal: 0,
-          dryKcal: Math.round(baseDER * 10) / 10,
+          ...meal,
+          kcal: Math.round(mealDryKcal * 10) / 10,
           wetGrams: 0,
-          dryGrams: Math.round(dryGrams * 10) / 10,
-          units: 0,
-          servingSize: 0
+          dryGrams: Math.round(mealDryGrams * 10) / 10,
+          wetUnits: 0,
         }
+      })
+
+      return {
+        ...day,
+        type: 'dry',
+        wetKcal: 0,
+        dryKcal: Math.round(dryKcal * 10) / 10,
+        wetGrams: 0,
+        dryGrams: Math.round(dryGrams * 10) / 10,
+        units: 0,
+        servingSize: 0,
+        mealsBreakdown,
       }
     })
-  }, [foodData])
-  
-  // دالة لتوزيع الأيام بشكل متوازن
-  const selectEvenlyDistributedIndices = useCallback((total: number, count: number): number[] => {
-    if (count <= 0 || total <= 0) return []
-    if (count >= total) return Array.from({ length: total }, (_, i) => i)
-    
-    const result: number[] = []
-    
-    if (count === 1) {
-      result.push(3) // الأربعاء (وسط الأسبوع)
-    } else if (count === 2) {
-      result.push(1, 5) // الاثنين والجمعة
-    } else if (count === 3) {
-      result.push(1, 3, 5) // الاثنين والأربعاء والجمعة
-    } else {
-      // لأيام أكثر، استخدم توزيع رياضي
-      const step = (total - 1) / (count - 1)
-      for (let i = 0; i < count; i++) {
-        const index = Math.round(i * step)
-        if (index < total && !result.includes(index)) {
-          result.push(index)
-        }
-      }
-    }
-    
-    return result.slice(0, count)
-  }, [])
+  }, [foodData, selectBoxWetDayIndices])
 
   // Calculate box pricing without requiring main results
   const calculateBoxPricingDirect = useCallback((): BoxPricing[] => {
