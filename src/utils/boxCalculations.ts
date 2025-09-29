@@ -75,12 +75,24 @@ function selectEvenlyDistributedIndices(total: number, count: number): number[] 
   if (count >= total) return Array.from({ length: total }, (_, i) => i)
   
   const result: number[] = []
-  const step = total / count
   
-  for (let i = 0; i < count; i++) {
-    const index = Math.round(i * step)
-    if (index < total && !result.includes(index)) {
-      result.push(index)
+  if (count === 1) {
+    // For 1 wet day, place it in the middle of the week
+    result.push(3) // Wednesday (index 3)
+  } else if (count === 2) {
+    // For 2 wet days, distribute evenly
+    result.push(1, 5) // Monday and Friday
+  } else if (count === 3) {
+    // For 3 wet days, distribute evenly
+    result.push(1, 3, 5) // Monday, Wednesday, Friday
+  } else {
+    // For more days, use mathematical distribution
+    const step = (total - 1) / (count - 1)
+    for (let i = 0; i < count; i++) {
+      const index = Math.round(i * step)
+      if (index < total && !result.includes(index)) {
+        result.push(index)
+      }
     }
   }
   
@@ -178,6 +190,7 @@ export function calculateBoxSpecificNutrition(
     const dryKcalPerMeal = new Array(meals).fill(0)
     
     if (isWet) {
+      // في أيام الويت فود، وجبة واحدة ويت والباقي دراي
       wetKcalPerMeal[wetMealIndex - 1] = perMealTarget
       for (let j = 0; j < meals; j++) {
         if (j !== wetMealIndex - 1) {
@@ -185,6 +198,7 @@ export function calculateBoxSpecificNutrition(
         }
       }
     } else {
+      // في أيام الدراي فقط، كل الوجبات دراي
       for (let j = 0; j < meals; j++) {
         dryKcalPerMeal[j] = perMealTarget
       }

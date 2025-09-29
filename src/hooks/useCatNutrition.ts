@@ -298,37 +298,37 @@ export const BOX_TYPES: BoxTypeConfig[] = [
   {
     id: 'mimi',
     name: 'ميمي',
-    description: 'البوكس الاقتصادي - دراي فود فقط بدون إضافات',
+    description: 'البوكس الاقتصادي - دراي فود فقط + تريت هدية',
     includeDryFood: true,
     includeWetFood: false,
     wetFoodBagsPerWeek: 0,
-    includeTreat: false,
+    includeTreat: true,
     treatUnitsPerDuration: {
-      week: 0,
-      twoWeeks: 0,
-      month: 0,
+      week: 1,
+      twoWeeks: 1,
+      month: 1,
     },
     enabledDurations: ['week', 'twoWeeks'],
   },
   {
     id: 'toty',
     name: 'توتي',
-    description: 'دراي فود + كيس ويت واحد لكل أسبوع بدون تريت',
+    description: 'دراي فود + ويت فود (كيس واحد/أسبوع) + تريت',
     includeDryFood: true,
     includeWetFood: true,
     wetFoodBagsPerWeek: 1,
-    includeTreat: false,
+    includeTreat: true,
     treatUnitsPerDuration: {
-      week: 0,
-      twoWeeks: 0,
-      month: 0,
+      week: 1,
+      twoWeeks: 1,
+      month: 1,
     },
     enabledDurations: ['week', 'twoWeeks'],
   },
   {
-    id: 'qatty',
-    name: 'قطتى',
-    description: 'دراي فود + كيسين ويت لكل أسبوع + تريت واحد للبوكس',
+    id: 'qatqoot_azam',
+    name: 'القطقوط الأعظم',
+    description: 'دراي فود + ويت فود (كيسين/أسبوع) + تريت',
     includeDryFood: true,
     includeWetFood: true,
     wetFoodBagsPerWeek: 2,
@@ -341,9 +341,9 @@ export const BOX_TYPES: BoxTypeConfig[] = [
     enabledDurations: ['week', 'twoWeeks'],
   },
   {
-    id: 'qatqoot_azam',
-    name: 'القطقوط الأعظم',
-    description: 'دراي فود + ثلاثة أكياس ويت لكل أسبوع + تريتين للبوكس',
+    id: 'qatqoot_azam_premium',
+    name: 'القطقوط الأعظم - بريميم',
+    description: 'دراي فود + ويت فود (3 أكياس/أسبوع) + تريت',
     includeDryFood: true,
     includeWetFood: true,
     wetFoodBagsPerWeek: 3,
@@ -353,7 +353,7 @@ export const BOX_TYPES: BoxTypeConfig[] = [
       twoWeeks: 2,
       month: 2,
     },
-    enabledDurations: ['week', 'twoWeeks'],
+    enabledDurations: ['week'], // البريميم متاح أسبوعياً فقط
   },
 ]
 
@@ -901,11 +901,8 @@ export function useCatNutrition() {
         const configWetUnits = boxType.includeWetFood ? Math.ceil(boxType.wetFoodBagsPerWeek * weeks) : 0
         const scheduleWetUnits = boxType.includeWetFood ? Math.ceil(totalWetUnitsRaw) : 0
         const suggestedWetUnits = boxType.includeWetFood ? Math.max(configWetUnits, scheduleWetUnits) : 0
-        const wetUnitsUsed = boxType.includeWetFood
-          ? (boxBuilder.boxWetMode === 'fixed_total'
-            ? Math.max(0, Math.floor(boxBuilder.boxTotalUnits))
-            : suggestedWetUnits)
-          : 0
+        // للبوكسات المحددة مسبقاً، استخدم عدد الأكياس المحدد في البوكس
+        const wetUnitsUsed = boxType.includeWetFood ? configWetUnits : 0
 
         const wetUnitsDelta = boxType.includeWetFood ? (wetUnitsUsed - totalWetUnitsRaw) : 0
         const wetUnitGramsValue = Math.max(1, toNumber(foodData.wetUnitGrams, 85))
@@ -1073,11 +1070,8 @@ export function useCatNutrition() {
         const configWetUnits = boxType.includeWetFood ? Math.ceil(boxType.wetFoodBagsPerWeek * weeks) : 0
         const scheduleWetUnits = boxType.includeWetFood ? Math.ceil(totalWetUnitsRaw) : 0
         const suggestedWetUnits = boxType.includeWetFood ? Math.max(configWetUnits, scheduleWetUnits) : 0
-        const wetUnitsUsed = boxType.includeWetFood
-          ? (boxBuilder.boxWetMode === 'fixed_total'
-            ? Math.max(0, Math.floor(boxBuilder.boxTotalUnits))
-            : suggestedWetUnits)
-          : 0
+        // للبوكسات المحددة مسبقاً في calculateBoxPricingDirect، استخدم عدد الأكياس المحدد
+        const wetUnitsUsed = boxType.includeWetFood ? configWetUnits : 0
 
         const wetUnitsDelta = boxType.includeWetFood ? (wetUnitsUsed - totalWetUnitsRaw) : 0
         const wetUnitGramsValue = Math.max(1, toNumber(foodData.wetUnitGrams, 85))
