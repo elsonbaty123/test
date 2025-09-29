@@ -117,6 +117,13 @@ export default function CatNutritionCalculator() {
     const targetBoxId = boxPricing.boxType.id
     const targetDuration = boxPricing.variant.duration
     applyPresetSelection(targetBoxId, targetDuration)
+    // Scroll to box builder section smoothly
+    setTimeout(() => {
+      const boxBuilderElement = document.querySelector('[data-section="box-builder"]')
+      if (boxBuilderElement) {
+        boxBuilderElement.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      }
+    }, 100)
   }
 
   // Calculate box pricings automatically when data is available
@@ -1308,7 +1315,7 @@ export default function CatNutritionCalculator() {
 
 
         {/* Box Builder */}
-        <Card>
+        <Card data-section="box-builder">
           <CardHeader>
             <CardTitle>صانع البوكسات</CardTitle>
             <CardDescription>احسب ما تحتاجه لفترة معينة</CardDescription>
