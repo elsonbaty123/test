@@ -91,6 +91,14 @@ export default function CatNutritionCalculator() {
       }
     }
     handleBoxBuilderChange('presetVariantDuration', resolvedDuration)
+    
+    // Save selected box name for receipt
+    if (changeTargetBox) {
+      localStorage.setItem('selectedBoxName', changeTargetBox.name)
+      const variantLabel = BOX_VARIANTS.find(v => v.duration === resolvedDuration)?.durationLabel || ''
+      localStorage.setItem('selectedBoxDuration', variantLabel)
+    }
+    
     applyPresetSelection(nextBoxId, resolvedDuration)
   }
 
@@ -98,24 +106,35 @@ export default function CatNutritionCalculator() {
     handleBoxBuilderChange('presetVariantDuration', duration)
     const targetBoxId = boxBuilder.presetBoxId ?? selectedPresetBox?.id
     if (targetBoxId) {
-      applyPresetSelection(targetBoxId, duration)
-    }
-  }
-
-  const handleAutoSyncToggle = (checked: boolean) => {
-    setAutoSyncSelection(checked)
-    if (checked) {
-      const targetBoxId = boxBuilder.presetBoxId ?? selectedPresetBox?.id
+      const targetBox = BOX_TYPES.find((box) => box.id === targetBoxId)
       const targetDuration = (boxBuilder.presetVariantDuration as 'week' | 'twoWeeks' | 'month' | undefined) ?? currentPresetVariantDuration
+      
+      // Save selected duration for receipt
+      const variantLabel = BOX_VARIANTS.find(v => v.duration === duration)?.durationLabel || ''
+      localStorage.setItem('selectedBoxDuration', variantLabel)
+      if (targetBox) {
+        localStorage.setItem('selectedBoxName', targetBox.name)
+      }
+      
       if (targetBoxId) {
         applyPresetSelection(targetBoxId, targetDuration)
       }
     }
   }
+{{ ... }}
 
   const handleSelectPricingBox = (boxPricing: NutritionBoxPricing) => {
     const targetBoxId = boxPricing.boxType.id
     const targetDuration = boxPricing.variant.duration
+    
+    // Save selected box name and duration for receipt
+    const boxName = boxPricing.boxType.name
+    const boxDuration = boxPricing.variant.durationLabel
+    
+    // Store in localStorage for receipt
+    localStorage.setItem('selectedBoxName', boxName)
+    localStorage.setItem('selectedBoxDuration', boxDuration)
+    
     applyPresetSelection(targetBoxId, targetDuration)
   }
 
