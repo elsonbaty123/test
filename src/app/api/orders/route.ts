@@ -12,6 +12,9 @@ export async function POST(req: Request) {
     const totals = body?.totals || {}
     const currency = body?.currency || ''
     const catName = body?.catName || ''
+    const boxName = body?.boxName || ''
+    const boxDuration = body?.boxDuration || ''
+    const boxPrice = body?.boxPrice || 0
     const planDuration = body?.planDuration || ''
     const paidAmount = Number(body?.paidAmount || 0)
     const payload = body?.payload || {}
@@ -46,9 +49,12 @@ export async function POST(req: Request) {
       totals,
       currency,
       catName,
+      boxName,
+      boxDuration,
+      boxPrice,
       planDuration,
       paidAmount,
-      ...payload,
+      payload, // Keep payload as a nested object
     }
 
     // Avoid duplicates by orderNo
