@@ -113,6 +113,128 @@ export const ReprintReportButton: React.FC<ReprintReportButtonProps> = ({
               .no-print {
                 display: none !important;
               }
+              
+              .print-report {
+                font-family: 'Arial', sans-serif;
+                font-size: 12px;
+                line-height: 1.4;
+                color: #000;
+                background: white;
+              }
+              
+              .print-header {
+                text-align: center;
+                border-bottom: 2px solid #0ea5e9;
+                padding-bottom: 15px;
+                margin-bottom: 20px;
+              }
+              
+              .print-title {
+                font-size: 18px;
+                font-weight: bold;
+                color: #0ea5e9;
+                margin-bottom: 5px;
+              }
+              
+              .print-subtitle {
+                font-size: 12px;
+                color: #666;
+              }
+              
+              .print-section {
+                margin-bottom: 20px;
+                page-break-inside: avoid;
+              }
+              
+              .print-section-title {
+                font-size: 14px;
+                font-weight: bold;
+                color: #0ea5e9;
+                border-bottom: 1px solid #e5e7eb;
+                padding-bottom: 5px;
+                margin-bottom: 10px;
+              }
+              
+              .print-grid {
+                display: grid;
+                grid-template-columns: repeat(2, 1fr);
+                gap: 10px;
+                margin-bottom: 15px;
+              }
+              
+              .print-field {
+                display: flex;
+                justify-content: space-between;
+                padding: 5px 0;
+                border-bottom: 1px dotted #ccc;
+              }
+              
+              .print-field-label {
+                font-weight: bold;
+                color: #374151;
+              }
+              
+              .print-field-value {
+                color: #000;
+              }
+              
+              .print-table {
+                width: 100%;
+                border-collapse: collapse;
+                margin-bottom: 15px;
+              }
+              
+              .print-table th,
+              .print-table td {
+                border: 1px solid #ccc;
+                padding: 8px;
+                text-align: center;
+                font-size: 11px;
+              }
+              
+              .print-table th {
+                background-color: #f3f4f6;
+                font-weight: bold;
+              }
+              
+              .print-table .wet-day {
+                background-color: #dbeafe;
+              }
+              
+              .print-highlights {
+                display: grid;
+                grid-template-columns: repeat(3, 1fr);
+                gap: 15px;
+                margin: 20px 0;
+              }
+              
+              .print-highlight {
+                text-align: center;
+                padding: 10px;
+                border: 2px solid #0ea5e9;
+                border-radius: 8px;
+              }
+              
+              .print-highlight-value {
+                font-size: 16px;
+                font-weight: bold;
+                color: #0ea5e9;
+              }
+              
+              .print-highlight-label {
+                font-size: 10px;
+                color: #666;
+                margin-top: 5px;
+              }
+              
+              .print-footer {
+                margin-top: 30px;
+                text-align: center;
+                font-size: 10px;
+                color: #666;
+                border-top: 1px solid #e5e7eb;
+                padding-top: 10px;
+              }
             }
             
             @media screen {
