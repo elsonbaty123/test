@@ -3,6 +3,8 @@
 import React from 'react'
 import { Button } from '@/components/ui/button'
 import { FileText } from 'lucide-react'
+import ReactDOM from 'react-dom/client'
+import { PrintableReport } from '@/components/print/PrintableReport'
 
 interface ReprintReportButtonProps {
   order: {
@@ -32,144 +34,141 @@ export const ReprintReportButton: React.FC<ReprintReportButtonProps> = ({
   size = 'default',
   className = ''
 }) => {
-  const formatNumber = (n: number, digits = 2) => {
-    return n.toFixed(digits)
-  }
-
   const handlePrint = () => {
-    const boxSummary = order.payload?.boxSummary || {}
     const results = order.payload?.results
-    const currency = order.payload?.pricing?.currency || 'جنيه'
+    const catData = order.payload?.catData || {}
+    const foodData = order.payload?.foodData || {}
+    const costs = order.payload?.costs || {}
+    const pricing = order.payload?.pricing || {}
+    const boxSummary = order.payload?.boxSummary || {}
 
     // Check if data is available
-    if (!results?.weeklyPlan && !boxSummary?.totalDays) {
+    if (!results) {
       alert('⚠️ البيانات الكاملة للتقرير غير متوفرة لهذا الطلب.\n\nهذا طلب قديم تم حفظه قبل إضافة ميزة التقارير.\nيمكنك فقط طباعة الإيصال.')
       return
     }
 
-    const printWindow = window.open('', '_blank', 'width=900,height=1024')
-    if (!printWindow) return
-
-    // Build the weekly plan table
-    let tableHtml = ''
-    if (results?.weeklyPlan) {
-      tableHtml = `
-        <h2>الجدول الأسبوعي للتغذية</h2>
-        <table>
-          <thead>
-            <tr>
-              <th>اليوم</th>
-              <th>النوع</th>
-              <th>السعرات</th>
-              <th>دراي (جم)</th>
-              <th>ويت (جم)</th>
-              <th>وحدات ويت</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${results.weeklyPlan.map((day: any) => `
-              <tr>
-                <td>${day.day}</td>
-                <td>${day.type === 'wet' ? 'ويت' : 'دراي'}</td>
-                <td>${formatNumber(day.der, 1)}</td>
-                <td>${formatNumber(day.dryGrams, 0)}</td>
-                <td>${formatNumber(day.wetGrams, 0)}</td>
-                <td>${day.meals?.reduce((sum: number, m: any) => sum + (m.wetUnits || 0), 0).toFixed(2) || '0.00'}</td>
-              </tr>
-            `).join('')}
-          </tbody>
-        </table>
-      `
-    } else {
-      tableHtml = `
-        <div style="padding: 20px; background: #fff3cd; border: 1px solid #ffc107; border-radius: 8px; margin: 20px 0;">
-          <p style="color: #856404; margin: 0;">⚠️ الجدول الأسبوعي غير متوفر لهذا الطلب.</p>
-        </div>
-      `
+    // Merge client data with catData
+    const fullCatData = {
+      ...catData,
+      clientName: client.name,
+      clientPhone: client.phone || catData.clientPhone || '',
+      clientAddress: client.address || catData.clientAddress || '',
+      name: order.catName || catData.name || ''
     }
 
-    const styles = `
-      <style>
-        body { font-family: 'Arial', sans-serif; direction: rtl; padding: 24px; background: #fff; color: #1f2937; }
-        h1 { font-size: 22px; margin-bottom: 12px; color: #0f172a; text-align: center; }
-        h2 { font-size: 18px; margin-top: 24px; margin-bottom: 12px; color: #1f2937; }
-        table { width: 100%; border-collapse: collapse; margin-top: 12px; }
-        th, td { border: 1px solid #e5e7eb; padding: 8px 10px; font-size: 13px; text-align: center; }
-        th { background: #f8fafc; }
-        .meta { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin: 20px 0; }
-        .meta-item { background: #f8fafc; padding: 12px; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 14px; }
-        .meta-item span { display: block; }
-        .meta-item .label { color: #64748b; font-size: 12px; }
-        .meta-item .value { font-weight: 600; margin-top: 4px; }
-        @media print {
-          body { padding: 10px; }
-          @page { margin: 10mm; }
-        }
-      </style>
-    `
+    // Create a new window for printing
+    const printWindow = window.open('', '_blank', 'width=800,height=600')
+    
+    if (!printWindow) {
+      alert('تعذر فتح نافذة الطباعة. يرجى السماح للنوافذ المنبثقة.')
+      return
+    }
 
-    const headerHtml = `
-      <h1>تقرير التغذية - طلب رقم ${order.orderNo}</h1>
-      <div class="meta">
-        <div class="meta-item">
-          <span class="label">العميل</span>
-          <span class="value">${client.name}</span>
-        </div>
-        <div class="meta-item">
-          <span class="label">اسم القطة</span>
-          <span class="value">${order.catName || 'غير محدد'}</span>
-        </div>
-        ${order.boxName ? `
-        <div class="meta-item">
-          <span class="label">نوع البوكس</span>
-          <span class="value">${order.boxName}</span>
-        </div>
-        ` : ''}
-        ${order.boxDuration ? `
-        <div class="meta-item">
-          <span class="label">المدة</span>
-          <span class="value">${order.boxDuration}</span>
-        </div>
-        ` : ''}
-        ${boxSummary?.totalDays ? `
-        <div class="meta-item">
-          <span class="label">إجمالي الأيام</span>
-          <span class="value">${boxSummary.totalDays} يوم</span>
-        </div>
-        ` : ''}
-      </div>
-    `
+    // Create the print content
+    const printContent = document.createElement('div')
+    const root = ReactDOM.createRoot(printContent)
+    
+    root.render(
+      <PrintableReport
+        catData={fullCatData}
+        foodData={foodData}
+        results={results}
+        costs={costs}
+        pricing={pricing}
+        boxSummary={boxSummary}
+      />
+    )
 
-    printWindow.document.write(`
-      <!doctype html>
-      <html lang="ar" dir="rtl">
+    // Wait for React to render, then set up the print window
+    setTimeout(() => {
+      const htmlContent = `
+        <!DOCTYPE html>
+        <html lang="ar" dir="rtl">
         <head>
-          <meta charset="utf-8" />
-          <title>تقرير التغذية - ${order.orderNo}</title>
-          ${styles}
+          <meta charset="UTF-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>تقرير تغذية القطة - ${order.orderNo}</title>
+          <style>
+            * {
+              margin: 0;
+              padding: 0;
+              box-sizing: border-box;
+            }
+            
+            body {
+              font-family: 'Arial', sans-serif;
+              line-height: 1.6;
+              color: #333;
+              background: white;
+              padding: 20px;
+              direction: rtl;
+            }
+            
+            @media print {
+              body {
+                padding: 0;
+              }
+              
+              .no-print {
+                display: none !important;
+              }
+            }
+            
+            @media screen {
+              .print-buttons {
+                text-align: center;
+                margin: 20px 0;
+                padding: 20px;
+                background: #f9f9f9;
+                border-radius: 8px;
+              }
+              
+              .print-btn {
+                background: #0ea5e9;
+                color: white;
+                border: none;
+                padding: 10px 20px;
+                margin: 0 10px;
+                border-radius: 5px;
+                cursor: pointer;
+                font-size: 14px;
+              }
+              
+              .print-btn:hover {
+                background: #0284c7;
+              }
+            }
+          </style>
         </head>
         <body>
-          ${headerHtml}
-          ${tableHtml}
-          <script>
-            window.onload = function() {
-              setTimeout(function() {
-                window.print();
-              }, 500);
-            };
-          </script>
+          <div class="print-buttons no-print">
+            <button class="print-btn" onclick="window.print()">🖨️ طباعة التقرير</button>
+            <button class="print-btn" onclick="window.close()">❌ إغلاق</button>
+          </div>
+          ${printContent.innerHTML}
         </body>
-      </html>
-    `)
-    printWindow.document.close()
+        </html>
+      `
+
+      printWindow.document.write(htmlContent)
+      printWindow.document.close()
+      
+      // Focus the print window and trigger print dialog
+      printWindow.focus()
+      
+      // Auto-trigger print dialog after a short delay
+      setTimeout(() => {
+        printWindow.print()
+      }, 500)
+    }, 100)
   }
 
-  // Always show the button
   return (
-    <Button 
-      variant={variant} 
-      size={size} 
-      className={className} 
+    <Button
+      variant={variant}
+      size={size}
+      className={className}
       onClick={handlePrint}
     >
       <FileText className="w-4 h-4 ml-2" />
